@@ -17,6 +17,9 @@
   {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"ApplicationSet"},"component":{"$codeRef":"ApplicationSetListPage"}},"flags":{"required":["ARGOCD_APPLICATIONSET"]}},
   {"type":"console.page/resource/details","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"ApplicationSet"},"component":{"$codeRef":"ApplicationSetDetailPage"}},"flags":{"required":["ARGOCD_APPLICATIONSET"]}},
 
+  {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Rollout"},"flag":"ARGOCD_ROLLOUT"}},
+  {"type":"console.navigation/resource-ns","properties":{"id":"gitops-rollouts","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~Rollouts%","model":{"group":"argoproj.io","version":"v1alpha1","kind":"Rollout"}},"flags":{"required":["ARGOCD_ROLLOUT"]}},
+
   {"type":"console.navigation/resource-ns","properties":{"id":"gitops-appprojects","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~AppProjects%","model":{"group":"argoproj.io","version":"v1alpha1","kind":"AppProject"}},"flags":{"required":["ARGOCD_APPPROJECT"]}},
   {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AppProject"},"component":{"$codeRef":"AppProjectListPage"}},"flags":{"required":["ARGOCD_APPPROJECT"]}},
   {"type":"console.page/resource/details","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AppProject"},"component":{"$codeRef":"AppProjectDetailPage"}},"flags":{"required":["ARGOCD_APPPROJECT"]}},
