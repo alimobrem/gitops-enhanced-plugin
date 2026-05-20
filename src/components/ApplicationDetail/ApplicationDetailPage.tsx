@@ -65,7 +65,7 @@ export const ApplicationDetailPage: FC = () => {
   return (
     <>
       <DocumentTitle>{app.metadata.name}</DocumentTitle>
-      <PageSection variant="light">
+      <PageSection>
         <Flex
           justifyContent={{ default: 'justifyContentSpaceBetween' }}
           alignItems={{ default: 'alignItemsCenter' }}

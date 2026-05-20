@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { ComponentType, FC } from 'react';
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
@@ -6,7 +6,7 @@ import {
 } from '@patternfly/react-icons';
 import type { SyncStatusCode } from '../../types';
 
-const icons: Record<SyncStatusCode, FC> = {
+const icons: Record<SyncStatusCode, ComponentType<{ color?: string }>> = {
   Synced: CheckCircleIcon,
   OutOfSync: ExclamationTriangleIcon,
   Unknown: QuestionCircleIcon,

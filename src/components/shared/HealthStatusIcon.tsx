@@ -1,4 +1,4 @@
-import type { FC } from 'react';
+import type { ComponentType, FC } from 'react';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -9,7 +9,7 @@ import {
 } from '@patternfly/react-icons';
 import type { HealthStatusCode } from '../../types';
 
-const iconMap: Record<HealthStatusCode, FC<{ color?: string }>> = {
+const iconMap: Record<HealthStatusCode, ComponentType<{ color?: string }>> = {
   Healthy: CheckCircleIcon,
   Degraded: ExclamationCircleIcon,
   Progressing: SyncAltIcon,
