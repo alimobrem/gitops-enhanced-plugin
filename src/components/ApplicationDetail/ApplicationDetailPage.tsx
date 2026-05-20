@@ -26,6 +26,7 @@ import { OverviewTab } from './OverviewTab';
 import { ResourcesTab } from './ResourcesTab';
 import { LogsTab } from './LogsTab';
 import { HistoryTab } from './HistoryTab';
+import { EventsTab } from './EventsTab';
 import { EditTab } from './EditTab';
 import type { ApplicationResource } from '../../types';
 
@@ -114,10 +115,13 @@ export const ApplicationDetailPage: FC<DetailPageProps> = (props) => {
           <Tab eventKey={2} title={<TabTitleText>{t('Logs')}</TabTitleText>}>
             <LogsTab app={app} />
           </Tab>
-          <Tab eventKey={3} title={<TabTitleText>{t('History')}</TabTitleText>}>
+          <Tab eventKey={3} title={<TabTitleText>{t('Events')}</TabTitleText>}>
+            <EventsTab app={app} />
+          </Tab>
+          <Tab eventKey={4} title={<TabTitleText>{t('History')}</TabTitleText>}>
             <HistoryTab app={app} />
           </Tab>
-          <Tab eventKey={4} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
+          <Tab eventKey={5} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
             <EditTab app={app} />
           </Tab>
         </Tabs>

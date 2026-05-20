@@ -5,8 +5,13 @@ import { ActionsMenu } from './ActionsMenu';
 const mockK8sPatch = jest.fn();
 
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  useK8sWatchResource: () => [{ metadata: { name: "testuser" } }, true, null],
+  k8sDelete: jest.fn().mockResolvedValue({}),
   k8sPatch: (...args: unknown[]) => mockK8sPatch(...args),
 }));
+
+jest.mock('react-router', () => ({ useNavigate: () => jest.fn(), useParams: () => ({}) }));
+jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn(), useParams: () => ({}) }));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (s: string, opts?: Record<string, string>) => {
@@ -56,6 +61,6 @@ describe('ActionsMenu', () => {
     render(<ActionsMenu app={mockApp} />);
     fireEvent.click(screen.getByText('Actions'));
     fireEvent.click(screen.getByText('Sync'));
-    await waitFor(() => expect(screen.getByText(/Sync failed: forbidden/)).toBeInTheDocument());
+    await waitFor(() => expect(screen.getByText(/Sync: forbidden/)).toBeInTheDocument());
   });
 });

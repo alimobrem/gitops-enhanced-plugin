@@ -27,6 +27,11 @@ declare module '@openshift-console/dynamic-plugin-sdk' {
     data: unknown;
   }): Promise<unknown>;
 
+  export function k8sDelete(options: {
+    model: K8sModel;
+    resource: unknown;
+  }): Promise<unknown>;
+
   export function consoleFetch(
     url: string,
     options?: RequestInit,

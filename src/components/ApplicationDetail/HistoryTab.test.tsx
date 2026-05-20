@@ -3,6 +3,8 @@ import { render, screen } from '@testing-library/react';
 import { HistoryTab } from './HistoryTab';
 
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  useK8sWatchResource: () => [{ metadata: { name: "testuser" } }, true, null],
+  k8sDelete: jest.fn().mockResolvedValue({}),
   k8sPatch: jest.fn(),
 }));
 

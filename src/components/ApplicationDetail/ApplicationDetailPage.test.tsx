@@ -36,15 +36,18 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   DocumentTitle: ({ children }: PropsWithChildren) => <title>{children}</title>,
   ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
   k8sPatch: jest.fn(),
+  k8sDelete: jest.fn(),
   consoleFetch: jest.fn(),
 }));
 
 jest.mock('react-router', () => ({
   useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
+  useNavigate: () => jest.fn(),
 }));
 
 jest.mock('react-router-dom', () => ({
   useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
+  useNavigate: () => jest.fn(),
 }));
 
 jest.mock('react-i18next', () => ({

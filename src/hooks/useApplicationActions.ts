@@ -1,10 +1,23 @@
-import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
+import { k8sPatch, k8sDelete } from '@openshift-console/dynamic-plugin-sdk';
 import { ApplicationModel } from '../models';
+import { useCurrentUser } from './useCurrentUser';
+import { getApplicationSource } from '../utils/application';
 import type { ApplicationResource } from '../types';
 
 export function useApplicationActions(app: ApplicationResource | null) {
-  const sync = async (revision?: string) => {
+  const username = useCurrentUser();
+
+  const sync = async (
+    revision?: string,
+    resources?: Array<{ group: string; kind: string; name: string; namespace?: string }>,
+  ) => {
     if (!app) return;
+    const syncValue: Record<string, unknown> = {
+      revision: revision ?? getApplicationSource(app)?.targetRevision ?? 'HEAD',
+    };
+    if (resources?.length) {
+      syncValue.resources = resources;
+    }
     await k8sPatch({
       model: ApplicationModel,
       resource: app,
@@ -13,10 +26,8 @@ export function useApplicationActions(app: ApplicationResource | null) {
           op: 'add',
           path: '/operation',
           value: {
-            initiatedBy: { username: 'console-plugin' },
-            sync: {
-              revision: revision ?? app.spec.source?.targetRevision ?? 'HEAD',
-            },
+            initiatedBy: { username },
+            sync: syncValue,
           },
         },
       ],
@@ -53,5 +64,26 @@ export function useApplicationActions(app: ApplicationResource | null) {
     });
   };
 
-  return { sync, refresh, terminate };
+  const deleteApp = async (cascade = true) => {
+    if (!app) return;
+    if (!cascade) {
+      await k8sPatch({
+        model: ApplicationModel,
+        resource: app,
+        data: [{ op: 'remove', path: '/metadata/finalizers', value: null }],
+      });
+    }
+    await k8sDelete({ model: ApplicationModel, resource: app });
+  };
+
+  const retry = async () => {
+    if (!app) return;
+    const lastRevision = app.status?.operationState?.syncResult?.revision
+      ?? app.status?.sync?.revision
+      ?? getApplicationSource(app)?.targetRevision
+      ?? 'HEAD';
+    await sync(lastRevision);
+  };
+
+  return { sync, refresh, terminate, deleteApp, retry };
 }

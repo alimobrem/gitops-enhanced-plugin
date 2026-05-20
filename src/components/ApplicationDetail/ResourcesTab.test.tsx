@@ -4,6 +4,9 @@ import { ResourcesTab } from './ResourcesTab';
 
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
+  useK8sWatchResource: () => [{ metadata: { name: 'testuser' } }, true, null],
+  k8sPatch: jest.fn().mockResolvedValue({}),
+  k8sDelete: jest.fn().mockResolvedValue({}),
 }));
 
 jest.mock('react-i18next', () => ({
