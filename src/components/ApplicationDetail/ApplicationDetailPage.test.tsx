@@ -23,6 +23,10 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   consoleFetch: jest.fn(),
 }));
 
+jest.mock('react-router', () => ({
+  useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
+}));
+
 jest.mock('react-router-dom', () => ({
   useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
 }));

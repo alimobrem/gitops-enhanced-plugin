@@ -1,0 +1,17 @@
+plugin:
+  name: gitops-enhanced
+  image: image-registry.openshift-image-registry.svc:5000/gitops-enhanced-plugin/gitops-enhanced-plugin:latest
+  replicas: 1
+  port: 9443
+  resources:
+    requests:
+      cpu: 10m
+      memory: 64Mi
+    limits:
+      cpu: 100m
+      memory: 128Mi
+
+argocd:
+  namespace: openshift-gitops
+  serviceName: openshift-gitops-server
+  port: 443
