@@ -70,5 +70,8 @@
   "Server": "Server",
   "GitOps Applications": "GitOps Applications",
   "Total": "Total",
-  "No Argo CD applications target this namespace.": "No Argo CD applications target this namespace."
+  "No Argo CD applications target this namespace.": "No Argo CD applications target this namespace.",
+  "Configured": "Configured",
+  "Public": "Public",
+  "No repositories found.": "No repositories found."
 }
