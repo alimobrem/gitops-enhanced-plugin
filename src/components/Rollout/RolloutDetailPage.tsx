@@ -10,20 +10,9 @@ import {
   Flex, FlexItem, Dropdown, DropdownList, DropdownItem, MenuToggle, Button, Alert,
 } from '@patternfly/react-core';
 import { RolloutGroupVersionKind } from '../../models';
+import type { RolloutResource } from '../../types';
 import { RolloutEditTab } from './RolloutEditTab';
 
-interface RolloutResource {
-  metadata: { name: string; namespace: string; uid: string };
-  spec: {
-    replicas?: number;
-    strategy?: {
-      canary?: { steps?: Array<Record<string, unknown>> };
-      blueGreen?: { activeService?: string; previewService?: string };
-    };
-    template?: { spec?: { containers?: Array<{ name: string; image: string; ports?: Array<{ containerPort: number }> }> } };
-  };
-  status?: { phase?: string; currentStepIndex?: number; replicas?: number; updatedReplicas?: number; readyReplicas?: number; availableReplicas?: number };
-}
 
 interface DetailPageProps {
   match?: { params: { name: string; ns: string } };

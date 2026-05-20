@@ -9,21 +9,9 @@ import {
 } from '@patternfly/react-core';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { ApplicationSetModel } from '../../models';
+import type { AppSetResource } from '../../types';
 import { safePatch } from '../../utils/patch';
 
-interface AppSetResource {
-  metadata: { name: string; namespace: string };
-  spec: {
-    template?: {
-      metadata?: { name?: string };
-      spec?: {
-        source?: { repoURL?: string; path?: string; targetRevision?: string };
-        destination?: { server?: string; namespace?: string };
-        syncPolicy?: { automated?: { prune?: boolean; selfHeal?: boolean } };
-      };
-    };
-  };
-}
 
 export const ApplicationSetEditTab: FC<{ appset: AppSetResource }> = ({ appset }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');

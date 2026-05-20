@@ -18,20 +18,11 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationSetGroupVersionKind } from '../../models';
+import type { AppSetResource } from '../../types';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
 import { InstanceProvider } from '../shared/InstanceProvider';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 
-interface AppSetResource {
-  metadata: { name: string; namespace: string; uid: string };
-  spec: {
-    generators?: Array<Record<string, unknown>>;
-    template?: { metadata?: { name?: string } };
-  };
-  status?: {
-    conditions?: Array<{ type: string; status: string; message?: string }>;
-  };
-}
 
 export const ApplicationSetListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');

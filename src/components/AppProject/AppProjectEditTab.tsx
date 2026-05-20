@@ -9,16 +9,9 @@ import {
 import { PlusCircleIcon, MinusCircleIcon } from '@patternfly/react-icons';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { AppProjectModel } from '../../models';
+import type { AppProjectResource } from '../../types';
 import { safePatch } from '../../utils/patch';
 
-interface AppProjectResource {
-  metadata: { name: string; namespace: string };
-  spec: {
-    description?: string;
-    sourceRepos?: string[];
-    destinations?: Array<{ server?: string; namespace?: string }>;
-  };
-}
 
 export const AppProjectEditTab: FC<{ project: AppProjectResource }> = ({ project }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');

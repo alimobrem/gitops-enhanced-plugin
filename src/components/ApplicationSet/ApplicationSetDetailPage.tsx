@@ -11,6 +11,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationSetGroupVersionKind, ApplicationGroupVersionKind } from '../../models';
+import type { AppSetResource } from '../../types';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ApplicationSetEditTab } from './ApplicationSetEditTab';
@@ -19,14 +20,6 @@ import {
 } from '@patternfly/react-core';
 import type { ApplicationResource } from '../../types';
 
-interface AppSetResource {
-  metadata: { name: string; namespace: string; uid: string };
-  spec: {
-    generators?: Array<Record<string, unknown>>;
-    template?: { metadata?: { name?: string; labels?: Record<string, string> }; spec?: Record<string, unknown> };
-  };
-  status?: { conditions?: Array<{ type: string; status: string; message?: string; lastTransitionTime?: string }> };
-}
 
 interface DetailPageProps {
   match?: { params: { name: string; ns: string } };

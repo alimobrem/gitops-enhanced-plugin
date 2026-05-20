@@ -9,15 +9,9 @@ import {
 } from '@patternfly/react-core';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { RolloutModel } from '../../models';
+import type { RolloutResource } from '../../types';
 import { safePatch } from '../../utils/patch';
 
-interface RolloutResource {
-  metadata: { name: string; namespace: string };
-  spec: {
-    replicas?: number;
-    template?: { spec?: { containers?: Array<{ name: string; image: string }> } };
-  };
-}
 
 export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
