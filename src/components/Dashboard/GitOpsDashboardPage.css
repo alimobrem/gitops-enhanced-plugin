@@ -13,6 +13,11 @@
   color: var(--pf-t--global--color--status--default--default);
 }
 
+.gitops-dashboard__status-link {
+  text-decoration: none;
+  color: inherit;
+}
+
 .gitops-dashboard__resource-icon {
   font-size: 1.25rem;
   color: var(--pf-t--global--color--brand--default);

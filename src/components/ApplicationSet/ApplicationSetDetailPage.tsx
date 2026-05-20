@@ -51,10 +51,13 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
   if (error) return <PageSection><Alert variant="danger" isInline title={t('Error')}>{(error as Error).message}</Alert></PageSection>;
   if (!loaded || !appset) return <PageSection><Bullseye><Spinner /></Bullseye></PageSection>;
 
-  const childApps = (apps ?? []).filter((a) =>
-    a.metadata.annotations?.['argocd.argoproj.io/application-set-name'] === appset.metadata.name ||
-    a.metadata.name.startsWith(appset.metadata.name)
-  );
+  const childApps = (apps ?? []).filter((a) => {
+    const meta = a.metadata as Record<string, unknown>;
+    const owners = (meta.ownerReferences ?? []) as Array<{ kind: string; name: string }>;
+    if (owners.some((o) => o.kind === 'ApplicationSet' && o.name === appset.metadata.name)) return true;
+    if (a.metadata.annotations?.['argocd.argoproj.io/application-set-name'] === appset.metadata.name) return true;
+    return false;
+  });
 
   return (
     <React.Fragment>

@@ -51,18 +51,31 @@ interface StatusCardProps {
   count: number;
   icon: React.ReactNode;
   color?: string;
+  href?: string;
 }
 
-const StatusCard: FC<StatusCardProps> = ({ title, count, icon, color }) => (
-  <Card isCompact>
+const StatusCard: FC<StatusCardProps> = ({ title, count, icon, color, href }) => (
+  <Card isCompact isSelectable={!!href} isClickable={!!href}>
     <CardBody>
-      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-        <FlexItem className="gitops-dashboard__status-icon" style={color ? { color } : undefined}>{icon}</FlexItem>
-        <FlexItem>
-          <div className="gitops-dashboard__status-count">{count}</div>
-          <div className="gitops-dashboard__status-label">{title}</div>
-        </FlexItem>
-      </Flex>
+      {href ? (
+        <a href={href} className="gitops-dashboard__status-link">
+          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
+            <FlexItem className="gitops-dashboard__status-icon" style={color ? { color } : undefined}>{icon}</FlexItem>
+            <FlexItem>
+              <div className="gitops-dashboard__status-count">{count}</div>
+              <div className="gitops-dashboard__status-label">{title}</div>
+            </FlexItem>
+          </Flex>
+        </a>
+      ) : (
+        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
+          <FlexItem className="gitops-dashboard__status-icon" style={color ? { color } : undefined}>{icon}</FlexItem>
+          <FlexItem>
+            <div className="gitops-dashboard__status-count">{count}</div>
+            <div className="gitops-dashboard__status-label">{title}</div>
+          </FlexItem>
+        </Flex>
+      )}
     </CardBody>
   </Card>
 );
@@ -140,16 +153,16 @@ export const GitOpsDashboardPage: FC = () => {
 
         <Grid hasGutter>
           <GridItem span={3}>
-            <StatusCard title={t('Total Applications')} count={total} icon={<CubesIcon />} color="var(--pf-t--global--color--brand--default)" />
+            <StatusCard title={t('Total Applications')} count={total} icon={<CubesIcon />} color="var(--pf-t--global--color--brand--default)" href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application" />
           </GridItem>
           <GridItem span={3}>
-            <StatusCard title={t('Synced')} count={synced} icon={<CheckCircleIcon />} color="var(--pf-t--global--color--status--success--default)" />
+            <StatusCard title={t('Synced')} count={synced} icon={<CheckCircleIcon />} color="var(--pf-t--global--color--status--success--default)" href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application" />
           </GridItem>
           <GridItem span={3}>
-            <StatusCard title={t('OutOfSync')} count={outOfSync} icon={<ExclamationTriangleIcon />} color="var(--pf-t--global--color--status--warning--default)" />
+            <StatusCard title={t('OutOfSync')} count={outOfSync} icon={<ExclamationTriangleIcon />} color="var(--pf-t--global--color--status--warning--default)" href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application" />
           </GridItem>
           <GridItem span={3}>
-            <StatusCard title={t('Degraded')} count={degraded} icon={<ExclamationCircleIcon />} color="var(--pf-t--global--color--status--danger--default)" />
+            <StatusCard title={t('Degraded')} count={degraded} icon={<ExclamationCircleIcon />} color="var(--pf-t--global--color--status--danger--default)" href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application" />
           </GridItem>
 
           <GridItem span={6}>
@@ -159,7 +172,7 @@ export const GitOpsDashboardPage: FC = () => {
                 <div className="pf-v6-u-mb-sm">
                   <Progress
                     value={syncedPct}
-                    title={`${t('Synced')}: ${synced}`}
+                    title={t('Synced')}
                     variant={ProgressVariant.success}
                     measureLocation={ProgressMeasureLocation.outside}
                   />
@@ -167,7 +180,7 @@ export const GitOpsDashboardPage: FC = () => {
                 <div className="pf-v6-u-mb-sm">
                   <Progress
                     value={oosPct}
-                    title={`${t('OutOfSync')}: ${outOfSync}`}
+                    title={t('OutOfSync')}
                     variant={ProgressVariant.warning}
                     measureLocation={ProgressMeasureLocation.outside}
                   />
@@ -175,7 +188,7 @@ export const GitOpsDashboardPage: FC = () => {
                 {unknown > 0 && (
                   <Progress
                     value={total > 0 ? Math.round((unknown / total) * 100) : 0}
-                    title={`${t('Unknown')}: ${unknown}`}
+                    title={t('Unknown')}
                     measureLocation={ProgressMeasureLocation.outside}
                   />
                 )}
@@ -190,7 +203,7 @@ export const GitOpsDashboardPage: FC = () => {
                 <div className="pf-v6-u-mb-sm">
                   <Progress
                     value={total > 0 ? Math.round((healthy / total) * 100) : 0}
-                    title={`${t('Healthy')}: ${healthy}`}
+                    title={t('Healthy')}
                     variant={ProgressVariant.success}
                     measureLocation={ProgressMeasureLocation.outside}
                   />
@@ -198,14 +211,14 @@ export const GitOpsDashboardPage: FC = () => {
                 <div className="pf-v6-u-mb-sm">
                   <Progress
                     value={total > 0 ? Math.round((progressing / total) * 100) : 0}
-                    title={`${t('Progressing')}: ${progressing}`}
+                    title={t('Progressing')}
                     measureLocation={ProgressMeasureLocation.outside}
                   />
                 </div>
                 {degraded > 0 && (
                   <Progress
                     value={total > 0 ? Math.round((degraded / total) * 100) : 0}
-                    title={`${t('Degraded')}: ${degraded}`}
+                    title={t('Degraded')}
                     variant={ProgressVariant.danger}
                     measureLocation={ProgressMeasureLocation.outside}
                   />
