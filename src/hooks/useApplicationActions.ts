@@ -3,7 +3,7 @@ import { ApplicationModel } from '../models';
 import type { ApplicationResource } from '../types';
 
 export function useApplicationActions(app: ApplicationResource | null) {
-  const sync = async () => {
+  const sync = async (revision?: string) => {
     if (!app) return;
     await k8sPatch({
       model: ApplicationModel,
@@ -15,7 +15,7 @@ export function useApplicationActions(app: ApplicationResource | null) {
           value: {
             initiatedBy: { username: 'console-plugin' },
             sync: {
-              revision: app.spec.source?.targetRevision ?? 'HEAD',
+              revision: revision ?? app.spec.source?.targetRevision ?? 'HEAD',
             },
           },
         },

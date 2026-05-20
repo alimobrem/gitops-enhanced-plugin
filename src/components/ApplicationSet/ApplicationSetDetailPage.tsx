@@ -24,9 +24,17 @@ interface AppSetResource {
   status?: { conditions?: Array<{ type: string; status: string; message?: string; lastTransitionTime?: string }> };
 }
 
-export const ApplicationSetDetailPage: FC = () => {
+interface DetailPageProps {
+  match?: { params: { name: string; ns: string } };
+  name?: string;
+  namespace?: string;
+}
+
+export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const { name, ns } = useParams<{ name: string; ns: string }>();
+  const routeParams = useParams<{ name: string; ns: string }>();
+  const name = props.match?.params?.name ?? props.name ?? routeParams.name;
+  const ns = props.match?.params?.ns ?? props.namespace ?? routeParams.ns;
   const [activeTab, setActiveTab] = useState(0);
 
   const [appset, loaded, error] = useK8sWatchResource<AppSetResource>({

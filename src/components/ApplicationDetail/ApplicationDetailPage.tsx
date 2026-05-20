@@ -26,11 +26,20 @@ import { OverviewTab } from './OverviewTab';
 import { ResourcesTab } from './ResourcesTab';
 import { LogsTab } from './LogsTab';
 import { HistoryTab } from './HistoryTab';
+import { EditTab } from './EditTab';
 import type { ApplicationResource } from '../../types';
 
-export const ApplicationDetailPage: FC = () => {
+interface DetailPageProps {
+  match?: { params: { name: string; ns: string } };
+  name?: string;
+  namespace?: string;
+}
+
+export const ApplicationDetailPage: FC<DetailPageProps> = (props) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const { name, ns } = useParams<{ name: string; ns: string }>();
+  const routeParams = useParams<{ name: string; ns: string }>();
+  const name = props.match?.params?.name ?? props.name ?? routeParams.name;
+  const ns = props.match?.params?.ns ?? props.namespace ?? routeParams.ns;
   const [activeTab, setActiveTab] = useState(0);
 
   const [app, loaded, error] = useK8sWatchResource<ApplicationResource>({
@@ -107,6 +116,9 @@ export const ApplicationDetailPage: FC = () => {
           </Tab>
           <Tab eventKey={3} title={<TabTitleText>{t('History')}</TabTitleText>}>
             <HistoryTab app={app} />
+          </Tab>
+          <Tab eventKey={4} title={<TabTitleText>{t('Edit')}</TabTitleText>}>
+            <EditTab app={app} />
           </Tab>
         </Tabs>
       </PageSection>

@@ -57,7 +57,7 @@
       "ApplicationListPage": "./components/ApplicationList/ApplicationListPage",
       "ApplicationDetailPage": "./components/ApplicationDetail/ApplicationDetailPage",
       "ApplicationCreatePage": "./components/ApplicationCreate/ApplicationCreatePage",
-      "GitOpsDashboardCard": "./components/Dashboard/GitOpsDashboardCard",
+      "GitOpsDashboardCard": "./components/Dashboard/GitOpsDashboardPage",
       "NamespaceGitOpsTab": "./components/NamespaceTab/NamespaceGitOpsTab",
       "ApplicationSetListPage": "./components/ApplicationSet/ApplicationSetListPage",
       "ApplicationSetDetailPage": "./components/ApplicationSet/ApplicationSetDetailPage",

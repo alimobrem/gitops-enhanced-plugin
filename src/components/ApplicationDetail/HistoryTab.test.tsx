@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { HistoryTab } from './HistoryTab';
 
+jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  k8sPatch: jest.fn(),
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (s: string) => s }),
 }));
@@ -22,7 +26,7 @@ describe('HistoryTab', () => {
     expect(screen.getByText('No deployment history available.')).toBeInTheDocument();
   });
 
-  it('renders history rows', () => {
+  it('renders history rows with rollback buttons', () => {
     const app = {
       ...baseApp,
       status: {
@@ -37,5 +41,6 @@ describe('HistoryTab', () => {
     render(<HistoryTab app={app} />);
     expect(screen.getByText('abc1234')).toBeInTheDocument();
     expect(screen.getByText('def4567')).toBeInTheDocument();
+    expect(screen.getByText('Rollback')).toBeInTheDocument();
   });
 });
