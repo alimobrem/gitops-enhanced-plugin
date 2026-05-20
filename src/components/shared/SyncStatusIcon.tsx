@@ -7,6 +7,7 @@ import {
 } from '@patternfly/react-icons';
 import type { SyncStatusCode } from '../../types';
 import { syncStatusColor } from '../../utils/status';
+import './StatusIcon.css';
 
 const icons: Record<SyncStatusCode, ComponentType<{ color?: string }>> = {
   Synced: CheckCircleIcon,
@@ -17,13 +18,7 @@ const icons: Record<SyncStatusCode, ComponentType<{ color?: string }>> = {
 export const SyncStatusIcon: FC<{ status: SyncStatusCode }> = ({ status }) => {
   const IconComponent = icons[status] ?? QuestionCircleIcon;
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-      }}
-    >
+    <span className="gitops-status-icon">
       <IconComponent color={syncStatusColor[status]} aria-hidden="true" />
       <span>{status}</span>
     </span>

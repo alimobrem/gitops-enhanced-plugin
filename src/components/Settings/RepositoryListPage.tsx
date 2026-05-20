@@ -84,7 +84,7 @@ export const RepositoryListPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('Repositories')}</DocumentTitle>
       <PageSection>
-        <Title headingLevel="h1" style={{ marginBottom: '1rem' }}>
+        <Title headingLevel="h1" className="pf-v6-u-mb-md">
           {t('Repositories')}
         </Title>
         {!loaded && <Bullseye><Spinner /></Bullseye>}
@@ -115,7 +115,7 @@ export const RepositoryListPage: FC = () => {
               ))}
               {allRepos.length === 0 && (
                 <Tr>
-                  <Td colSpan={5} style={{ textAlign: 'center' }}>
+                  <Td colSpan={5} className="pf-v6-u-text-align-center">
                     {t('No repositories found.')}
                   </Td>
                 </Tr>

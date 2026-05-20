@@ -42,7 +42,7 @@ export const ClusterListPage: FC = () => {
     <>
       <DocumentTitle>{t('Clusters')}</DocumentTitle>
       <PageSection>
-        <Title headingLevel="h1" style={{ marginBottom: '1rem' }}>
+        <Title headingLevel="h1" className="pf-v6-u-mb-md">
           {t('Clusters')}
         </Title>
         {!loaded && <Bullseye><Spinner /></Bullseye>}

@@ -15,7 +15,7 @@ export const InstanceProvider: FC<PropsWithChildren> = ({ children }) => {
     try {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) return JSON.parse(stored);
-    } catch { /* ignore */ }
+    } catch (e) { console.warn('Failed to parse stored GitOps instance:', e); }
     return { name: 'openshift-gitops', namespace: 'openshift-gitops' };
   });
 

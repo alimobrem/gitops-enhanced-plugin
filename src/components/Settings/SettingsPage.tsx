@@ -23,7 +23,7 @@ export const SettingsPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('GitOps Settings')}</DocumentTitle>
       <PageSection>
-        <Title headingLevel="h1" style={{ marginBottom: '1rem' }}>{t('GitOps Settings')}</Title>
+        <Title headingLevel="h1" className="pf-v6-u-mb-md">{t('GitOps Settings')}</Title>
         <Tabs activeKey={activeTab} onSelect={(_e, key) => setActiveTab(key as number)}>
           <Tab eventKey={0} title={<TabTitleText>{t('ArgoCD Instances')}</TabTitleText>}>
             <ArgoCDListPage />

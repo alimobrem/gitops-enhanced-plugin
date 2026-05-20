@@ -43,6 +43,7 @@ import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { InstancePicker } from '../shared/InstancePicker';
 import type { ApplicationResource } from '../../types';
+import './GitOpsDashboardPage.css';
 
 interface StatusCardProps {
   title: string;
@@ -55,10 +56,10 @@ const StatusCard: FC<StatusCardProps> = ({ title, count, icon, color }) => (
   <Card isCompact>
     <CardBody>
       <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-        <FlexItem style={{ color, fontSize: '1.5rem' }}>{icon}</FlexItem>
+        <FlexItem className="gitops-dashboard__status-icon" style={color ? { color } : undefined}>{icon}</FlexItem>
         <FlexItem>
-          <div style={{ fontSize: '2rem', fontWeight: 700, lineHeight: 1 }}>{count}</div>
-          <div style={{ color: 'var(--pf-t--global--color--status--default--default)', fontSize: '0.875rem' }}>{title}</div>
+          <div className="gitops-dashboard__status-count">{count}</div>
+          <div className="gitops-dashboard__status-label">{title}</div>
         </FlexItem>
       </Flex>
     </CardBody>
@@ -122,13 +123,13 @@ export const GitOpsDashboardPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('GitOps Dashboard')}</DocumentTitle>
       <PageSection>
-        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '1.5rem' }}>
+        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} className="pf-v6-u-mb-lg">
           <FlexItem><Title headingLevel="h1">{t('GitOps Overview')}</Title></FlexItem>
           <FlexItem><InstancePicker /></FlexItem>
         </Flex>
 
         {errors.length > 0 && errors.map((err, i) => (
-          <Alert key={i} variant="danger" isInline title={t('Error loading resources')} style={{ marginBottom: '1rem' }}>
+          <Alert key={i} variant="danger" isInline title={t('Error loading resources')} className="pf-v6-u-mb-md">
             {err.message}
           </Alert>
         ))}
@@ -151,7 +152,7 @@ export const GitOpsDashboardPage: FC = () => {
             <Card>
               <CardTitle>{t('Sync Status')}</CardTitle>
               <CardBody>
-                <div style={{ marginBottom: '0.5rem' }}>
+                <div className="pf-v6-u-mb-sm">
                   <Progress
                     value={syncedPct}
                     title={`${t('Synced')}: ${synced}`}
@@ -159,7 +160,7 @@ export const GitOpsDashboardPage: FC = () => {
                     measureLocation={ProgressMeasureLocation.outside}
                   />
                 </div>
-                <div style={{ marginBottom: '0.5rem' }}>
+                <div className="pf-v6-u-mb-sm">
                   <Progress
                     value={oosPct}
                     title={`${t('OutOfSync')}: ${outOfSync}`}
@@ -182,7 +183,7 @@ export const GitOpsDashboardPage: FC = () => {
             <Card>
               <CardTitle>{t('Health Status')}</CardTitle>
               <CardBody>
-                <div style={{ marginBottom: '0.5rem' }}>
+                <div className="pf-v6-u-mb-sm">
                   <Progress
                     value={total > 0 ? Math.round((healthy / total) * 100) : 0}
                     title={`${t('Healthy')}: ${healthy}`}
@@ -190,7 +191,7 @@ export const GitOpsDashboardPage: FC = () => {
                     measureLocation={ProgressMeasureLocation.outside}
                   />
                 </div>
-                <div style={{ marginBottom: '0.5rem' }}>
+                <div className="pf-v6-u-mb-sm">
                   <Progress
                     value={total > 0 ? Math.round((progressing / total) * 100) : 0}
                     title={`${t('Progressing')}: ${progressing}`}
@@ -253,7 +254,7 @@ export const GitOpsDashboardPage: FC = () => {
             <Card isCompact>
               <CardBody>
                 <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <FlexItem style={{ fontSize: '1.25rem', color: 'var(--pf-t--global--color--brand--default)' }}><LayerGroupIcon /></FlexItem>
+                  <FlexItem className="gitops-dashboard__resource-icon"><LayerGroupIcon /></FlexItem>
                   <FlexItem>
                     <strong>{appsets?.length ?? 0}</strong> {t('ApplicationSets')}
                   </FlexItem>
@@ -265,7 +266,7 @@ export const GitOpsDashboardPage: FC = () => {
             <Card isCompact>
               <CardBody>
                 <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <FlexItem style={{ fontSize: '1.25rem', color: 'var(--pf-t--global--color--brand--default)' }}><FolderOpenIcon /></FlexItem>
+                  <FlexItem className="gitops-dashboard__resource-icon"><FolderOpenIcon /></FlexItem>
                   <FlexItem>
                     <strong>{projects?.length ?? 0}</strong> {t('AppProjects')}
                   </FlexItem>
@@ -277,7 +278,7 @@ export const GitOpsDashboardPage: FC = () => {
             <Card isCompact>
               <CardBody>
                 <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <FlexItem style={{ fontSize: '1.25rem', color: 'var(--pf-t--global--color--brand--default)' }}><ServerIcon /></FlexItem>
+                  <FlexItem className="gitops-dashboard__resource-icon"><ServerIcon /></FlexItem>
                   <FlexItem>
                     <strong>{instances?.length ?? 0}</strong> {t('ArgoCD Instances')}
                   </FlexItem>

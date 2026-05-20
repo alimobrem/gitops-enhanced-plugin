@@ -1,0 +1,19 @@
+.gitops-dashboard__status-icon {
+  font-size: 1.5rem;
+}
+
+.gitops-dashboard__status-count {
+  font-size: 2rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gitops-dashboard__status-label {
+  font-size: 0.875rem;
+  color: var(--pf-t--global--color--status--default--default);
+}
+
+.gitops-dashboard__resource-icon {
+  font-size: 1.25rem;
+  color: var(--pf-t--global--color--brand--default);
+}

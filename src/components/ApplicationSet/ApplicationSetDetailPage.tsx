@@ -60,19 +60,19 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
     <React.Fragment>
       <DocumentTitle>{appset.metadata.name}</DocumentTitle>
       <PageSection>
-        <Title headingLevel="h1" style={{ marginBottom: '1rem' }}>{appset.metadata.name}</Title>
+        <Title headingLevel="h1" className="pf-v6-u-mb-md">{appset.metadata.name}</Title>
         <Tabs activeKey={activeTab} onSelect={(_e, key) => setActiveTab(key as number)}>
           <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
-            <Card style={{ marginTop: '1rem' }}>
+            <Card className="pf-v6-u-mt-md">
               <CardTitle>{t('Generators')}</CardTitle>
               <CardBody>
                 {appset.spec.generators?.map((gen, i) => (
-                  <Label key={i} isCompact style={{ marginRight: '0.5rem' }}>{Object.keys(gen)[0]}</Label>
+                  <Label key={i} isCompact className="pf-v6-u-mr-sm">{Object.keys(gen)[0]}</Label>
                 )) ?? t('None')}
               </CardBody>
             </Card>
             {appset.status?.conditions && appset.status.conditions.length > 0 && (
-              <Card style={{ marginTop: '1rem' }}>
+              <Card className="pf-v6-u-mt-md">
                 <CardTitle>{t('Conditions')}</CardTitle>
                 <CardBody>
                   <DescriptionList isHorizontal isCompact>
@@ -81,7 +81,7 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
                         <DescriptionListTerm>{c.type}</DescriptionListTerm>
                         <DescriptionListDescription>
                           <Label isCompact color={c.status === 'True' ? 'green' : 'red'}>{c.status}</Label>
-                          {c.message && <span style={{ marginLeft: '0.5rem' }}>{c.message}</span>}
+                          {c.message && <span className="pf-v6-u-ml-sm">{c.message}</span>}
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                     ))}
@@ -92,9 +92,9 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
           </Tab>
           <Tab eventKey={1} title={<TabTitleText>{t('Child Applications')} ({childApps.length})</TabTitleText>}>
             {childApps.length === 0 ? (
-              <EmptyState style={{ marginTop: '1rem' }}><EmptyStateBody>{t('No child applications found.')}</EmptyStateBody></EmptyState>
+              <EmptyState className="pf-v6-u-mt-md"><EmptyStateBody>{t('No child applications found.')}</EmptyStateBody></EmptyState>
             ) : (
-              <Table aria-label={t('Child Applications')} style={{ marginTop: '1rem' }}>
+              <Table aria-label={t('Child Applications')} className="pf-v6-u-mt-md">
                 <Thead><Tr>
                   <Th>{t('Name')}</Th>
                   <Th>{t('Sync Status')}</Th>

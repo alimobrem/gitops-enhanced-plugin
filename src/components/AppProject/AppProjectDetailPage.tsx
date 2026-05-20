@@ -54,10 +54,10 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
     <React.Fragment>
       <DocumentTitle>{project.metadata.name}</DocumentTitle>
       <PageSection>
-        <Title headingLevel="h1" style={{ marginBottom: '1rem' }}>{project.metadata.name}</Title>
+        <Title headingLevel="h1" className="pf-v6-u-mb-md">{project.metadata.name}</Title>
         <Tabs activeKey={activeTab} onSelect={(_e, key) => setActiveTab(key as number)}>
           <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
-            <Card style={{ marginTop: '1rem' }}>
+            <Card className="pf-v6-u-mt-md">
               <CardBody>
                 <DescriptionList isHorizontal>
                   <DescriptionListGroup>
@@ -85,9 +85,9 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
 
           <Tab eventKey={1} title={<TabTitleText>{t('Source Repos')} ({repos.length})</TabTitleText>}>
             {repos.length === 0 ? (
-              <EmptyState style={{ marginTop: '1rem' }}><EmptyStateBody>{t('No source repositories configured.')}</EmptyStateBody></EmptyState>
+              <EmptyState className="pf-v6-u-mt-md"><EmptyStateBody>{t('No source repositories configured.')}</EmptyStateBody></EmptyState>
             ) : (
-              <Table aria-label={t('Source Repos')} style={{ marginTop: '1rem' }}>
+              <Table aria-label={t('Source Repos')} className="pf-v6-u-mt-md">
                 <Thead><Tr><Th>{t('Repository Pattern')}</Th></Tr></Thead>
                 <Tbody>{repos.map((r, i) => <Tr key={i}><Td>{r}</Td></Tr>)}</Tbody>
               </Table>
@@ -96,9 +96,9 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
 
           <Tab eventKey={2} title={<TabTitleText>{t('Destinations')} ({dests.length})</TabTitleText>}>
             {dests.length === 0 ? (
-              <EmptyState style={{ marginTop: '1rem' }}><EmptyStateBody>{t('No destinations configured.')}</EmptyStateBody></EmptyState>
+              <EmptyState className="pf-v6-u-mt-md"><EmptyStateBody>{t('No destinations configured.')}</EmptyStateBody></EmptyState>
             ) : (
-              <Table aria-label={t('Destinations')} style={{ marginTop: '1rem' }}>
+              <Table aria-label={t('Destinations')} className="pf-v6-u-mt-md">
                 <Thead><Tr><Th>{t('Server')}</Th><Th>{t('Namespace')}</Th><Th>{t('Name')}</Th></Tr></Thead>
                 <Tbody>{dests.map((d, i) => <Tr key={i}><Td>{d.server ?? '*'}</Td><Td>{d.namespace ?? '*'}</Td><Td>{d.name ?? '-'}</Td></Tr>)}</Tbody>
               </Table>
@@ -107,9 +107,9 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
 
           <Tab eventKey={3} title={<TabTitleText>{t('Roles')} ({roles.length})</TabTitleText>}>
             {roles.length === 0 ? (
-              <EmptyState style={{ marginTop: '1rem' }}><EmptyStateBody>{t('No roles configured.')}</EmptyStateBody></EmptyState>
+              <EmptyState className="pf-v6-u-mt-md"><EmptyStateBody>{t('No roles configured.')}</EmptyStateBody></EmptyState>
             ) : (
-              <Table aria-label={t('Roles')} style={{ marginTop: '1rem' }}>
+              <Table aria-label={t('Roles')} className="pf-v6-u-mt-md">
                 <Thead><Tr><Th>{t('Name')}</Th><Th>{t('Groups')}</Th><Th>{t('Policies')}</Th></Tr></Thead>
                 <Tbody>{roles.map((r, i) => (
                   <Tr key={i}>
@@ -124,9 +124,9 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
 
           <Tab eventKey={4} title={<TabTitleText>{t('Sync Windows')} ({windows.length})</TabTitleText>}>
             {windows.length === 0 ? (
-              <EmptyState style={{ marginTop: '1rem' }}><EmptyStateBody>{t('No sync windows configured.')}</EmptyStateBody></EmptyState>
+              <EmptyState className="pf-v6-u-mt-md"><EmptyStateBody>{t('No sync windows configured.')}</EmptyStateBody></EmptyState>
             ) : (
-              <Table aria-label={t('Sync Windows')} style={{ marginTop: '1rem' }}>
+              <Table aria-label={t('Sync Windows')} className="pf-v6-u-mt-md">
                 <Thead><Tr><Th>{t('Kind')}</Th><Th>{t('Schedule')}</Th><Th>{t('Duration')}</Th><Th>{t('Namespaces')}</Th></Tr></Thead>
                 <Tbody>{windows.map((w, i) => (
                   <Tr key={i}>

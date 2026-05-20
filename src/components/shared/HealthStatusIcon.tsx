@@ -10,6 +10,7 @@ import {
 } from '@patternfly/react-icons';
 import type { HealthStatusCode } from '../../types';
 import { healthStatusColor } from '../../utils/status';
+import './StatusIcon.css';
 
 const iconMap: Record<HealthStatusCode, ComponentType<{ color?: string }>> = {
   Healthy: CheckCircleIcon,
@@ -25,13 +26,7 @@ export const HealthStatusIcon: FC<{ status: HealthStatusCode }> = ({
 }) => {
   const IconComponent = iconMap[status] ?? QuestionCircleIcon;
   return (
-    <span
-      style={{
-        display: 'inline-flex',
-        alignItems: 'center',
-        gap: '0.25rem',
-      }}
-    >
+    <span className="gitops-status-icon">
       <IconComponent color={healthStatusColor[status]} aria-hidden="true" />
       <span>{status}</span>
     </span>

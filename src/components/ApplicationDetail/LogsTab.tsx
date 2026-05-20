@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect, useRef, useCallback, type FC } from 'react';
+import { useState, useEffect, useRef, useCallback, useMemo, type FC } from 'react';
 import {
   useK8sWatchResource,
 } from '@openshift-console/dynamic-plugin-sdk';
@@ -43,19 +43,27 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const [following, setFollowing] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
-  const appPods = (pods ?? []).filter((p) =>
-    app.status?.resources?.some(
-      (r) => r.kind === 'Pod' && r.name === p.metadata.name,
-    ) ||
-    p.metadata.name.startsWith(app.metadata.name)
+  const managedPodNames = useMemo(() => {
+    const names = new Set<string>();
+    for (const r of app.status?.resources ?? []) {
+      if (r.kind === 'Pod') names.add(r.name);
+    }
+    return names;
+  }, [app.status?.resources]);
+
+  const appPods = useMemo(
+    () => (pods ?? []).filter((p) => managedPodNames.has(p.metadata.name)),
+    [pods, managedPodNames],
   );
+
+  const podNames = useMemo(() => appPods.map((p) => p.metadata.name).join(','), [appPods]);
 
   useEffect(() => {
     if (appPods.length > 0 && !selectedPod) {
       setSelectedPod(appPods[0].metadata.name);
       setSelectedContainer(appPods[0].spec.containers[0]?.name ?? '');
     }
-  }, [appPods.length]);
+  }, [podNames]);
 
   const fetchLogs = useCallback(async () => {
     if (!selectedPod || !selectedContainer) return;
@@ -100,7 +108,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
 
   return (
     <PageSection>
-      <Flex spaceItems={{ default: 'spaceItemsMd' }} style={{ marginBottom: '1rem' }}>
+      <Flex spaceItems={{ default: 'spaceItemsMd' }} className="pf-v6-u-mb-md">
         <FlexItem>
           <Select
             isOpen={podSelectOpen}

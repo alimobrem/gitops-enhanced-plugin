@@ -92,7 +92,7 @@ export const ApplicationListPage: FC = () => {
                     placeholder={t('Filter by name...')}
                     value={nameFilter}
                     onChange={(_e, val) => setNameFilter(val)}
-                    style={{ minWidth: '200px' }}
+                   
                   />
                 </ToolbarItem>
                 <ToolbarItem>

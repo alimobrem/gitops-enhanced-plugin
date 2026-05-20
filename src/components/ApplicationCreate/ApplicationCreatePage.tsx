@@ -113,7 +113,7 @@ export const ApplicationCreatePage: FC = () => {
     <>
       <DocumentTitle>{t('Create Application')}</DocumentTitle>
       <PageSection>
-        <Title headingLevel="h1" style={{ marginBottom: '1rem' }}>
+        <Title headingLevel="h1" className="pf-v6-u-mb-md">
           {t('Create Application')}
         </Title>
         {error && (
@@ -121,7 +121,7 @@ export const ApplicationCreatePage: FC = () => {
             variant="danger"
             isInline
             title={t('Error creating application')}
-            style={{ marginBottom: '1rem' }}
+            className="pf-v6-u-mb-md"
           >
             {error}
           </Alert>
