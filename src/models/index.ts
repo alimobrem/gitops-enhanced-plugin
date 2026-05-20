@@ -1,12 +1,10 @@
-export {
-  ApplicationModel,
-  ApplicationGroupVersionKind,
-} from './application';
-export {
-  AppProjectModel,
-  AppProjectGroupVersionKind,
-} from './appproject';
-export {
-  ApplicationSetModel,
-  ApplicationSetGroupVersionKind,
-} from './applicationset';
+export { ApplicationModel, ApplicationGroupVersionKind } from './application';
+export { AppProjectModel, AppProjectGroupVersionKind } from './appproject';
+export { ApplicationSetModel, ApplicationSetGroupVersionKind } from './applicationset';
+export { RolloutModel, RolloutGroupVersionKind, RolloutManagerModel, RolloutManagerGroupVersionKind } from './rollout';
+export { ArgoCDModel, ArgoCDGroupVersionKind } from './argocd';
+export { AnalysisTemplateModel, AnalysisTemplateGroupVersionKind, ClusterAnalysisTemplateModel, ClusterAnalysisTemplateGroupVersionKind, AnalysisRunModel, AnalysisRunGroupVersionKind } from './analysis';
+export { ExperimentModel, ExperimentGroupVersionKind } from './experiment';
+export { NotificationsConfigurationModel, NotificationsConfigurationGroupVersionKind } from './notifications';
+export { ImageUpdaterModel, ImageUpdaterGroupVersionKind } from './imageupdater';
+export { NamespaceManagementModel, NamespaceManagementGroupVersionKind } from './namespacemanagement';
