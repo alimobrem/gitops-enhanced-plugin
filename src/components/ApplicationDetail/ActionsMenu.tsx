@@ -6,7 +6,6 @@ import {
   MenuToggle,
 } from '@patternfly/react-core';
 import { useTranslation } from 'react-i18next';
-import { syncApplication } from '../../services/argocd-api';
 import { useApplicationActions } from '../../hooks/useApplicationActions';
 import type { ApplicationResource } from '../../types';
 
@@ -17,11 +16,11 @@ interface ActionsMenuProps {
 export const ActionsMenu: FC<ActionsMenuProps> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const [isOpen, setIsOpen] = useState(false);
-  const { refresh, terminate } = useApplicationActions(app);
+  const { sync, refresh, terminate } = useApplicationActions(app);
 
   const onSync = async () => {
     setIsOpen(false);
-    await syncApplication(app.metadata.name);
+    await sync();
   };
 
   const onRefresh = async () => {
