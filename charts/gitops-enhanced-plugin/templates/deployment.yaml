@@ -19,6 +19,7 @@ spec:
       containers:
         - name: plugin
           image: {{ .Values.plugin.image }}
+          imagePullPolicy: Always
           ports:
             - containerPort: 9443
               protocol: TCP

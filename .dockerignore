@@ -1,0 +1,12 @@
+node_modules
+dist
+coverage
+.git
+charts
+docs
+__mocks__
+*.test.ts
+*.test.tsx
+jest.config.ts
+setup-tests.ts
+.swcrc

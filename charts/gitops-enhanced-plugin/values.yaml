@@ -1,6 +1,6 @@
 plugin:
   name: gitops-enhanced
-  image: quay.io/gitops-enhanced/gitops-enhanced-plugin:latest
+  image: image-registry.openshift-image-registry.svc:5000/gitops-enhanced-plugin/gitops-enhanced-plugin:latest
   replicas: 1
   port: 9443
   resources:
