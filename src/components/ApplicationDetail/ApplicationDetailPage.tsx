@@ -1,10 +1,9 @@
 import React from 'react';
-import type { FC } from 'react';
+import { useState, type FC } from 'react';
 import { useParams } from 'react-router';
 import {
   useK8sWatchResource,
   DocumentTitle,
-  HorizontalNav,
 } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
@@ -15,6 +14,9 @@ import {
   Flex,
   FlexItem,
   Alert,
+  Tabs,
+  Tab,
+  TabTitleText,
 } from '@patternfly/react-core';
 import { ApplicationGroupVersionKind } from '../../models';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
@@ -29,6 +31,7 @@ import type { ApplicationResource } from '../../types';
 export const ApplicationDetailPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { name, ns } = useParams<{ name: string; ns: string }>();
+  const [activeTab, setActiveTab] = useState(0);
 
   const [app, loaded, error] = useK8sWatchResource<ApplicationResource>({
     groupVersionKind: ApplicationGroupVersionKind,
@@ -60,15 +63,8 @@ export const ApplicationDetailPage: FC = () => {
     );
   }
 
-  const pages = [
-    { name: t('Overview'), component: () => <OverviewTab app={app} /> },
-    { name: t('Resources'), component: () => <ResourcesTab app={app} /> },
-    { name: t('Logs'), component: () => <LogsTab app={app} /> },
-    { name: t('History'), component: () => <HistoryTab app={app} /> },
-  ];
-
   return (
-    <>
+    <React.Fragment>
       <DocumentTitle>{app.metadata.name}</DocumentTitle>
       <PageSection>
         <Flex
@@ -95,8 +91,26 @@ export const ApplicationDetailPage: FC = () => {
           </FlexItem>
         </Flex>
       </PageSection>
-      <HorizontalNav pages={pages} />
-    </>
+      <PageSection>
+        <Tabs
+          activeKey={activeTab}
+          onSelect={(_e, key) => setActiveTab(key as number)}
+        >
+          <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
+            <OverviewTab app={app} />
+          </Tab>
+          <Tab eventKey={1} title={<TabTitleText>{t('Resources')}</TabTitleText>}>
+            <ResourcesTab app={app} />
+          </Tab>
+          <Tab eventKey={2} title={<TabTitleText>{t('Logs')}</TabTitleText>}>
+            <LogsTab app={app} />
+          </Tab>
+          <Tab eventKey={3} title={<TabTitleText>{t('History')}</TabTitleText>}>
+            <HistoryTab app={app} />
+          </Tab>
+        </Tabs>
+      </PageSection>
+    </React.Fragment>
   );
 };
 

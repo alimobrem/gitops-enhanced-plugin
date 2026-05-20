@@ -1,40 +1,6 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
-import { ApplicationDetailPage } from './ApplicationDetailPage';
-import type { FC, PropsWithChildren } from 'react';
-
-const mockUseK8sWatchResource = jest.fn();
-
-jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
-  useK8sWatchResource: (...args: unknown[]) =>
-    mockUseK8sWatchResource(...args),
-  DocumentTitle: ({ children }: PropsWithChildren) => <title>{children}</title>,
-  HorizontalNav: ({
-    pages,
-  }: {
-    pages: Array<{ name: string; component: FC }>;
-  }) => (
-    <div>
-      {pages.map((p) => (
-        <div key={p.name}>{p.name}</div>
-      ))}
-    </div>
-  ),
-  k8sPatch: jest.fn(),
-  consoleFetch: jest.fn(),
-}));
-
-jest.mock('react-router', () => ({
-  useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
-}));
-
-jest.mock('react-router-dom', () => ({
-  useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
-}));
-
-jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (s: string) => s }),
-}));
+import type { PropsWithChildren } from 'react';
 
 const mockApp = {
   apiVersion: 'argoproj.io/v1alpha1',
@@ -58,25 +24,50 @@ const mockApp = {
     history: [
       { id: 1, revision: 'abc123', deployedAt: '2026-05-19T12:00:00Z' },
     ],
+    resources: [],
   },
 };
 
+jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  useK8sWatchResource: (resource: { isList?: boolean }) => {
+    if (resource.isList) return [[], true, null];
+    return [mockApp, true, null];
+  },
+  DocumentTitle: ({ children }: PropsWithChildren) => <title>{children}</title>,
+  ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
+  k8sPatch: jest.fn(),
+  consoleFetch: jest.fn(),
+}));
+
+jest.mock('react-router', () => ({
+  useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
+}));
+
+jest.mock('react-router-dom', () => ({
+  useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
+}));
+
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({ t: (s: string) => s }),
+}));
+
+import { ApplicationDetailPage } from './ApplicationDetailPage';
+
 describe('ApplicationDetailPage', () => {
   it('renders application name when loaded', () => {
-    mockUseK8sWatchResource.mockReturnValue([mockApp, true, null]);
     render(<ApplicationDetailPage />);
     expect(screen.getByRole('heading', { name: 'test-app' })).toBeInTheDocument();
   });
 
   it('renders tab names', () => {
-    mockUseK8sWatchResource.mockReturnValue([mockApp, true, null]);
     render(<ApplicationDetailPage />);
-    expect(screen.getAllByText('Overview').length).toBeGreaterThan(0);
-    expect(screen.getAllByText('History').length).toBeGreaterThan(0);
+    expect(screen.getByText('Overview')).toBeInTheDocument();
+    expect(screen.getByText('Resources')).toBeInTheDocument();
+    expect(screen.getByText('Logs')).toBeInTheDocument();
+    expect(screen.getByText('History')).toBeInTheDocument();
   });
 
   it('renders sync and health status', () => {
-    mockUseK8sWatchResource.mockReturnValue([mockApp, true, null]);
     render(<ApplicationDetailPage />);
     expect(screen.getAllByText('Synced').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Healthy').length).toBeGreaterThan(0);

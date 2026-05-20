@@ -71,6 +71,7 @@
   "GitOps Applications": "GitOps Applications",
   "Total": "Total",
   "No Argo CD applications target this namespace.": "No Argo CD applications target this namespace.",
+  "Dashboard": "Dashboard",
   "Configured": "Configured",
   "Public": "Public",
   "No repositories found.": "No repositories found."

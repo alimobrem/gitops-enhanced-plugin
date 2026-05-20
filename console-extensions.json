@@ -79,11 +79,25 @@
     }
   },
   {
-    "type": "console.dashboards/card",
+    "type": "console.page/route",
     "properties": {
-      "tab": "overview",
-      "position": "RIGHT",
+      "exact": true,
+      "path": "/gitops/dashboard",
       "component": { "$codeRef": "GitOpsDashboardCard" }
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "gitops-dashboard",
+      "perspective": "admin",
+      "section": "gitops",
+      "name": "%plugin__gitops-enhanced~Dashboard%",
+      "href": "/gitops/dashboard",
+      "insertBefore": "gitops-applications"
     },
     "flags": {
       "required": ["ARGOCD_APPLICATION"]
