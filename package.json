@@ -59,20 +59,11 @@
       "ApplicationCreatePage": "./components/ApplicationCreate/ApplicationCreatePage",
       "GitOpsDashboardCard": "./components/Dashboard/GitOpsDashboardCard",
       "NamespaceGitOpsTab": "./components/NamespaceTab/NamespaceGitOpsTab",
-      "RepositoryListPage": "./components/Settings/RepositoryListPage",
-      "ClusterListPage": "./components/Settings/ClusterListPage",
       "ApplicationSetListPage": "./components/ApplicationSet/ApplicationSetListPage",
+      "ApplicationSetDetailPage": "./components/ApplicationSet/ApplicationSetDetailPage",
       "AppProjectListPage": "./components/AppProject/AppProjectListPage",
-      "RolloutListPage": "./components/Rollout/RolloutListPage",
-      "ArgoCDListPage": "./components/ArgoInstance/ArgoCDListPage",
-      "AnalysisTemplateListPage": "./components/GenericResource/AnalysisTemplateListPage",
-      "ClusterAnalysisTemplateListPage": "./components/GenericResource/ClusterAnalysisTemplateListPage",
-      "AnalysisRunListPage": "./components/GenericResource/AnalysisRunListPage",
-      "ExperimentListPage": "./components/GenericResource/ExperimentListPage",
-      "RolloutManagerListPage": "./components/GenericResource/RolloutManagerListPage",
-      "NotificationsConfigListPage": "./components/GenericResource/NotificationsConfigListPage",
-      "ImageUpdaterListPage": "./components/GenericResource/ImageUpdaterListPage",
-      "NamespaceManagementListPage": "./components/GenericResource/NamespaceManagementListPage"
+      "AppProjectDetailPage": "./components/AppProject/AppProjectDetailPage",
+      "SettingsPage": "./components/Settings/SettingsPage"
     },
     "dependencies": {
       "@console/pluginAPI": "*"
