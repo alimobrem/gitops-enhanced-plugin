@@ -8,8 +8,8 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   k8sCreate: jest.fn().mockResolvedValue({}),
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
-jest.mock('react-router', () => ({ useNavigate: () => jest.fn() }));
-jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn() }));
+jest.mock('react-router', () => ({ useHistory: () => ({ push: jest.fn(), goBack: jest.fn() }) }));
+jest.mock('react-router-dom', () => ({ useHistory: () => ({ push: jest.fn(), goBack: jest.fn() }) }));
 jest.mock('../shared/InstanceProvider', () => ({
   InstanceProvider: ({ children }: { children: React.ReactNode }) => <>{children}</>,
 }));

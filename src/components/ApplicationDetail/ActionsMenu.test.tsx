@@ -10,8 +10,8 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   k8sPatch: (...args: unknown[]) => mockK8sPatch(...args),
 }));
 
-jest.mock('react-router', () => ({ useNavigate: () => jest.fn(), useParams: () => ({}) }));
-jest.mock('react-router-dom', () => ({ useNavigate: () => jest.fn(), useParams: () => ({}) }));
+jest.mock('react-router', () => ({ useHistory: () => ({ push: jest.fn(), goBack: jest.fn() }), useParams: () => ({}) }));
+jest.mock('react-router-dom', () => ({ useHistory: () => ({ push: jest.fn(), goBack: jest.fn() }), useParams: () => ({}) }));
 
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (s: string, opts?: Record<string, string>) => {

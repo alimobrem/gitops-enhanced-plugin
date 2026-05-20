@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, type FC } from 'react';
-import { useNavigate } from 'react-router';
+import { useHistory } from 'react-router-dom';
 import { k8sCreate, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
@@ -53,7 +53,7 @@ const initialState: AppFormState = {
 export const ApplicationCreatePage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance } = useCurrentInstance();
-  const navigate = useNavigate();
+  const history = useHistory();
   const [form, setForm] = useState<AppFormState>(initialState);
   const [error, setError] = useState<string>('');
   const [creating, setCreating] = useState(false);
@@ -99,7 +99,7 @@ export const ApplicationCreatePage: FC = () => {
         },
       };
       await k8sCreate({ model: ApplicationModel, data: resource });
-      navigate(
+      history.push(
         `/k8s/ns/${instance.namespace}/argoproj.io~v1alpha1~Application/${form.name}`,
       );
     } catch (e) {
@@ -126,7 +126,7 @@ export const ApplicationCreatePage: FC = () => {
             {error}
           </Alert>
         )}
-        <Wizard onClose={() => navigate(-1)}>
+        <Wizard onClose={() => history.goBack()}>
           <WizardStep name={t('Source')} id="source">
             <Form>
               <FormGroup label={t('Application Name')} isRequired fieldId="name">

@@ -42,12 +42,12 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
 
 jest.mock('react-router', () => ({
   useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
-  useNavigate: () => jest.fn(),
+  useHistory: () => ({ push: jest.fn(), goBack: jest.fn() }),
 }));
 
 jest.mock('react-router-dom', () => ({
   useParams: () => ({ name: 'test-app', ns: 'openshift-gitops' }),
-  useNavigate: () => jest.fn(),
+  useHistory: () => ({ push: jest.fn(), goBack: jest.fn() }),
 }));
 
 jest.mock('react-i18next', () => ({

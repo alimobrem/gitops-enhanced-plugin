@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, useCallback, type FC } from 'react';
-import { useNavigate } from 'react-router';
+import { useHistory } from 'react-router-dom';
 import {
   Dropdown, DropdownList, DropdownItem, MenuToggle,
   Alert, Spinner, Button, Checkbox,
@@ -12,7 +12,7 @@ import type { ApplicationResource } from '../../types';
 
 export const ActionsMenu: FC<{ app: ApplicationResource }> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const navigate = useNavigate();
+  const history = useHistory();
   const [isOpen, setIsOpen] = useState(false);
   const [actionInProgress, setActionInProgress] = useState<string | null>(null);
   const [actionError, setActionError] = useState('');
@@ -45,7 +45,7 @@ export const ActionsMenu: FC<{ app: ApplicationResource }> = ({ app }) => {
     setConfirmAction(null);
     await runAction(confirmAction.name, confirmAction.fn);
     if (confirmAction.name === t('Delete')) {
-      navigate(`/k8s/ns/${app.metadata.namespace}/argoproj.io~v1alpha1~Application`);
+      history.push(`/k8s/ns/${app.metadata.namespace}/argoproj.io~v1alpha1~Application`);
     }
   };
 

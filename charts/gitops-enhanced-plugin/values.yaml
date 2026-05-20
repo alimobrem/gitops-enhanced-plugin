@@ -5,11 +5,11 @@ plugin:
   port: 9443
   resources:
     requests:
-      cpu: 10m
-      memory: 64Mi
+      cpu: 1m
+      memory: 32Mi
     limits:
-      cpu: 100m
-      memory: 128Mi
+      cpu: 50m
+      memory: 64Mi
 
 argocd:
   namespace: openshift-gitops
