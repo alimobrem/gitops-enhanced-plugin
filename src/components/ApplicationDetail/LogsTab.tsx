@@ -12,12 +12,11 @@ import {
   SelectList,
   MenuToggle,
   PageSection,
-  CodeBlock,
-  CodeBlockCode,
   Button,
   Flex,
   FlexItem,
 } from '@patternfly/react-core';
+import { LogViewer } from '@patternfly/react-log-viewer';
 import type { ApplicationResource } from '../../types';
 
 interface OwnerRef {
@@ -233,9 +232,13 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
           </Button>
         </FlexItem>
       </Flex>
-      <CodeBlock>
-        <CodeBlockCode>{logs || t('Loading logs...')}</CodeBlockCode>
-      </CodeBlock>
+      <LogViewer
+        data={logs || t('Loading logs...')}
+        isTextWrapped
+        hasLineNumbers
+        height={500}
+        theme="dark"
+      />
     </PageSection>
   );
 };

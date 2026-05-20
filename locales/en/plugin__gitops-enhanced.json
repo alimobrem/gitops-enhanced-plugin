@@ -167,6 +167,9 @@
   "This will abort any in-progress sync on {{name}}.": "This will abort any in-progress sync on {{name}}.",
   "Create {{kind}}": "Create {{kind}}",
   "Are you sure you want to delete {{name}} ({{namespace}})?": "Are you sure you want to delete {{name}} ({{namespace}})?",
+  "Auto-sync": "Auto-sync",
+  "No {{kind}} resources found.": "No {{kind}} resources found.",
+  "Namespaces": "Namespaces",
   "Configured": "Configured",
   "Public": "Public",
   "No repositories found.": "No repositories found."
