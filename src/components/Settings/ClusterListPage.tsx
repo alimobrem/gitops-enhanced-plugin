@@ -1,3 +1,4 @@
+import React from 'react';
 import type { FC } from 'react';
 import { useK8sWatchResource, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';

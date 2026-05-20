@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, useEffect, useRef, useCallback, type FC } from 'react';
 import {
   useK8sWatchResource,

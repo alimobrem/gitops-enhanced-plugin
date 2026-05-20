@@ -1,3 +1,4 @@
+import React from 'react';
 import type { FC } from 'react';
 import { Button } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';

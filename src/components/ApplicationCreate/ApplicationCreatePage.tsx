@@ -1,3 +1,4 @@
+import React from 'react';
 import { useState, type FC } from 'react';
 import { useNavigate } from 'react-router';
 import { k8sCreate, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk';

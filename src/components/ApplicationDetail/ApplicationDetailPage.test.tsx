@@ -1,3 +1,4 @@
+import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { ApplicationDetailPage } from './ApplicationDetailPage';
 import type { FC, PropsWithChildren } from 'react';
