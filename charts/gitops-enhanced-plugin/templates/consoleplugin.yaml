@@ -18,8 +18,7 @@ spec:
       basePath: "/"
   proxy:
     - alias: argocd
-      authorize: true
-      caCertificate: ""
+      authorization: UserToken
       endpoint:
         type: Service
         service:
