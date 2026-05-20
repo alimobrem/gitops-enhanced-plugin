@@ -16,7 +16,7 @@ import {
   Flex,
   FlexItem,
 } from '@patternfly/react-core';
-import { LogViewer } from '@patternfly/react-log-viewer';
+import './LogsTab.css';
 import type { ApplicationResource } from '../../types';
 
 interface OwnerRef {
@@ -232,13 +232,9 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
           </Button>
         </FlexItem>
       </Flex>
-      <LogViewer
-        data={logs || t('Loading logs...')}
-        isTextWrapped
-        hasLineNumbers
-        height={500}
-        theme="dark"
-      />
+      <pre className="gitops-log-viewer" ref={(el) => { if (el && following) el.scrollTop = el.scrollHeight; }}>
+        {logs || t('Loading logs...')}
+      </pre>
     </PageSection>
   );
 };
