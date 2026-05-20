@@ -10,6 +10,7 @@ import {
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { ApplicationModel } from '../../models';
 import { isMultiSource, getApplicationSource } from '../../utils/application';
+import { safePatch, safeRemove } from '../../utils/patch';
 import type { ApplicationResource } from '../../types';
 
 export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
@@ -35,6 +36,21 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const repoURLValid = repoURL.trim().length > 0;
   const pathValid = path.trim().length > 0;
   const namespaceValid = destNamespace.trim().length > 0;
+
+  const isDirty = repoURL !== (source?.repoURL ?? '') || path !== (source?.path ?? '') ||
+    targetRevision !== (source?.targetRevision ?? 'HEAD') || destServer !== (app.spec.destination.server ?? '') ||
+    destNamespace !== (app.spec.destination.namespace ?? '') || project !== app.spec.project ||
+    autoSync !== !!app.spec.syncPolicy?.automated || prune !== !!app.spec.syncPolicy?.automated?.prune ||
+    selfHeal !== !!app.spec.syncPolicy?.automated?.selfHeal;
+
+  const resetForm = () => {
+    setRepoURL(source?.repoURL ?? ''); setPath(source?.path ?? '');
+    setTargetRevision(source?.targetRevision ?? 'HEAD');
+    setDestServer(app.spec.destination.server ?? ''); setDestNamespace(app.spec.destination.namespace ?? '');
+    setProject(app.spec.project); setAutoSync(!!app.spec.syncPolicy?.automated);
+    setPrune(!!app.spec.syncPolicy?.automated?.prune); setSelfHeal(!!app.spec.syncPolicy?.automated?.selfHeal);
+    clearFeedback();
+  };
   const formValid = repoURLValid && pathValid && namespaceValid;
 
   const clearFeedback = () => { setError(''); setSuccess(false); };
@@ -44,23 +60,21 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
     setSaving(true);
     clearFeedback();
     try {
+      const res = app as unknown as Record<string, unknown>;
       const sourcePath = multiSource ? '/spec/sources/0' : '/spec/source';
-      const patches: Array<{ op: string; path: string; value: unknown }> = [
-        { op: 'replace', path: `${sourcePath}/repoURL`, value: repoURL },
-        { op: 'replace', path: `${sourcePath}/path`, value: path },
-        { op: 'replace', path: `${sourcePath}/targetRevision`, value: targetRevision },
-        { op: 'replace', path: '/spec/destination/server', value: destServer },
-        { op: 'replace', path: '/spec/destination/namespace', value: destNamespace },
-        { op: 'replace', path: '/spec/project', value: project },
+      const patches = [
+        safePatch(res, `${sourcePath}/repoURL`, repoURL),
+        safePatch(res, `${sourcePath}/path`, path),
+        safePatch(res, `${sourcePath}/targetRevision`, targetRevision),
+        safePatch(res, '/spec/destination/server', destServer),
+        safePatch(res, '/spec/destination/namespace', destNamespace),
+        safePatch(res, '/spec/project', project),
       ];
       if (autoSync) {
-        patches.push({
-          op: app.spec.syncPolicy?.automated ? 'replace' : 'add',
-          path: '/spec/syncPolicy/automated',
-          value: { prune, selfHeal },
-        });
-      } else if (app.spec.syncPolicy?.automated) {
-        patches.push({ op: 'remove', path: '/spec/syncPolicy/automated', value: null });
+        patches.push(safePatch(res, '/spec/syncPolicy/automated', { prune, selfHeal }));
+      } else {
+        const removeOp = safeRemove(res, '/spec/syncPolicy/automated');
+        if (removeOp) patches.push(removeOp);
       }
       await k8sPatch({ model: ApplicationModel, resource: app, data: patches });
       setSuccess(true);
@@ -143,7 +157,8 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
       </Grid>
 
       <ActionGroup className="pf-v6-u-mt-md">
-        <Button variant="primary" onClick={() => setShowConfirm(true)} isDisabled={saving || !formValid}>{t('Save')}</Button>
+        <Button variant="primary" onClick={() => setShowConfirm(true)} isDisabled={saving || !formValid || !isDirty}>{t('Save')}</Button>
+        <Button variant="link" onClick={resetForm} isDisabled={!isDirty}>{t('Cancel')}</Button>
       </ActionGroup>
 
       <ConfirmModal title={t('Confirm Save')} isOpen={showConfirm} onConfirm={handleSave} onCancel={() => setShowConfirm(false)} isLoading={saving} confirmLabel={t('Save')}>

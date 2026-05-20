@@ -216,5 +216,12 @@
   "AppProject updated": "AppProject updated",
   "Template": "Template",
   "Rollout updated": "Rollout updated",
-  "Current Step": "Current Step"
+  "Current Step": "Current Step",
+  "Promote": "Promote",
+  "Abort": "Abort",
+  "Restart": "Restart",
+  "Image is required": "Image is required",
+  "Close": "Close",
+  "Remove repository": "Remove repository",
+  "Remove destination": "Remove destination"
 }

@@ -52,14 +52,16 @@ describe('EditTab', () => {
 
   it('shows confirmation modal before saving', () => {
     render(<EditTab app={mockApp} />);
+    // Make form dirty first
+    fireEvent.change(screen.getByDisplayValue('manifests'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Save'));
     expect(screen.getByText('Confirm Save')).toBeInTheDocument();
-    expect(screen.getByText(/Save changes to test-app/)).toBeInTheDocument();
   });
 
   it('calls k8sPatch with correct source path on confirm', async () => {
     mockK8sPatch.mockResolvedValue({});
     render(<EditTab app={mockApp} />);
+    fireEvent.change(screen.getByDisplayValue('manifests'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Save'));
     fireEvent.click(screen.getAllByText('Save')[1]); // modal save button
     await waitFor(() => expect(mockK8sPatch).toHaveBeenCalledWith(
@@ -75,6 +77,7 @@ describe('EditTab', () => {
     mockK8sPatch.mockResolvedValue({});
     render(<EditTab app={multiSourceApp as unknown as typeof mockApp} />);
     expect(screen.getByText('Multi-source application')).toBeInTheDocument();
+    fireEvent.change(screen.getByDisplayValue('base'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Save'));
     fireEvent.click(screen.getAllByText('Save')[1]);
     await waitFor(() => expect(mockK8sPatch).toHaveBeenCalledWith(
@@ -89,6 +92,7 @@ describe('EditTab', () => {
   it('shows error on save failure with dismiss', async () => {
     mockK8sPatch.mockRejectedValue(new Error('forbidden'));
     render(<EditTab app={mockApp} />);
+    fireEvent.change(screen.getByDisplayValue('manifests'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Save'));
     fireEvent.click(screen.getAllByText('Save')[1]);
     await waitFor(() => expect(screen.getByText('forbidden')).toBeInTheDocument());

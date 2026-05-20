@@ -1,13 +1,13 @@
 import React from 'react';
 import { useState, type FC } from 'react';
 import { useParams } from 'react-router';
-import { useK8sWatchResource, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk';
+import { useK8sWatchResource, DocumentTitle, k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
   PageSection, Title, Bullseye, Spinner, Alert, Tabs, Tab, TabTitleText,
   Card, CardTitle, CardBody, Label,
   DescriptionList, DescriptionListGroup, DescriptionListTerm, DescriptionListDescription,
-  Flex, FlexItem, Dropdown, DropdownList, DropdownItem, MenuToggle,
+  Flex, FlexItem, Dropdown, DropdownList, DropdownItem, MenuToggle, Button, Alert,
 } from '@patternfly/react-core';
 import { RolloutGroupVersionKind } from '../../models';
 import { RolloutEditTab } from './RolloutEditTab';
@@ -38,6 +38,7 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
   const ns = props.match?.params?.ns ?? props.namespace ?? routeParams.ns;
   const [activeTab, setActiveTab] = useState(0);
   const [actionsOpen, setActionsOpen] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const [rollout, loaded, error] = useK8sWatchResource<RolloutResource>({
     groupVersionKind: RolloutGroupVersionKind,
@@ -48,6 +49,16 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
   if (error) return <PageSection><Alert variant="danger" isInline title={t('Error')}>{(error as Error).message}</Alert></PageSection>;
   if (!loaded || !rollout) return <PageSection><Bullseye><Spinner /></Bullseye></PageSection>;
 
+  const runAction = async (actionName: string, annotation: string, value: string) => {
+    setActionsOpen(false); setActionError('');
+    try {
+      await k8sPatch({ model: RolloutModel, resource: rollout, data: [
+        { op: 'add', path: `/metadata/annotations/${annotation.replace(/\//g, '~1')}`, value },
+      ] });
+    } catch (e) { setActionError(`${actionName}: ${(e as Error).message}`); }
+  };
+
+  const isPaused = rollout.status?.phase === 'Paused';
   const strategyType = rollout.spec.strategy?.canary ? 'Canary' : rollout.spec.strategy?.blueGreen ? 'Blue-Green' : 'Unknown';
   const container = rollout.spec.template?.spec?.containers?.[0];
 
@@ -65,11 +76,15 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
               toggle={(ref) => <MenuToggle ref={ref} onClick={() => setActionsOpen(!actionsOpen)} variant="primary">{t('Actions')}</MenuToggle>}
             >
               <DropdownList>
+                {isPaused && <DropdownItem key="promote" onClick={() => runAction(t('Promote'), 'rollout.argoproj.io/promote', 'true')}>{t('Promote')}</DropdownItem>}
+                <DropdownItem key="restart" onClick={() => runAction(t('Restart'), 'rollout.argoproj.io/restart', new Date().toISOString())}>{t('Restart')}</DropdownItem>
+                <DropdownItem key="abort" isDanger onClick={() => runAction(t('Abort'), 'rollout.argoproj.io/abort', 'true')}>{t('Abort')}</DropdownItem>
                 <DropdownItem key="edit-yaml" component="a" href={`/k8s/ns/${ns}/argoproj.io~v1alpha1~Rollout/${name}/yaml`}>{t('Edit YAML')}</DropdownItem>
               </DropdownList>
             </Dropdown>
           </FlexItem>
         </Flex>
+        {actionError && <Alert variant="danger" isInline title={actionError} actionClose={<Button variant="plain" aria-label={t('Close')} onClick={() => setActionError('')}>x</Button>} className="pf-v6-u-mb-md" />}
         <Tabs activeKey={activeTab} onSelect={(_e, key) => setActiveTab(key as number)}>
           <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
             <Card className="pf-v6-u-mt-md">
