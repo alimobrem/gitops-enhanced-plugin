@@ -87,16 +87,10 @@ export const GitOpsDashboardPage: FC = () => {
     isList: true,
   });
 
-  const errors = [appsError, appsetsError, projectsError, instancesError].filter(Boolean) as Error[];
-
-  if (!appsLoaded && errors.length === 0) {
-    return (
-      <React.Fragment>
-        <DocumentTitle>{t('GitOps Dashboard')}</DocumentTitle>
-        <PageSection><Bullseye><Spinner /></Bullseye></PageSection>
-      </React.Fragment>
-    );
-  }
+  const errors = useMemo(
+    () => [appsError, appsetsError, projectsError, instancesError].filter(Boolean) as Error[],
+    [appsError, appsetsError, projectsError, instancesError],
+  );
 
   const allApps = apps ?? [];
 
@@ -119,6 +113,15 @@ export const GitOpsDashboardPage: FC = () => {
 
   const syncedPct = total > 0 ? Math.round((synced / total) * 100) : 0;
   const oosPct = total > 0 ? Math.round((outOfSync / total) * 100) : 0;
+
+  if (!appsLoaded && errors.length === 0) {
+    return (
+      <React.Fragment>
+        <DocumentTitle>{t('GitOps Dashboard')}</DocumentTitle>
+        <PageSection><Bullseye><Spinner /></Bullseye></PageSection>
+      </React.Fragment>
+    );
+  }
 
   return (
     <React.Fragment>
