@@ -94,3 +94,5 @@ export const ApplicationListPage: FC = () => {
     </>
   );
 };
+
+export default ApplicationListPage;
