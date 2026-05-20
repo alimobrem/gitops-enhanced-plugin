@@ -40,6 +40,7 @@ import {
 } from '../../models';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
+import { InstancePicker } from '../shared/InstancePicker';
 import type { ApplicationResource } from '../../types';
 
 interface StatusCardProps {
@@ -116,7 +117,10 @@ export const GitOpsDashboardPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('GitOps Dashboard')}</DocumentTitle>
       <PageSection>
-        <Title headingLevel="h1" style={{ marginBottom: '1.5rem' }}>{t('GitOps Overview')}</Title>
+        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} style={{ marginBottom: '1.5rem' }}>
+          <FlexItem><Title headingLevel="h1">{t('GitOps Overview')}</Title></FlexItem>
+          <FlexItem><InstancePicker /></FlexItem>
+        </Flex>
 
         <Grid hasGutter>
           <GridItem span={3}>

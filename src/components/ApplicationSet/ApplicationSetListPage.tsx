@@ -18,6 +18,7 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationSetGroupVersionKind } from '../../models';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
+import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 
 interface AppSetResource {
   metadata: { name: string; namespace: string; uid: string };
@@ -32,6 +33,7 @@ interface AppSetResource {
 
 export const ApplicationSetListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const { instance } = useCurrentInstance();
   const [appsets, loaded] = useK8sWatchResource<AppSetResource[]>({
     groupVersionKind: ApplicationSetGroupVersionKind,
     isList: true,
@@ -48,7 +50,7 @@ export const ApplicationSetListPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('ApplicationSets')}</DocumentTitle>
       <ListPageHeader title={t('ApplicationSets')}>
-        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="ApplicationSet" namespace="openshift-gitops" />
+        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="ApplicationSet" namespace={instance.namespace} />
       </ListPageHeader>
       <PageSection>
         {!loaded && <Bullseye><Spinner /></Bullseye>}

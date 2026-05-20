@@ -11,6 +11,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationGroupVersionKind } from '../../models';
+import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 import type { ApplicationResource } from '../../types';
 
 interface SecretResource {
@@ -20,10 +21,11 @@ interface SecretResource {
 
 export const RepositoryListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const { instance } = useCurrentInstance();
 
   const [secrets, secretsLoaded] = useK8sWatchResource<SecretResource[]>({
     groupVersionKind: { group: '', version: 'v1', kind: 'Secret' },
-    namespace: 'openshift-gitops',
+    namespace: instance.namespace,
     isList: true,
   });
 

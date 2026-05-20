@@ -117,7 +117,7 @@ export const ApplicationDetailPage: FC<DetailPageProps> = (props) => {
           <Tab eventKey={3} title={<TabTitleText>{t('History')}</TabTitleText>}>
             <HistoryTab app={app} />
           </Tab>
-          <Tab eventKey={4} title={<TabTitleText>{t('Edit')}</TabTitleText>}>
+          <Tab eventKey={4} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
             <EditTab app={app} />
           </Tab>
         </Tabs>

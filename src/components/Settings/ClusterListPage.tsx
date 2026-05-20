@@ -2,6 +2,7 @@ import React from 'react';
 import type { FC } from 'react';
 import { useK8sWatchResource, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
+import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 import {
   PageSection,
   Title,
@@ -20,10 +21,11 @@ interface SecretResource {
 
 export const ClusterListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const { instance } = useCurrentInstance();
 
   const [secrets, loaded] = useK8sWatchResource<SecretResource[]>({
     groupVersionKind: { group: '', version: 'v1', kind: 'Secret' },
-    namespace: 'openshift-gitops',
+    namespace: instance.namespace,
     isList: true,
   });
 

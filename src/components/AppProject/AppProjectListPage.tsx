@@ -18,6 +18,7 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AppProjectGroupVersionKind } from '../../models';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
+import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 
 interface AppProjectResource {
   metadata: { name: string; namespace: string; uid: string };
@@ -31,6 +32,7 @@ interface AppProjectResource {
 
 export const AppProjectListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const { instance } = useCurrentInstance();
   const [projects, loaded] = useK8sWatchResource<AppProjectResource[]>({
     groupVersionKind: AppProjectGroupVersionKind,
     isList: true,
@@ -42,7 +44,7 @@ export const AppProjectListPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('AppProjects')}</DocumentTitle>
       <ListPageHeader title={t('AppProjects')}>
-        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="AppProject" namespace="openshift-gitops" />
+        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="AppProject" namespace={instance.namespace} />
       </ListPageHeader>
       <PageSection>
         {!loaded && <Bullseye><Spinner /></Bullseye>}

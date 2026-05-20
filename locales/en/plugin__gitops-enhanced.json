@@ -137,6 +137,7 @@
   "Confirm Rollback": "Confirm Rollback",
   "Rollback failed": "Rollback failed",
   "Are you sure you want to rollback to revision {{revision}}?": "Are you sure you want to rollback to revision {{revision}}?",
+  "Configuration": "Configuration",
   "Filter by name...": "Filter by name...",
   "No applications match the current filters.": "No applications match the current filters.",
   "Configured": "Configured",

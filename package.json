@@ -63,7 +63,8 @@
       "ApplicationSetDetailPage": "./components/ApplicationSet/ApplicationSetDetailPage",
       "AppProjectListPage": "./components/AppProject/AppProjectListPage",
       "AppProjectDetailPage": "./components/AppProject/AppProjectDetailPage",
-      "SettingsPage": "./components/Settings/SettingsPage"
+      "SettingsPage": "./components/Settings/SettingsPage",
+      "GitOpsContextProvider": "./components/shared/GitOpsContextProvider"
     },
     "dependencies": {
       "@console/pluginAPI": "*"

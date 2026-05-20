@@ -19,6 +19,7 @@ import {
   Checkbox,
 } from '@patternfly/react-core';
 import { ApplicationModel } from '../../models';
+import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 
 interface AppFormState {
   name: string;
@@ -50,6 +51,7 @@ const initialState: AppFormState = {
 
 export const ApplicationCreatePage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const { instance } = useCurrentInstance();
   const navigate = useNavigate();
   const [form, setForm] = useState<AppFormState>(initialState);
   const [error, setError] = useState<string>('');
@@ -67,7 +69,7 @@ export const ApplicationCreatePage: FC = () => {
         kind: 'Application',
         metadata: {
           name: form.name,
-          namespace: 'openshift-gitops',
+          namespace: instance.namespace,
         },
         spec: {
           project: form.project,
@@ -97,7 +99,7 @@ export const ApplicationCreatePage: FC = () => {
       };
       await k8sCreate({ model: ApplicationModel, data: resource });
       navigate(
-        `/k8s/ns/openshift-gitops/argoproj.io~v1alpha1~Application/${form.name}`,
+        `/k8s/ns/${instance.namespace}/argoproj.io~v1alpha1~Application/${form.name}`,
       );
     } catch (e) {
       setError((e as Error).message);
