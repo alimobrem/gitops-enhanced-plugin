@@ -13,6 +13,8 @@ export const RolloutListPage: FC = () => (
       { title: 'Replicas', field: 'spec.replicas' },
       { title: 'Status', field: 'status.phase' },
     ]}
+    createHref="/gitops/create-rollout"
+    createLabel="Create Rollout"
   />
 );
 

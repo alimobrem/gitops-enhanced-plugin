@@ -14,6 +14,7 @@ import {
   EmptyState,
   EmptyStateBody,
   Alert,
+  Button,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
@@ -30,6 +31,8 @@ interface GenericResourceListPageProps {
   groupVersionKind: { group: string; version: string; kind: string };
   columns: ColumnDef[];
   getFieldValue?: (resource: Record<string, unknown>, field: string) => string;
+  createHref?: string;
+  createLabel?: string;
 }
 
 function defaultGetFieldValue(resource: Record<string, unknown>, field: string): string {
@@ -52,6 +55,8 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
   groupVersionKind,
   columns,
   getFieldValue = defaultGetFieldValue,
+  createHref,
+  createLabel,
 }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
 
@@ -69,7 +74,10 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
     <React.Fragment>
       <DocumentTitle>{t(title)}</DocumentTitle>
       <ListPageHeader title={t(title)}>
-        <CreateResourceButton group={groupVersionKind.group} version={groupVersionKind.version} kind={groupVersionKind.kind} />
+        {createHref
+          ? <Button variant="primary" component="a" href={createHref}>{createLabel ?? t('Create {{kind}}', { kind: groupVersionKind.kind })}</Button>
+          : <CreateResourceButton group={groupVersionKind.group} version={groupVersionKind.version} kind={groupVersionKind.kind} />
+        }
       </ListPageHeader>
       <PageSection>
         {error && (
