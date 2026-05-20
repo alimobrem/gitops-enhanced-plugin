@@ -132,13 +132,14 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   }, [selectedPod, selectedContainer, destNs]);
 
   useEffect(() => {
+    if (!selectedPod || !selectedContainer) return;
     if (following) {
       streamLogs();
     } else {
       fetchLogs();
     }
     return () => abortRef.current?.abort();
-  }, [fetchLogs, streamLogs, following]);
+  }, [selectedPod, selectedContainer, following]);
 
   if (appPods.length === 0) {
     return (
