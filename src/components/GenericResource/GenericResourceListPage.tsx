@@ -17,6 +17,8 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
+import { TablePagination } from '../shared/TablePagination';
+import { usePagination } from '../../hooks/usePagination';
 
 interface ColumnDef {
   title: string;
@@ -61,6 +63,7 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
   });
 
   const items = resources ?? [];
+  const { paginatedItems, page, perPage, totalItems, setPage, setPerPage } = usePagination(items);
 
   return (
     <React.Fragment>
@@ -87,6 +90,7 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
           </EmptyState>
         )}
         {loaded && items.length > 0 && (
+          <>
           <Table aria-label={t(title)}>
             <Thead>
               <Tr>
@@ -96,7 +100,7 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
               </Tr>
             </Thead>
             <Tbody>
-              {items.map((res) => {
+              {paginatedItems.map((res) => {
                 const meta = res.metadata as { name: string; namespace?: string; uid: string };
                 return (
                   <Tr key={meta.uid}>
@@ -118,6 +122,8 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
               })}
             </Tbody>
           </Table>
+          <TablePagination page={page} perPage={perPage} totalItems={totalItems} onSetPage={setPage} onPerPageSelect={setPerPage} />
+          </>
         )}
       </PageSection>
     </React.Fragment>

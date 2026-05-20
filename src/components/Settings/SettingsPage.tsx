@@ -24,7 +24,7 @@ export const SettingsPage: FC = () => {
       <DocumentTitle>{t('GitOps Settings')}</DocumentTitle>
       <PageSection>
         <Title headingLevel="h1" className="pf-v6-u-mb-md">{t('GitOps Settings')}</Title>
-        <Tabs activeKey={activeTab} onSelect={(_e, key) => setActiveTab(key as number)}>
+        <Tabs activeKey={activeTab} onSelect={(_e, key) => setActiveTab(key as number)} isOverflowHorizontal>
           <Tab eventKey={0} title={<TabTitleText>{t('ArgoCD Instances')}</TabTitleText>}>
             <ArgoCDListPage />
           </Tab>

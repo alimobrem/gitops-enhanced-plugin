@@ -23,13 +23,17 @@ import {
   MenuToggle,
   TextInput,
   Badge,
+  Button,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { useApplications } from '../../hooks/useApplications';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
+import { usePagination } from '../../hooks/usePagination';
+import { useSortableData } from '../../hooks/useSortableData';
+import { TablePagination } from '../shared/TablePagination';
 import { InstanceProvider } from '../shared/InstanceProvider';
-import { CreateResourceButton } from '../shared/CreateResourceButton';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
+import { RowActions } from './RowActions';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ApplicationGroupVersionKind } from '../../models';
 import type { ApplicationResource, SyncStatusCode, HealthStatusCode } from '../../types';
@@ -67,11 +71,22 @@ export const ApplicationListPage: FC = () => {
 
   const activeFilterCount = [syncFilter, healthFilter, projectFilter, nameFilter].filter(Boolean).length;
 
+  const sortGetters = useMemo(() => [
+    (app: ApplicationResource) => app.metadata.name,
+    (app: ApplicationResource) => app.spec.project,
+    (app: ApplicationResource) => app.status?.sync?.status ?? 'Unknown',
+    (app: ApplicationResource) => app.status?.health?.status ?? 'Unknown',
+    (app: ApplicationResource) => app.spec.source?.repoURL ?? app.spec.sources?.[0]?.repoURL ?? '',
+    (app: ApplicationResource) => `${app.spec.destination.server ?? ''} / ${app.spec.destination.namespace ?? ''}`,
+  ], []);
+  const { sortedItems, getSortParams } = useSortableData(filtered, sortGetters);
+  const { paginatedItems, page, perPage, totalItems, setPage, setPerPage } = usePagination(sortedItems);
+
   return (
     <React.Fragment>
       <DocumentTitle>{t('Applications')}</DocumentTitle>
       <ListPageHeader title={t('Applications')}>
-        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="Application" namespace={instance.namespace} />
+        <Button variant="primary" component="a" href="/gitops/create">{t('Create Application')}</Button>
       </ListPageHeader>
       <PageSection>
         {error && (
@@ -183,19 +198,21 @@ export const ApplicationListPage: FC = () => {
                 </EmptyStateBody>
               </EmptyState>
             ) : (
+              <>
               <Table aria-label={t('Applications')}>
                 <Thead>
                   <Tr>
-                    <Th>{t('Name')}</Th>
-                    <Th>{t('Project')}</Th>
-                    <Th>{t('Sync Status')}</Th>
-                    <Th>{t('Health')}</Th>
-                    <Th>{t('Repository')}</Th>
-                    <Th>{t('Destination')}</Th>
+                    <Th {...getSortParams(0)}>{t('Name')}</Th>
+                    <Th {...getSortParams(1)}>{t('Project')}</Th>
+                    <Th {...getSortParams(2)}>{t('Sync Status')}</Th>
+                    <Th {...getSortParams(3)}>{t('Health')}</Th>
+                    <Th {...getSortParams(4)}>{t('Repository')}</Th>
+                    <Th {...getSortParams(5)}>{t('Destination')}</Th>
+                    <Th></Th>
                   </Tr>
                 </Thead>
                 <Tbody>
-                  {filtered.map((app: ApplicationResource) => (
+                  {paginatedItems.map((app: ApplicationResource) => (
                     <Tr key={app.metadata.uid}>
                       <Td>
                         <ResourceLink
@@ -209,10 +226,13 @@ export const ApplicationListPage: FC = () => {
                       <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
                       <Td>{app.spec.source?.repoURL ?? app.spec.sources?.[0]?.repoURL ?? '-'}</Td>
                       <Td>{`${app.spec.destination.name ?? app.spec.destination.server ?? ''} / ${app.spec.destination.namespace ?? ''}`}</Td>
+                      <Td isActionCell><RowActions app={app} /></Td>
                     </Tr>
                   ))}
                 </Tbody>
               </Table>
+              <TablePagination page={page} perPage={perPage} totalItems={totalItems} onSetPage={setPage} onPerPageSelect={setPerPage} />
+              </>
             )}
           </React.Fragment>
         )}
