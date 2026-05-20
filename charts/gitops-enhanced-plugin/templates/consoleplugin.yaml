@@ -1,0 +1,28 @@
+apiVersion: console.openshift.io/v1
+kind: ConsolePlugin
+metadata:
+  name: {{ .Values.plugin.name }}
+  labels:
+    app.kubernetes.io/name: {{ .Values.plugin.name }}
+    app.kubernetes.io/part-of: gitops-enhanced
+spec:
+  displayName: "GitOps Enhanced"
+  i18n:
+    loadType: Preload
+  backend:
+    type: Service
+    service:
+      name: {{ .Values.plugin.name }}
+      namespace: {{ .Release.Namespace }}
+      port: {{ .Values.plugin.port }}
+      basePath: "/"
+  proxy:
+    - alias: argocd
+      authorize: true
+      caCertificate: ""
+      endpoint:
+        type: Service
+        service:
+          name: {{ .Values.argocd.serviceName }}
+          namespace: {{ .Values.argocd.namespace }}
+          port: {{ .Values.argocd.port }}
