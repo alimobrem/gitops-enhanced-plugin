@@ -19,7 +19,12 @@ declare module '@openshift-console/dynamic-plugin-sdk' {
   export function k8sPatch(options: {
     model: K8sModel;
     resource: unknown;
-    data: Array<{ op: string; path: string; value: string }>;
+    data: Array<{ op: string; path: string; value: unknown }>;
+  }): Promise<unknown>;
+
+  export function k8sCreate(options: {
+    model: K8sModel;
+    data: unknown;
   }): Promise<unknown>;
 
   export function consoleFetch(

@@ -55,7 +55,10 @@
     "description": "Enhanced GitOps management with Argo CD API integration",
     "exposedModules": {
       "ApplicationListPage": "./components/ApplicationList/ApplicationListPage",
-      "ApplicationDetailPage": "./components/ApplicationDetail/ApplicationDetailPage"
+      "ApplicationDetailPage": "./components/ApplicationDetail/ApplicationDetailPage",
+      "ApplicationCreatePage": "./components/ApplicationCreate/ApplicationCreatePage",
+      "GitOpsDashboardCard": "./components/Dashboard/GitOpsDashboardCard",
+      "NamespaceGitOpsTab": "./components/NamespaceTab/NamespaceGitOpsTab"
     },
     "dependencies": {
       "@console/pluginAPI": "*"

@@ -20,6 +20,8 @@ import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ActionsMenu } from './ActionsMenu';
 import { OverviewTab } from './OverviewTab';
+import { ResourcesTab } from './ResourcesTab';
+import { LogsTab } from './LogsTab';
 import { HistoryTab } from './HistoryTab';
 import type { ApplicationResource } from '../../types';
 
@@ -59,6 +61,8 @@ export const ApplicationDetailPage: FC = () => {
 
   const pages = [
     { name: t('Overview'), component: () => <OverviewTab app={app} /> },
+    { name: t('Resources'), component: () => <ResourcesTab app={app} /> },
+    { name: t('Logs'), component: () => <LogsTab app={app} /> },
     { name: t('History'), component: () => <HistoryTab app={app} /> },
   ];
 

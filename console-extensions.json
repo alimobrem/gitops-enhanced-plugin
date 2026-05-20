@@ -66,5 +66,45 @@
     "flags": {
       "required": ["ARGOCD_APPLICATION"]
     }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/gitops/create",
+      "component": { "$codeRef": "ApplicationCreatePage" }
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
+  },
+  {
+    "type": "console.dashboards/card",
+    "properties": {
+      "tab": "overview",
+      "position": "RIGHT",
+      "component": { "$codeRef": "GitOpsDashboardCard" }
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
+  },
+  {
+    "type": "console.tab/horizontalNav",
+    "properties": {
+      "model": {
+        "group": "",
+        "version": "v1",
+        "kind": "Namespace"
+      },
+      "page": {
+        "name": "%plugin__gitops-enhanced~GitOps%",
+        "href": "gitops"
+      },
+      "component": { "$codeRef": "NamespaceGitOpsTab" }
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
   }
 ]
