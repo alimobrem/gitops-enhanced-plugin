@@ -58,7 +58,9 @@
       "ApplicationDetailPage": "./components/ApplicationDetail/ApplicationDetailPage",
       "ApplicationCreatePage": "./components/ApplicationCreate/ApplicationCreatePage",
       "GitOpsDashboardCard": "./components/Dashboard/GitOpsDashboardCard",
-      "NamespaceGitOpsTab": "./components/NamespaceTab/NamespaceGitOpsTab"
+      "NamespaceGitOpsTab": "./components/NamespaceTab/NamespaceGitOpsTab",
+      "RepositoryListPage": "./components/Settings/RepositoryListPage",
+      "ClusterListPage": "./components/Settings/ClusterListPage"
     },
     "dependencies": {
       "@console/pluginAPI": "*"

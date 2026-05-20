@@ -106,5 +106,53 @@
     "flags": {
       "required": ["ARGOCD_APPLICATION"]
     }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "gitops-repositories",
+      "perspective": "admin",
+      "section": "gitops",
+      "name": "%plugin__gitops-enhanced~Repositories%",
+      "href": "/gitops/repositories"
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/gitops/repositories",
+      "component": { "$codeRef": "RepositoryListPage" }
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
+  },
+  {
+    "type": "console.navigation/href",
+    "properties": {
+      "id": "gitops-clusters",
+      "perspective": "admin",
+      "section": "gitops",
+      "name": "%plugin__gitops-enhanced~Clusters%",
+      "href": "/gitops/clusters"
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
+  },
+  {
+    "type": "console.page/route",
+    "properties": {
+      "exact": true,
+      "path": "/gitops/clusters",
+      "component": { "$codeRef": "ClusterListPage" }
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
   }
 ]
