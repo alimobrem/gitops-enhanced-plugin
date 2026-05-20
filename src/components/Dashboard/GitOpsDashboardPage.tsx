@@ -42,6 +42,7 @@ import {
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { InstancePicker } from '../shared/InstancePicker';
+import { InstanceProvider } from '../shared/InstanceProvider';
 import type { ApplicationResource } from '../../types';
 import './GitOpsDashboardPage.css';
 
