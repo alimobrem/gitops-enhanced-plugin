@@ -210,5 +210,9 @@
   "Strategy": "Strategy",
   "Configured": "Configured",
   "Public": "Public",
-  "No repositories found.": "No repositories found."
+  "No repositories found.": "No repositories found.",
+  "Edit YAML": "Edit YAML",
+  "ApplicationSet updated": "ApplicationSet updated",
+  "AppProject updated": "AppProject updated",
+  "Template": "Template"
 }

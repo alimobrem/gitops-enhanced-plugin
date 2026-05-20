@@ -13,6 +13,7 @@ import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationSetGroupVersionKind, ApplicationGroupVersionKind } from '../../models';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
+import { ApplicationSetEditTab } from './ApplicationSetEditTab';
 import type { ApplicationResource } from '../../types';
 
 interface AppSetResource {
@@ -120,6 +121,9 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
                 </Tbody>
               </Table>
             )}
+          </Tab>
+          <Tab eventKey={2} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
+            <ApplicationSetEditTab appset={appset} />
           </Tab>
         </Tabs>
       </PageSection>

@@ -10,6 +10,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AppProjectGroupVersionKind } from '../../models';
+import { AppProjectEditTab } from './AppProjectEditTab';
 
 interface AppProjectResource {
   metadata: { name: string; namespace: string; uid: string };
@@ -138,6 +139,9 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
                 ))}</Tbody>
               </Table>
             )}
+          </Tab>
+          <Tab eventKey={5} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
+            <AppProjectEditTab project={project} />
           </Tab>
         </Tabs>
       </PageSection>
