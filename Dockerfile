@@ -4,7 +4,7 @@ WORKDIR /app
 COPY package.json package-lock.json ./
 RUN npm ci
 COPY . .
-RUN npm run build
+RUN NODE_ENV=production npx webpack --config webpack.config.ts
 
 FROM registry.access.redhat.com/ubi9/nginx-122:latest
 COPY --from=build /app/dist /usr/share/nginx/html
