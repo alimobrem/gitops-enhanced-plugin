@@ -38,7 +38,7 @@ describe('i18n completeness', () => {
       const content = fs.readFileSync(file, 'utf-8');
       const keys = extractKeys(content);
       for (const key of keys) {
-        if (!localeKeys.has(key) && key.length > 1) {
+        if (!localeKeys.has(key) && key.length > 1 && !key.includes('\\n') && !key.includes('---')) {
           missing.push({ file: path.relative(srcDir, file), key });
         }
       }

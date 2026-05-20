@@ -67,7 +67,10 @@
       "ApplicationSetDetailPage": "./components/ApplicationSet/ApplicationSetDetailPage",
       "AppProjectListPage": "./components/AppProject/AppProjectListPage",
       "AppProjectDetailPage": "./components/AppProject/AppProjectDetailPage",
-      "SettingsPage": "./components/Settings/SettingsPage"
+      "SettingsPage": "./components/Settings/SettingsPage",
+      "ApplicationSetCreatePage": "./components/ApplicationSetCreate/ApplicationSetCreatePage",
+      "AppProjectCreatePage": "./components/AppProjectCreate/AppProjectCreatePage",
+      "RolloutCreatePage": "./components/RolloutCreate/RolloutCreatePage"
     },
     "dependencies": {
       "@console/pluginAPI": "*"

@@ -14,6 +14,7 @@ import {
   EmptyState,
   EmptyStateBody,
   Label,
+  Button,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationSetGroupVersionKind } from '../../models';
@@ -51,7 +52,7 @@ export const ApplicationSetListPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('ApplicationSets')}</DocumentTitle>
       <ListPageHeader title={t('ApplicationSets')}>
-        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="ApplicationSet" namespace={instance.namespace} />
+        <Button variant="primary" component="a" href="/gitops/create-appset">{t('Create ApplicationSet')}</Button>
       </ListPageHeader>
       <PageSection>
         {!loaded && <Bullseye><Spinner /></Bullseye>}

@@ -14,6 +14,7 @@ import {
   EmptyState,
   EmptyStateBody,
   Label,
+  Button,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AppProjectGroupVersionKind } from '../../models';
@@ -45,7 +46,7 @@ export const AppProjectListPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('AppProjects')}</DocumentTitle>
       <ListPageHeader title={t('AppProjects')}>
-        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="AppProject" namespace={instance.namespace} />
+        <Button variant="primary" component="a" href="/gitops/create-project">{t('Create AppProject')}</Button>
       </ListPageHeader>
       <PageSection>
         {!loaded && <Bullseye><Spinner /></Bullseye>}
