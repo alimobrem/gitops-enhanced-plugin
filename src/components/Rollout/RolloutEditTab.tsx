@@ -36,13 +36,12 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
   const handleSave = async () => {
     setShowConfirm(false); setSaving(true); clearFeedback();
     try {
-      const res = rollout as unknown as Record<string, unknown>;
       await k8sPatch({
         model: RolloutModel,
         resource: rollout,
         data: [
-          safePatch(res, '/spec/replicas', replicas),
-          safePatch(res, '/spec/template/spec/containers/0/image', image),
+          safePatch(rollout, '/spec/replicas', replicas),
+          safePatch(rollout, '/spec/template/spec/containers/0/image', image),
         ],
       });
       setSuccess(true);

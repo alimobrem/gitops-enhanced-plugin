@@ -60,20 +60,19 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
     setSaving(true);
     clearFeedback();
     try {
-      const res = app as unknown as Record<string, unknown>;
       const sourcePath = multiSource ? '/spec/sources/0' : '/spec/source';
       const patches = [
-        safePatch(res, `${sourcePath}/repoURL`, repoURL),
-        safePatch(res, `${sourcePath}/path`, path),
-        safePatch(res, `${sourcePath}/targetRevision`, targetRevision),
-        safePatch(res, '/spec/destination/server', destServer),
-        safePatch(res, '/spec/destination/namespace', destNamespace),
-        safePatch(res, '/spec/project', project),
+        safePatch(app, `${sourcePath}/repoURL`, repoURL),
+        safePatch(app, `${sourcePath}/path`, path),
+        safePatch(app, `${sourcePath}/targetRevision`, targetRevision),
+        safePatch(app, '/spec/destination/server', destServer),
+        safePatch(app, '/spec/destination/namespace', destNamespace),
+        safePatch(app, '/spec/project', project),
       ];
       if (autoSync) {
-        patches.push(safePatch(res, '/spec/syncPolicy/automated', { prune, selfHeal }));
+        patches.push(safePatch(app, '/spec/syncPolicy/automated', { prune, selfHeal }));
       } else {
-        const removeOp = safeRemove(res, '/spec/syncPolicy/automated');
+        const removeOp = safeRemove(app, '/spec/syncPolicy/automated');
         if (removeOp) patches.push(removeOp);
       }
       await k8sPatch({ model: ApplicationModel, resource: app, data: patches });

@@ -47,14 +47,13 @@ export const AppProjectEditTab: FC<{ project: AppProjectResource }> = ({ project
   const handleSave = async () => {
     setShowConfirm(false); setSaving(true); clearFeedback();
     try {
-      const res = project as unknown as Record<string, unknown>;
       await k8sPatch({
         model: AppProjectModel,
         resource: project,
         data: [
-          safePatch(res, '/spec/description', description),
-          safePatch(res, '/spec/sourceRepos', allRepos ? ['*'] : repos.filter(Boolean)),
-          safePatch(res, '/spec/destinations', allDests ? [{ server: '*', namespace: '*' }] : dests.filter((d) => d.server || d.namespace)),
+          safePatch(project, '/spec/description', description),
+          safePatch(project, '/spec/sourceRepos', allRepos ? ['*'] : repos.filter(Boolean)),
+          safePatch(project, '/spec/destinations', allDests ? [{ server: '*', namespace: '*' }] : dests.filter((d) => d.server || d.namespace)),
         ],
       });
       setSuccess(true);

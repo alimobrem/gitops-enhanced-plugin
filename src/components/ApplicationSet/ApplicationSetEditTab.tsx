@@ -10,7 +10,7 @@ import {
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { ApplicationSetModel } from '../../models';
 import type { AppSetResource } from '../../types';
-import { safePatch } from '../../utils/patch';
+import { safePatch, safeRemove } from '../../utils/patch';
 
 
 export const ApplicationSetEditTab: FC<{ appset: AppSetResource }> = ({ appset }) => {
@@ -57,15 +57,19 @@ export const ApplicationSetEditTab: FC<{ appset: AppSetResource }> = ({ appset }
   const handleSave = async () => {
     setShowConfirm(false); setSaving(true); clearFeedback();
     try {
-      const res = appset as unknown as Record<string, unknown>;
       const patches = [
-        safePatch(res, '/spec/template/metadata/name', templateName),
-        safePatch(res, '/spec/template/spec/source/repoURL', repoURL),
-        safePatch(res, '/spec/template/spec/source/path', path),
-        safePatch(res, '/spec/template/spec/source/targetRevision', targetRevision),
-        safePatch(res, '/spec/template/spec/destination/namespace', destNamespace),
+        safePatch(appset, '/spec/template/metadata/name', templateName),
+        safePatch(appset, '/spec/template/spec/source/repoURL', repoURL),
+        safePatch(appset, '/spec/template/spec/source/path', path),
+        safePatch(appset, '/spec/template/spec/source/targetRevision', targetRevision),
+        safePatch(appset, '/spec/template/spec/destination/namespace', destNamespace),
       ];
-      if (autoSync) patches.push(safePatch(res, '/spec/template/spec/syncPolicy/automated', { prune, selfHeal }));
+      if (autoSync) {
+        patches.push(safePatch(appset, '/spec/template/spec/syncPolicy/automated', { prune, selfHeal }));
+      } else {
+        const removeOp = safeRemove(appset, '/spec/template/spec/syncPolicy/automated');
+        if (removeOp) patches.push(removeOp);
+      }
       await k8sPatch({ model: ApplicationSetModel, resource: appset, data: patches });
       setSuccess(true);
     } catch (e) { setError((e as Error).message); } finally { setSaving(false); }

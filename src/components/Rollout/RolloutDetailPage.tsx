@@ -7,9 +7,9 @@ import {
   PageSection, Title, Bullseye, Spinner, Alert, Tabs, Tab, TabTitleText,
   Card, CardTitle, CardBody, Label,
   DescriptionList, DescriptionListGroup, DescriptionListTerm, DescriptionListDescription,
-  Flex, FlexItem, Dropdown, DropdownList, DropdownItem, MenuToggle, Button, Alert,
+  Flex, FlexItem, Dropdown, DropdownList, DropdownItem, MenuToggle, Button,
 } from '@patternfly/react-core';
-import { RolloutGroupVersionKind } from '../../models';
+import { RolloutGroupVersionKind, RolloutModel } from '../../models';
 import type { RolloutResource } from '../../types';
 import { RolloutEditTab } from './RolloutEditTab';
 
