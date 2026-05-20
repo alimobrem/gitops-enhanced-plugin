@@ -102,7 +102,7 @@ export const RepositoryListPage: FC = () => {
             <Tbody>
               {allRepos.map((r) => (
                 <Tr key={r.url}>
-                  <Td>{r.url}</Td>
+                  <Td><a href={r.url} target="_blank" rel="noopener noreferrer">{r.url}</a></Td>
                   <Td><Label isCompact>{r.type}</Label></Td>
                   <Td>{r.name}</Td>
                   <Td>{r.appCount}</Td>

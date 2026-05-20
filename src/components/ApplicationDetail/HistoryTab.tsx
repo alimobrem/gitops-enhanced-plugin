@@ -43,7 +43,7 @@ export const HistoryTab: FC<{ app: ApplicationResource }> = ({ app }) => {
               <Td>{entry.id}</Td>
               <Td>{entry.revision.substring(0, 7)}</Td>
               <Td>{new Date(entry.deployedAt).toLocaleString()}</Td>
-              <Td>{entry.source?.repoURL ?? '-'}</Td>
+              <Td>{entry.source?.repoURL ? <a href={entry.source.repoURL} target="_blank" rel="noopener noreferrer">{entry.source.repoURL}</a> : '-'}</Td>
               <Td>{idx > 0 && <Button variant="secondary" size="sm" onClick={() => setRollbackTarget({ id: entry.id, revision: entry.revision })}>{t('Rollback')}</Button>}</Td>
             </Tr>
           ))}
