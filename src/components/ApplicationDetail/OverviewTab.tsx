@@ -62,7 +62,7 @@ export const OverviewTab: FC<{ app: ApplicationResource }> = ({ app }) => {
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Repository')}</DescriptionListTerm>
                 <DescriptionListDescription>
-                  {source?.repoURL ?? '-'}
+                  {source?.repoURL ? <a href={source.repoURL} target="_blank" rel="noopener noreferrer">{source.repoURL}</a> : '-'}
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>

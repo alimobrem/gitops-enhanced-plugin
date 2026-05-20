@@ -92,13 +92,6 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
 
   const podNames = useMemo(() => appPods.map((p) => p.metadata.name).join(','), [appPods]);
 
-  useEffect(() => {
-    if (appPods.length > 0 && !selectedPod) {
-      setSelectedPod(appPods[0].metadata.name);
-      setSelectedContainer(appPods[0].spec.containers[0]?.name ?? '');
-    }
-  }, [podNames]);
-
   const doFetchLogs = async (pod: string, container: string, follow: boolean) => {
     abortRef.current?.abort();
     const controller = new AbortController();
@@ -116,6 +109,16 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
       }
     }
   };
+
+  useEffect(() => {
+    if (appPods.length > 0 && !selectedPod) {
+      const pod = appPods[0].metadata.name;
+      const container = appPods[0].spec.containers[0]?.name ?? '';
+      setSelectedPod(pod);
+      setSelectedContainer(container);
+      doFetchLogs(pod, container, false);
+    }
+  }, [podNames]);
 
   useEffect(() => {
     if (!selectedPod || !selectedContainer) return;
