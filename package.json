@@ -20,7 +20,6 @@
     "@patternfly/react-core": "^6.4.3",
     "@patternfly/react-icons": "^6.4.0",
     "@patternfly/react-table": "^6.4.3",
-    "@patternfly/react-topology": "^5.4.1",
     "@swc/core": "^1.15.32",
     "@swc/jest": "^0.2.39",
     "@testing-library/dom": "^9.3.4",
