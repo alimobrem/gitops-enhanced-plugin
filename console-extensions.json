@@ -122,6 +122,24 @@
     }
   },
   {
+    "type": "console.tab/horizontalNav",
+    "properties": {
+      "model": {
+        "group": "project.openshift.io",
+        "version": "v1",
+        "kind": "Project"
+      },
+      "page": {
+        "name": "%plugin__gitops-enhanced~GitOps%",
+        "href": "gitops"
+      },
+      "component": { "$codeRef": "NamespaceGitOpsTab" }
+    },
+    "flags": {
+      "required": ["ARGOCD_APPLICATION"]
+    }
+  },
+  {
     "type": "console.navigation/href",
     "properties": {
       "id": "gitops-repositories",
