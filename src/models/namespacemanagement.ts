@@ -2,7 +2,7 @@ import type { K8sModel } from '@openshift-console/dynamic-plugin-sdk';
 
 export const NamespaceManagementModel: K8sModel = {
   apiGroup: 'argoproj.io',
-  apiVersion: 'v1alpha1',
+  apiVersion: 'v1beta1',
   kind: 'NamespaceManagement',
   plural: 'namespacemanagements',
   abbr: 'NM',
@@ -13,6 +13,6 @@ export const NamespaceManagementModel: K8sModel = {
 
 export const NamespaceManagementGroupVersionKind = {
   group: 'argoproj.io',
-  version: 'v1alpha1',
+  version: 'v1beta1',
   kind: 'NamespaceManagement',
 };
