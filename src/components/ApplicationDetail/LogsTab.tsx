@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useEffect, useRef, useCallback, useMemo, type FC } from 'react';
+import { useState, useEffect, useRef, useMemo, type FC } from 'react';
 import {
   useK8sWatchResource,
   consoleFetchText,
@@ -99,47 +99,29 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
     }
   }, [podNames]);
 
-  const fetchLogs = useCallback(async () => {
-    if (!selectedPod || !selectedContainer) return;
-    abortRef.current?.abort();
-
-    try {
-      const url = `/api/kubernetes/api/v1/namespaces/${destNs}/pods/${selectedPod}/log?container=${selectedContainer}&tailLines=500`;
-      const text = await consoleFetchText(url);
-      setLogs(text || '(no logs)');
-    } catch (e) {
-      if ((e as Error).name !== 'AbortError') {
-        setLogs(`Error: ${(e as Error).message}`);
-      }
-    }
-  }, [selectedPod, selectedContainer, destNs]);
-
-  const streamLogs = useCallback(async () => {
-    if (!selectedPod || !selectedContainer) return;
+  const doFetchLogs = async (pod: string, container: string, follow: boolean) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
+    setLogs('Loading logs...');
 
     try {
-      const url = `/api/kubernetes/api/v1/namespaces/${destNs}/pods/${selectedPod}/log?container=${selectedContainer}&tailLines=500&follow=true`;
+      const followParam = follow ? '&follow=true' : '';
+      const url = `/api/kubernetes/api/v1/namespaces/${destNs}/pods/${pod}/log?container=${container}&tailLines=500${followParam}`;
       const text = await consoleFetchText(url);
-      setLogs(text || '(no logs)');
+      setLogs(text || '(no output from container)');
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
-        setLogs((prev) => prev + `\n[Stream error: ${(e as Error).message}]`);
+        setLogs(`Error fetching logs: ${(e as Error).message}`);
       }
     }
-  }, [selectedPod, selectedContainer, destNs]);
+  };
 
   useEffect(() => {
     if (!selectedPod || !selectedContainer) return;
-    if (following) {
-      streamLogs();
-    } else {
-      fetchLogs();
-    }
+    doFetchLogs(selectedPod, selectedContainer, following);
     return () => abortRef.current?.abort();
-  }, [selectedPod, selectedContainer, following]);
+  }, [selectedPod, selectedContainer, following, destNs]);
 
   if (appPods.length === 0) {
     return (
@@ -211,7 +193,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
           </Button>
         </FlexItem>
         <FlexItem>
-          <Button variant="secondary" onClick={fetchLogs}>
+          <Button variant="secondary" onClick={() => doFetchLogs(selectedPod, selectedContainer, false)}>
             {t('Refresh')}
           </Button>
         </FlexItem>

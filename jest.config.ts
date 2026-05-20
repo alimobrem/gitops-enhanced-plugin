@@ -7,6 +7,7 @@ const config: Config = {
     '\\.(css|scss)$': '<rootDir>/__mocks__/styleMock.ts',
   },
   setupFilesAfterEnv: ['<rootDir>/setup-tests.ts'],
+  testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
 };
 
 export default config;
