@@ -1,0 +1,88 @@
+import { consoleFetch } from '@openshift-console/dynamic-plugin-sdk';
+import type { ApplicationTree, ManagedResource } from '../types';
+
+export const ARGOCD_PROXY_BASE =
+  '/api/proxy/plugin/gitops-enhanced/argocd';
+
+async function argoFetch<T>(path: string): Promise<T> {
+  const response = await consoleFetch(`${ARGOCD_PROXY_BASE}${path}`, {
+    method: 'GET',
+  });
+  if (!response.ok) {
+    const body = await response.json().catch(() => ({}));
+    throw new Error(
+      `Argo CD API error ${response.status}: ${(body as Record<string, string>).message ?? response.statusText}`,
+    );
+  }
+  return response.json() as Promise<T>;
+}
+
+export async function fetchResourceTree(
+  _namespace: string,
+  appName: string,
+): Promise<ApplicationTree> {
+  return argoFetch<ApplicationTree>(
+    `/api/v1/applications/${encodeURIComponent(appName)}/resource-tree`,
+  );
+}
+
+export async function fetchManagedResources(
+  _namespace: string,
+  appName: string,
+): Promise<{ items: ManagedResource[] }> {
+  return argoFetch<{ items: ManagedResource[] }>(
+    `/api/v1/applications/${encodeURIComponent(appName)}/managed-resources`,
+  );
+}
+
+export async function syncApplication(
+  appName: string,
+  revision?: string,
+  resources?: Array<{
+    group: string;
+    kind: string;
+    name: string;
+    namespace?: string;
+  }>,
+): Promise<void> {
+  const body: Record<string, unknown> = {};
+  if (revision) body.revision = revision;
+  if (resources) body.resources = resources;
+
+  const response = await consoleFetch(
+    `${ARGOCD_PROXY_BASE}/api/v1/applications/${encodeURIComponent(appName)}/sync`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(body),
+    },
+  );
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(
+      `Sync failed ${response.status}: ${(err as Record<string, string>).message ?? response.statusText}`,
+    );
+  }
+}
+
+export async function rollbackApplication(
+  appName: string,
+  id: number,
+): Promise<void> {
+  const response = await consoleFetch(
+    `${ARGOCD_PROXY_BASE}/api/v1/applications/${encodeURIComponent(appName)}/rollback`,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ id }),
+    },
+  );
+
+  if (!response.ok) {
+    const err = await response.json().catch(() => ({}));
+    throw new Error(
+      `Rollback failed ${response.status}: ${(err as Record<string, string>).message ?? response.statusText}`,
+    );
+  }
+}
