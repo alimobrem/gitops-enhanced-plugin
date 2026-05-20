@@ -1,6 +1,6 @@
 .gitops-log-viewer {
-  background-color: var(--pf-t--global--background--color--primary--default);
-  color: var(--pf-t--global--text--color--on-brand--default, #e0e0e0);
+  background-color: #1b1d21;
+  color: #d2d2d2;
   font-family: var(--pf-t--global--font--family--mono);
   font-size: var(--pf-t--global--font--size--sm);
   padding: var(--pf-t--global--spacer--md);
