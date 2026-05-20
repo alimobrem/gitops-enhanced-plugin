@@ -11,7 +11,7 @@ const config: Config = {
     '^@components/(.*)$': '<rootDir>/src/components/$1',
     '^@utils/(.*)$': '<rootDir>/src/utils/$1',
   },
-  setupFilesAfterSetup: ['<rootDir>/setup-tests.ts'],
+  setupFilesAfterEnv: ['<rootDir>/setup-tests.ts'],
 };
 
 export default config;
