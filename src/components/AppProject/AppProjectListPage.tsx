@@ -17,6 +17,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AppProjectGroupVersionKind } from '../../models';
+import { CreateResourceButton } from '../shared/CreateResourceButton';
 
 interface AppProjectResource {
   metadata: { name: string; namespace: string; uid: string };
@@ -40,7 +41,9 @@ export const AppProjectListPage: FC = () => {
   return (
     <React.Fragment>
       <DocumentTitle>{t('AppProjects')}</DocumentTitle>
-      <ListPageHeader title={t('AppProjects')} />
+      <ListPageHeader title={t('AppProjects')}>
+        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="AppProject" namespace="openshift-gitops" />
+      </ListPageHeader>
       <PageSection>
         {!loaded && <Bullseye><Spinner /></Bullseye>}
         {loaded && items.length === 0 && (

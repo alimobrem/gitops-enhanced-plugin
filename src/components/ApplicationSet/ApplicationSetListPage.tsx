@@ -17,6 +17,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationSetGroupVersionKind } from '../../models';
+import { CreateResourceButton } from '../shared/CreateResourceButton';
 
 interface AppSetResource {
   metadata: { name: string; namespace: string; uid: string };
@@ -46,7 +47,9 @@ export const ApplicationSetListPage: FC = () => {
   return (
     <React.Fragment>
       <DocumentTitle>{t('ApplicationSets')}</DocumentTitle>
-      <ListPageHeader title={t('ApplicationSets')} />
+      <ListPageHeader title={t('ApplicationSets')}>
+        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="ApplicationSet" namespace="openshift-gitops" />
+      </ListPageHeader>
       <PageSection>
         {!loaded && <Bullseye><Spinner /></Bullseye>}
         {loaded && items.length === 0 && (

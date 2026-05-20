@@ -2,7 +2,7 @@ declare module '@openshift-console/dynamic-plugin-sdk' {
   import type { FC, PropsWithChildren } from 'react';
 
   export const DocumentTitle: FC<PropsWithChildren>;
-  export const ListPageHeader: FC<{ title: string }>;
+  export const ListPageHeader: FC<PropsWithChildren<{ title: string }>>;
   export const ResourceLink: FC<{
     groupVersionKind: { group: string; version: string; kind: string };
     name: string;

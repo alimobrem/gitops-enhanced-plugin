@@ -16,6 +16,7 @@ import {
   Alert,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+import { CreateResourceButton } from '../shared/CreateResourceButton';
 
 interface ColumnDef {
   title: string;
@@ -64,7 +65,9 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
   return (
     <React.Fragment>
       <DocumentTitle>{t(title)}</DocumentTitle>
-      <ListPageHeader title={t(title)} />
+      <ListPageHeader title={t(title)}>
+        <CreateResourceButton group={groupVersionKind.group} version={groupVersionKind.version} kind={groupVersionKind.kind} />
+      </ListPageHeader>
       <PageSection>
         {error && (
           <Alert variant="danger" isInline title={t('Error loading resources')}>

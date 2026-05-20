@@ -16,6 +16,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { useApplications } from '../../hooks/useApplications';
+import { CreateResourceButton } from '../shared/CreateResourceButton';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ApplicationGroupVersionKind } from '../../models';
@@ -28,7 +29,9 @@ export const ApplicationListPage: FC = () => {
   return (
     <>
       <DocumentTitle>{t('Applications')}</DocumentTitle>
-      <ListPageHeader title={t('Applications')} />
+      <ListPageHeader title={t('Applications')}>
+        <CreateResourceButton group="argoproj.io" version="v1alpha1" kind="Application" namespace="openshift-gitops" />
+      </ListPageHeader>
       <PageSection>
         {error && (
           <Alert variant="danger" isInline title={t('Error loading applications')}>
