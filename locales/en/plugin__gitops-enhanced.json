@@ -214,5 +214,7 @@
   "Edit YAML": "Edit YAML",
   "ApplicationSet updated": "ApplicationSet updated",
   "AppProject updated": "AppProject updated",
-  "Template": "Template"
+  "Template": "Template",
+  "Rollout updated": "Rollout updated",
+  "Current Step": "Current Step"
 }

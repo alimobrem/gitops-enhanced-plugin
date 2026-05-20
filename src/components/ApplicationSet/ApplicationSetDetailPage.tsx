@@ -14,6 +14,9 @@ import { ApplicationSetGroupVersionKind, ApplicationGroupVersionKind } from '../
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ApplicationSetEditTab } from './ApplicationSetEditTab';
+import {
+  Flex, FlexItem, Dropdown, DropdownList, DropdownItem, MenuToggle,
+} from '@patternfly/react-core';
 import type { ApplicationResource } from '../../types';
 
 interface AppSetResource {
@@ -37,6 +40,7 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
   const name = props.match?.params?.name ?? props.name ?? routeParams.name;
   const ns = props.match?.params?.ns ?? props.namespace ?? routeParams.ns;
   const [activeTab, setActiveTab] = useState(0);
+  const [actionsOpen, setActionsOpen] = useState(false);
 
   const [appset, loaded, error] = useK8sWatchResource<AppSetResource>({
     groupVersionKind: ApplicationSetGroupVersionKind,
@@ -64,7 +68,18 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
     <React.Fragment>
       <DocumentTitle>{appset.metadata.name}</DocumentTitle>
       <PageSection>
-        <Title headingLevel="h1" className="pf-v6-u-mb-md">{appset.metadata.name}</Title>
+        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} className="pf-v6-u-mb-md">
+          <FlexItem><Title headingLevel="h1">{appset.metadata.name}</Title></FlexItem>
+          <FlexItem>
+            <Dropdown isOpen={actionsOpen} onSelect={() => setActionsOpen(false)} onOpenChange={setActionsOpen}
+              toggle={(ref) => <MenuToggle ref={ref} onClick={() => setActionsOpen(!actionsOpen)} variant="primary">{t('Actions')}</MenuToggle>}
+            >
+              <DropdownList>
+                <DropdownItem key="edit-yaml" component="a" href={`/k8s/ns/${ns}/argoproj.io~v1alpha1~ApplicationSet/${name}/yaml`}>{t('Edit YAML')}</DropdownItem>
+              </DropdownList>
+            </Dropdown>
+          </FlexItem>
+        </Flex>
         <Tabs activeKey={activeTab} onSelect={(_e, key) => setActiveTab(key as number)}>
           <Tab eventKey={0} title={<TabTitleText>{t('Overview')}</TabTitleText>}>
             <Card className="pf-v6-u-mt-md">
