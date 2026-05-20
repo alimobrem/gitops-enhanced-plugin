@@ -19,6 +19,7 @@ import {
   Checkbox,
 } from '@patternfly/react-core';
 import { ApplicationModel } from '../../models';
+import { InstanceProvider } from '../shared/InstanceProvider';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 
 interface AppFormState {
@@ -259,4 +260,5 @@ export const ApplicationCreatePage: FC = () => {
   );
 };
 
-export default ApplicationCreatePage;
+const ApplicationCreatePageWithProvider = () => (<InstanceProvider><ApplicationCreatePage /></InstanceProvider>);
+export default ApplicationCreatePageWithProvider;

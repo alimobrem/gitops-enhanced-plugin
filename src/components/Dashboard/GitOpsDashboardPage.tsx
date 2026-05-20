@@ -280,4 +280,5 @@ export const GitOpsDashboardPage: FC = () => {
   );
 };
 
-export default GitOpsDashboardPage;
+const GitOpsDashboardPageWithProvider = () => (<InstanceProvider><GitOpsDashboardPage /></InstanceProvider>);
+export default GitOpsDashboardPageWithProvider;

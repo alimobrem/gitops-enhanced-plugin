@@ -18,6 +18,7 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AppProjectGroupVersionKind } from '../../models';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
+import { InstanceProvider } from '../shared/InstanceProvider';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 
 interface AppProjectResource {
@@ -92,4 +93,5 @@ export const AppProjectListPage: FC = () => {
   );
 };
 
-export default AppProjectListPage;
+const AppProjectListPageWithProvider = () => (<InstanceProvider><AppProjectListPage /></InstanceProvider>);
+export default AppProjectListPageWithProvider;

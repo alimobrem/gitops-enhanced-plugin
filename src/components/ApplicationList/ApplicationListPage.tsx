@@ -27,6 +27,7 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { useApplications } from '../../hooks/useApplications';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
+import { InstanceProvider } from '../shared/InstanceProvider';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
@@ -220,4 +221,7 @@ export const ApplicationListPage: FC = () => {
   );
 };
 
-export default ApplicationListPage;
+const ApplicationListPageWithProvider = () => (
+  <InstanceProvider><ApplicationListPage /></InstanceProvider>
+);
+export default ApplicationListPageWithProvider;

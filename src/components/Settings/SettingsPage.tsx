@@ -71,4 +71,5 @@ export const SettingsPage: FC = () => {
   );
 };
 
-export default SettingsPage;
+const SettingsPageWithProvider = () => (<InstanceProvider><SettingsPage /></InstanceProvider>);
+export default SettingsPageWithProvider;

@@ -18,6 +18,7 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationSetGroupVersionKind } from '../../models';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
+import { InstanceProvider } from '../shared/InstanceProvider';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 
 interface AppSetResource {
@@ -99,4 +100,5 @@ export const ApplicationSetListPage: FC = () => {
   );
 };
 
-export default ApplicationSetListPage;
+const ApplicationSetListPageWithProvider = () => (<InstanceProvider><ApplicationSetListPage /></InstanceProvider>);
+export default ApplicationSetListPageWithProvider;

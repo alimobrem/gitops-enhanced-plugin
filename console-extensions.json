@@ -1,5 +1,4 @@
 [
-  {"type":"console.context-provider","properties":{"provider":{"$codeRef":"GitOpsContextProvider"},"useValueHook":null}},
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Application"},"flag":"ARGOCD_APPLICATION"}},
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"ApplicationSet"},"flag":"ARGOCD_APPLICATIONSET"}},
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AppProject"},"flag":"ARGOCD_APPPROJECT"}},
