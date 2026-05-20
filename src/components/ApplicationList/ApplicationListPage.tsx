@@ -36,6 +36,7 @@ import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { RowActions } from './RowActions';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ApplicationGroupVersionKind } from '../../models';
+import { getApplicationSource } from '../../utils/application';
 import type { ApplicationResource, SyncStatusCode, HealthStatusCode } from '../../types';
 
 const SYNC_OPTIONS: SyncStatusCode[] = ['Synced', 'OutOfSync', 'Unknown'];
@@ -76,7 +77,7 @@ export const ApplicationListPage: FC = () => {
     (app: ApplicationResource) => app.spec.project,
     (app: ApplicationResource) => app.status?.sync?.status ?? 'Unknown',
     (app: ApplicationResource) => app.status?.health?.status ?? 'Unknown',
-    (app: ApplicationResource) => app.spec.source?.repoURL ?? app.spec.sources?.[0]?.repoURL ?? '',
+    (app: ApplicationResource) => getApplicationSource(app)?.repoURL ?? '',
     (app: ApplicationResource) => `${app.spec.destination.server ?? ''} / ${app.spec.destination.namespace ?? ''}`,
   ], []);
   const { sortedItems, getSortParams } = useSortableData(filtered, sortGetters);
@@ -224,7 +225,7 @@ export const ApplicationListPage: FC = () => {
                       <Td>{app.spec.project}</Td>
                       <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
                       <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
-                      <Td>{app.spec.source?.repoURL ?? app.spec.sources?.[0]?.repoURL ?? '-'}</Td>
+                      <Td>{getApplicationSource(app)?.repoURL ?? '-'}</Td>
                       <Td>{`${app.spec.destination.name ?? app.spec.destination.server ?? ''} / ${app.spec.destination.namespace ?? ''}`}</Td>
                       <Td isActionCell><RowActions app={app} /></Td>
                     </Tr>

@@ -12,7 +12,7 @@ interface ArgoCDResource {
 }
 
 export function useArgoCDInstances(): [ArgoCDInstance[], boolean] {
-  const [resources, loaded] = useK8sWatchResource<ArgoCDResource[]>({
+  const [resources, loaded, error] = useK8sWatchResource<ArgoCDResource[]>({
     groupVersionKind: ArgoCDGroupVersionKind,
     isList: true,
   });

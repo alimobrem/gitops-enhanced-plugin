@@ -8,14 +8,7 @@
     "skipLibCheck": true,
     "noUnusedLocals": true,
     "types": ["jest", "@testing-library/jest-dom", "node"],
-    "baseUrl": "src",
-    "paths": {
-      "@models/*": ["models/*"],
-      "@services/*": ["services/*"],
-      "@hooks/*": ["hooks/*"],
-      "@components/*": ["components/*"],
-      "@utils/*": ["utils/*"]
-    }
+    "baseUrl": "src"
   },
   "include": ["src"],
   "exclude": ["node_modules"],

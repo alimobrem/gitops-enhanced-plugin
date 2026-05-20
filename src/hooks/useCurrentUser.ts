@@ -5,7 +5,7 @@ interface UserResource {
 }
 
 export function useCurrentUser(): string {
-  const [user] = useK8sWatchResource<UserResource>({
+  const [user, , error] = useK8sWatchResource<UserResource>({
     groupVersionKind: { group: 'user.openshift.io', version: 'v1', kind: 'User' },
     name: '~',
   });

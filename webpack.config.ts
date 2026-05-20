@@ -20,13 +20,6 @@ const config: Configuration & { devServer?: Record<string, unknown> } = {
   },
   resolve: {
     extensions: ['.ts', '.tsx', '.js', '.jsx'],
-    alias: {
-      '@models': path.resolve(__dirname, 'src/models'),
-      '@services': path.resolve(__dirname, 'src/services'),
-      '@hooks': path.resolve(__dirname, 'src/hooks'),
-      '@components': path.resolve(__dirname, 'src/components'),
-      '@utils': path.resolve(__dirname, 'src/utils'),
-    },
   },
   module: {
     rules: [

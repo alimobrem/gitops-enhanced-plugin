@@ -8,6 +8,7 @@ import { RepositoryListPage } from './RepositoryListPage';
 import { ClusterListPage } from './ClusterListPage';
 import { RolloutListPage } from '../Rollout/RolloutListPage';
 import { GenericResourceListPage } from '../GenericResource/GenericResourceListPage';
+import { InstanceProvider } from '../shared/InstanceProvider';
 import {
   RolloutManagerGroupVersionKind,
   NotificationsConfigurationGroupVersionKind,
