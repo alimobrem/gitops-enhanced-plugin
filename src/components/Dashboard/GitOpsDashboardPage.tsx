@@ -106,6 +106,7 @@ export const GitOpsDashboardPage: FC = () => {
   );
 
   const allApps = apps ?? [];
+  const appsKey = allApps.map((a) => `${a.metadata.uid}:${a.status?.sync?.status}:${a.status?.health?.status}`).join('|');
 
   const { total, synced, outOfSync, unknown, healthy, degraded, progressing, recentApps } = useMemo(() => {
     const t = allApps.length;
@@ -122,7 +123,7 @@ export const GitOpsDashboardPage: FC = () => {
       })
       .slice(0, 10);
     return { total: t, synced: s, outOfSync: o, unknown: t - s - o, healthy: h, degraded: d, progressing: p, recentApps: recent };
-  }, [allApps]);
+  }, [appsKey]);
 
   const syncedPct = total > 0 ? Math.round((synced / total) * 100) : 0;
   const oosPct = total > 0 ? Math.round((outOfSync / total) * 100) : 0;
