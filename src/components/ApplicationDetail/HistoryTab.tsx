@@ -7,6 +7,9 @@ import {
   Button,
   Modal,
   ModalVariant,
+  ModalHeader,
+  ModalBody,
+  ModalFooter,
   Alert,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
@@ -66,7 +69,7 @@ export const HistoryTab: FC<{ app: ApplicationResource }> = ({ app }) => {
                 {idx > 0 && (
                   <Button
                     variant="secondary"
-                    isSmall
+                    size="sm"
                     onClick={() => setRollbackTarget({ id: entry.id, revision: entry.revision })}
                   >
                     {t('Rollback')}
@@ -78,25 +81,27 @@ export const HistoryTab: FC<{ app: ApplicationResource }> = ({ app }) => {
         </Tbody>
       </Table>
 
-      {rollbackTarget && (
-        <Modal
-          variant={ModalVariant.small}
-          title={t('Confirm Rollback')}
-          isOpen
-          onClose={() => setRollbackTarget(null)}
-          actions={[
-            <Button key="confirm" variant="primary" onClick={handleRollback} isLoading={rolling} isDisabled={rolling}>
-              {t('Rollback')}
-            </Button>,
-            <Button key="cancel" variant="link" onClick={() => setRollbackTarget(null)}>
-              {t('Cancel')}
-            </Button>,
-          ]}
-        >
-          {rollbackError && <Alert variant="danger" isInline title={t('Rollback failed')} style={{ marginBottom: '1rem' }}>{rollbackError}</Alert>}
-          {t('Are you sure you want to rollback to revision {{revision}}?', { revision: rollbackTarget.revision.substring(0, 7) })}
-        </Modal>
-      )}
+      <Modal
+        variant={ModalVariant.small}
+        isOpen={!!rollbackTarget}
+        onClose={() => setRollbackTarget(null)}
+      >
+        <ModalHeader title={t('Confirm Rollback')} />
+        <ModalBody>
+          {rollbackError && (
+            <Alert variant="danger" isInline title={t('Rollback failed')} style={{ marginBottom: '1rem' }}>
+              {rollbackError}
+            </Alert>
+          )}
+          {rollbackTarget && t('Are you sure you want to rollback to revision {{revision}}?', { revision: rollbackTarget.revision.substring(0, 7) })}
+        </ModalBody>
+        <ModalFooter>
+          <Button variant="primary" onClick={handleRollback} isLoading={rolling} isDisabled={rolling}>
+            {t('Rollback')}
+          </Button>
+          <Button variant="link" onClick={() => setRollbackTarget(null)}>{t('Cancel')}</Button>
+        </ModalFooter>
+      </Modal>
     </React.Fragment>
   );
 };

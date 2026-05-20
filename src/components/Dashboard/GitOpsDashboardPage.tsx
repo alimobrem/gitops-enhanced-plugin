@@ -18,6 +18,7 @@ import {
   FlexItem,
   Spinner,
   Bullseye,
+  Alert,
   Progress,
   ProgressMeasureLocation,
   ProgressVariant,
@@ -67,24 +68,26 @@ const StatusCard: FC<StatusCardProps> = ({ title, count, icon, color }) => (
 export const GitOpsDashboardPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
 
-  const [apps, appsLoaded] = useK8sWatchResource<ApplicationResource[]>({
+  const [apps, appsLoaded, appsError] = useK8sWatchResource<ApplicationResource[]>({
     groupVersionKind: ApplicationGroupVersionKind,
     isList: true,
   });
-  const [appsets] = useK8sWatchResource<Array<Record<string, unknown>>>({
+  const [appsets, , appsetsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: ApplicationSetGroupVersionKind,
     isList: true,
   });
-  const [projects] = useK8sWatchResource<Array<Record<string, unknown>>>({
+  const [projects, , projectsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: AppProjectGroupVersionKind,
     isList: true,
   });
-  const [instances] = useK8sWatchResource<Array<Record<string, unknown>>>({
+  const [instances, , instancesError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: ArgoCDGroupVersionKind,
     isList: true,
   });
 
-  if (!appsLoaded) {
+  const errors = [appsError, appsetsError, projectsError, instancesError].filter(Boolean) as Error[];
+
+  if (!appsLoaded && errors.length === 0) {
     return (
       <React.Fragment>
         <DocumentTitle>{t('GitOps Dashboard')}</DocumentTitle>
@@ -121,6 +124,12 @@ export const GitOpsDashboardPage: FC = () => {
           <FlexItem><Title headingLevel="h1">{t('GitOps Overview')}</Title></FlexItem>
           <FlexItem><InstancePicker /></FlexItem>
         </Flex>
+
+        {errors.length > 0 && errors.map((err, i) => (
+          <Alert key={i} variant="danger" isInline title={t('Error loading resources')} style={{ marginBottom: '1rem' }}>
+            {err.message}
+          </Alert>
+        ))}
 
         <Grid hasGutter>
           <GridItem span={3}>

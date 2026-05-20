@@ -39,6 +39,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const [selectedContainer, setSelectedContainer] = useState<string>('');
   const [logs, setLogs] = useState<string>('');
   const [podSelectOpen, setPodSelectOpen] = useState(false);
+  const [containerSelectOpen, setContainerSelectOpen] = useState(false);
   const [following, setFollowing] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
@@ -129,10 +130,11 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
         {containers.length > 1 && (
           <FlexItem>
             <Select
-              isOpen={false}
-              onSelect={(_e, val) => setSelectedContainer(val as string)}
+              isOpen={containerSelectOpen}
+              onOpenChange={setContainerSelectOpen}
+              onSelect={(_e, val) => { setSelectedContainer(val as string); setContainerSelectOpen(false); }}
               toggle={(toggleRef) => (
-                <MenuToggle ref={toggleRef}>{selectedContainer}</MenuToggle>
+                <MenuToggle ref={toggleRef} onClick={() => setContainerSelectOpen(!containerSelectOpen)}>{selectedContainer}</MenuToggle>
               )}
               selected={selectedContainer}
             >

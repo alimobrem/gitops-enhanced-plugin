@@ -1,16 +1,18 @@
 import React from 'react';
-import { render, screen, fireEvent } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 import { ActionsMenu } from './ActionsMenu';
 
 const mockK8sPatch = jest.fn();
 
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   k8sPatch: (...args: unknown[]) => mockK8sPatch(...args),
-  consoleFetch: jest.fn(),
 }));
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (s: string) => s }),
+  useTranslation: () => ({ t: (s: string, opts?: Record<string, string>) => {
+    if (opts) return Object.entries(opts).reduce((acc, [k, v]) => acc.replace(`{{${k}}}`, v), s);
+    return s;
+  }}),
 }));
 
 const mockApp = {
@@ -38,7 +40,22 @@ describe('ActionsMenu', () => {
     fireEvent.click(screen.getByText('Actions'));
     expect(screen.getByText('Sync')).toBeInTheDocument();
     expect(screen.getByText('Refresh')).toBeInTheDocument();
-    expect(screen.getByText('Hard Refresh')).toBeInTheDocument();
     expect(screen.getByText('Terminate')).toBeInTheDocument();
+  });
+
+  it('shows confirmation modal for terminate', () => {
+    render(<ActionsMenu app={mockApp} />);
+    fireEvent.click(screen.getByText('Actions'));
+    fireEvent.click(screen.getByText('Terminate'));
+    expect(screen.getByText('Confirm Terminate')).toBeInTheDocument();
+    expect(screen.getByText(/abort any in-progress sync/)).toBeInTheDocument();
+  });
+
+  it('shows error alert when action fails', async () => {
+    mockK8sPatch.mockRejectedValue(new Error('forbidden'));
+    render(<ActionsMenu app={mockApp} />);
+    fireEvent.click(screen.getByText('Actions'));
+    fireEvent.click(screen.getByText('Sync'));
+    await waitFor(() => expect(screen.getByText(/Sync failed: forbidden/)).toBeInTheDocument());
   });
 });

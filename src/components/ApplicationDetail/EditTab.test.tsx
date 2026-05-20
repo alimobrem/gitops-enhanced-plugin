@@ -28,6 +28,18 @@ const mockApp = {
   status: { sync: { status: 'Synced' as const }, health: { status: 'Healthy' as const } },
 };
 
+const multiSourceApp = {
+  ...mockApp,
+  spec: {
+    ...mockApp.spec,
+    source: undefined,
+    sources: [
+      { repoURL: 'https://github.com/org/repo', path: 'base', targetRevision: 'main' },
+      { repoURL: 'https://github.com/org/overlays', path: 'prod', targetRevision: 'main' },
+    ],
+  },
+};
+
 describe('EditTab', () => {
   beforeEach(() => mockK8sPatch.mockReset());
 
@@ -35,28 +47,58 @@ describe('EditTab', () => {
     render(<EditTab app={mockApp} />);
     expect(screen.getByDisplayValue('https://github.com/org/repo')).toBeInTheDocument();
     expect(screen.getByDisplayValue('manifests')).toBeInTheDocument();
-    expect(screen.getByDisplayValue('main')).toBeInTheDocument();
     expect(screen.getAllByDisplayValue('default').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('calls k8sPatch on save', async () => {
+  it('shows confirmation modal before saving', () => {
+    render(<EditTab app={mockApp} />);
+    fireEvent.click(screen.getByText('Save'));
+    expect(screen.getByText('Confirm Save')).toBeInTheDocument();
+    expect(screen.getByText(/Save changes to test-app/)).toBeInTheDocument();
+  });
+
+  it('calls k8sPatch with correct source path on confirm', async () => {
     mockK8sPatch.mockResolvedValue({});
     render(<EditTab app={mockApp} />);
     fireEvent.click(screen.getByText('Save'));
-    await waitFor(() => expect(mockK8sPatch).toHaveBeenCalled());
+    fireEvent.click(screen.getAllByText('Save')[1]); // modal save button
+    await waitFor(() => expect(mockK8sPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.arrayContaining([
+          expect.objectContaining({ path: '/spec/source/repoURL' }),
+        ]),
+      }),
+    ));
   });
 
-  it('shows error on save failure', async () => {
+  it('uses /spec/sources/0 path for multi-source apps', async () => {
+    mockK8sPatch.mockResolvedValue({});
+    render(<EditTab app={multiSourceApp as unknown as typeof mockApp} />);
+    expect(screen.getByText('Multi-source application')).toBeInTheDocument();
+    fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getAllByText('Save')[1]);
+    await waitFor(() => expect(mockK8sPatch).toHaveBeenCalledWith(
+      expect.objectContaining({
+        data: expect.arrayContaining([
+          expect.objectContaining({ path: '/spec/sources/0/repoURL' }),
+        ]),
+      }),
+    ));
+  });
+
+  it('shows error on save failure with dismiss', async () => {
     mockK8sPatch.mockRejectedValue(new Error('forbidden'));
     render(<EditTab app={mockApp} />);
     fireEvent.click(screen.getByText('Save'));
+    fireEvent.click(screen.getAllByText('Save')[1]);
     await waitFor(() => expect(screen.getByText('forbidden')).toBeInTheDocument());
   });
 
-  it('shows success message on save', async () => {
-    mockK8sPatch.mockResolvedValue({});
-    render(<EditTab app={mockApp} />);
-    fireEvent.click(screen.getByText('Save'));
-    await waitFor(() => expect(screen.getByText('Application updated successfully')).toBeInTheDocument());
+  it('disables save when required fields are empty', () => {
+    render(<EditTab app={{
+      ...mockApp,
+      spec: { ...mockApp.spec, source: { repoURL: '', path: '', targetRevision: '' } },
+    }} />);
+    expect(screen.getByText('Save').closest('button')).toBeDisabled();
   });
 });

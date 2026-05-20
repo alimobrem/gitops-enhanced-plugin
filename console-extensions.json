@@ -26,7 +26,4 @@
 
   {"type":"console.tab/horizontalNav","properties":{"model":{"group":"","version":"v1","kind":"Namespace"},"page":{"name":"%plugin__gitops-enhanced~GitOps%","href":"gitops"},"component":{"$codeRef":"NamespaceGitOpsTab"}},"flags":{"required":["ARGOCD_APPLICATION"]}},
   {"type":"console.tab/horizontalNav","properties":{"model":{"group":"project.openshift.io","version":"v1","kind":"Project"},"page":{"name":"%plugin__gitops-enhanced~GitOps%","href":"gitops"},"component":{"$codeRef":"NamespaceGitOpsTab"}},"flags":{"required":["ARGOCD_APPLICATION"]}},
-
-  {"type":"console.topology/data/factory","properties":{"id":"gitops-topology-data-factory","factory":{"$codeRef":"TopologyDataFactory"}},"flags":{"required":["ARGOCD_APPLICATION"]}},
-  {"type":"console.topology/component/factory","properties":{"id":"gitops-topology-component-factory","factory":{"$codeRef":"TopologyComponentFactory"}},"flags":{"required":["ARGOCD_APPLICATION"]}}
 ]

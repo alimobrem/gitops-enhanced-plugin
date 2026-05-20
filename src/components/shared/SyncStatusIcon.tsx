@@ -6,17 +6,12 @@ import {
   QuestionCircleIcon,
 } from '@patternfly/react-icons';
 import type { SyncStatusCode } from '../../types';
+import { syncStatusColor } from '../../utils/status';
 
 const icons: Record<SyncStatusCode, ComponentType<{ color?: string }>> = {
   Synced: CheckCircleIcon,
   OutOfSync: ExclamationTriangleIcon,
   Unknown: QuestionCircleIcon,
-};
-
-const colorMap: Record<SyncStatusCode, string> = {
-  Synced: 'var(--pf-t--global--color--status--success--default)',
-  OutOfSync: 'var(--pf-t--global--color--status--warning--default)',
-  Unknown: 'var(--pf-t--global--color--status--info--default)',
 };
 
 export const SyncStatusIcon: FC<{ status: SyncStatusCode }> = ({ status }) => {
@@ -29,7 +24,7 @@ export const SyncStatusIcon: FC<{ status: SyncStatusCode }> = ({ status }) => {
         gap: '0.25rem',
       }}
     >
-      <IconComponent color={colorMap[status]} />
+      <IconComponent color={syncStatusColor[status]} aria-hidden="true" />
       <span>{status}</span>
     </span>
   );

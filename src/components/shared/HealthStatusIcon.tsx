@@ -9,6 +9,7 @@ import {
   QuestionCircleIcon,
 } from '@patternfly/react-icons';
 import type { HealthStatusCode } from '../../types';
+import { healthStatusColor } from '../../utils/status';
 
 const iconMap: Record<HealthStatusCode, ComponentType<{ color?: string }>> = {
   Healthy: CheckCircleIcon,
@@ -17,15 +18,6 @@ const iconMap: Record<HealthStatusCode, ComponentType<{ color?: string }>> = {
   Suspended: PauseCircleIcon,
   Missing: GhostIcon,
   Unknown: QuestionCircleIcon,
-};
-
-const colorMap: Record<HealthStatusCode, string> = {
-  Healthy: 'var(--pf-t--global--color--status--success--default)',
-  Degraded: 'var(--pf-t--global--color--status--danger--default)',
-  Progressing: 'var(--pf-t--global--color--status--info--default)',
-  Suspended: 'var(--pf-t--global--color--status--info--default)',
-  Missing: 'var(--pf-t--global--color--status--warning--default)',
-  Unknown: 'var(--pf-t--global--color--status--info--default)',
 };
 
 export const HealthStatusIcon: FC<{ status: HealthStatusCode }> = ({
@@ -40,7 +32,7 @@ export const HealthStatusIcon: FC<{ status: HealthStatusCode }> = ({
         gap: '0.25rem',
       }}
     >
-      <IconComponent color={colorMap[status]} />
+      <IconComponent color={healthStatusColor[status]} aria-hidden="true" />
       <span>{status}</span>
     </span>
   );
