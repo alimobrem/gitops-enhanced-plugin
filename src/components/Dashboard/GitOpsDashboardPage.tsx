@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import {
   useK8sWatchResource,
   DocumentTitle,
@@ -97,21 +97,23 @@ export const GitOpsDashboardPage: FC = () => {
   }
 
   const allApps = apps ?? [];
-  const total = allApps.length;
-  const synced = allApps.filter((a) => a.status?.sync?.status === 'Synced').length;
-  const outOfSync = allApps.filter((a) => a.status?.sync?.status === 'OutOfSync').length;
-  const unknown = total - synced - outOfSync;
-  const healthy = allApps.filter((a) => a.status?.health?.status === 'Healthy').length;
-  const degraded = allApps.filter((a) => a.status?.health?.status === 'Degraded').length;
-  const progressing = allApps.filter((a) => a.status?.health?.status === 'Progressing').length;
 
-  const recentApps = [...allApps]
-    .sort((a, b) => {
-      const aTime = a.status?.reconciledAt ?? a.metadata.creationTimestamp ?? '';
-      const bTime = b.status?.reconciledAt ?? b.metadata.creationTimestamp ?? '';
-      return bTime.localeCompare(aTime);
-    })
-    .slice(0, 10);
+  const { total, synced, outOfSync, unknown, healthy, degraded, progressing, recentApps } = useMemo(() => {
+    const t = allApps.length;
+    const s = allApps.filter((a) => a.status?.sync?.status === 'Synced').length;
+    const o = allApps.filter((a) => a.status?.sync?.status === 'OutOfSync').length;
+    const h = allApps.filter((a) => a.status?.health?.status === 'Healthy').length;
+    const d = allApps.filter((a) => a.status?.health?.status === 'Degraded').length;
+    const p = allApps.filter((a) => a.status?.health?.status === 'Progressing').length;
+    const recent = [...allApps]
+      .sort((a, b) => {
+        const aTime = a.status?.reconciledAt ?? a.metadata.creationTimestamp ?? '';
+        const bTime = b.status?.reconciledAt ?? b.metadata.creationTimestamp ?? '';
+        return bTime.localeCompare(aTime);
+      })
+      .slice(0, 10);
+    return { total: t, synced: s, outOfSync: o, unknown: t - s - o, healthy: h, degraded: d, progressing: p, recentApps: recent };
+  }, [allApps]);
 
   const syncedPct = total > 0 ? Math.round((synced / total) * 100) : 0;
   const oosPct = total > 0 ? Math.round((outOfSync / total) * 100) : 0;

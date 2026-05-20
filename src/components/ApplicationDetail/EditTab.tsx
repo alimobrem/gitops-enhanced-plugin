@@ -3,35 +3,19 @@ import { useState, type FC } from 'react';
 import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
-  Form,
-  FormGroup,
-  TextInput,
-  Checkbox,
-  ActionGroup,
-  Button,
-  Alert,
-  Card,
-  CardTitle,
-  CardBody,
-  Grid,
-  GridItem,
-  Modal,
-  ModalVariant,
-  ModalHeader,
-  ModalBody,
-  ModalFooter,
-  HelperText,
-  HelperTextItem,
-  FormHelperText,
+  Form, FormGroup, TextInput, Checkbox, ActionGroup, Button, Alert,
+  Card, CardTitle, CardBody, Grid, GridItem,
+  HelperText, HelperTextItem, FormHelperText,
 } from '@patternfly/react-core';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import { ApplicationModel } from '../../models';
+import { isMultiSource, getApplicationSource } from '../../utils/application';
 import type { ApplicationResource } from '../../types';
 
 export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-
-  const isMultiSource = !app.spec.source && Array.isArray(app.spec.sources) && app.spec.sources.length > 0;
-  const source = app.spec.source ?? app.spec.sources?.[0];
+  const multiSource = isMultiSource(app);
+  const source = getApplicationSource(app);
 
   const [repoURL, setRepoURL] = useState(source?.repoURL ?? '');
   const [path, setPath] = useState(source?.path ?? '');
@@ -53,13 +37,14 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const namespaceValid = destNamespace.trim().length > 0;
   const formValid = repoURLValid && pathValid && namespaceValid;
 
+  const clearFeedback = () => { setError(''); setSuccess(false); };
+
   const handleSave = async () => {
     setShowConfirm(false);
     setSaving(true);
-    setError('');
-    setSuccess(false);
+    clearFeedback();
     try {
-      const sourcePath = isMultiSource ? '/spec/sources/0' : '/spec/source';
+      const sourcePath = multiSource ? '/spec/sources/0' : '/spec/source';
       const patches: Array<{ op: string; path: string; value: unknown }> = [
         { op: 'replace', path: `${sourcePath}/repoURL`, value: repoURL },
         { op: 'replace', path: `${sourcePath}/path`, value: path },
@@ -68,7 +53,6 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
         { op: 'replace', path: '/spec/destination/namespace', value: destNamespace },
         { op: 'replace', path: '/spec/project', value: project },
       ];
-
       if (autoSync) {
         patches.push({
           op: app.spec.syncPolicy?.automated ? 'replace' : 'add',
@@ -78,7 +62,6 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
       } else if (app.spec.syncPolicy?.automated) {
         patches.push({ op: 'remove', path: '/spec/syncPolicy/automated', value: null });
       }
-
       await k8sPatch({ model: ApplicationModel, resource: app, data: patches });
       setSuccess(true);
     } catch (e) {
@@ -88,39 +71,16 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
     }
   };
 
-  return (
-    <React.Fragment>
-      {error && (
-        <Alert
-          variant="danger"
-          isInline
-          title={t('Error saving')}
-          actionClose={<Button variant="plain" onClick={() => setError('')}>x</Button>}
-          style={{ marginBottom: '1rem' }}
-        >
-          {error}
-        </Alert>
-      )}
-      {success && (
-        <Alert
-          variant="success"
-          isInline
-          title={t('Application updated successfully')}
-          actionClose={<Button variant="plain" onClick={() => setSuccess(false)}>x</Button>}
-          style={{ marginBottom: '1rem' }}
-        />
-      )}
+  const validationHelper = (valid: boolean, msg: string) =>
+    !valid ? (
+      <FormHelperText><HelperText><HelperTextItem variant="error">{msg}</HelperTextItem></HelperText></FormHelperText>
+    ) : null;
 
-      {isMultiSource && (
-        <Alert
-          variant="info"
-          isInline
-          title={t('Multi-source application')}
-          style={{ marginBottom: '1rem' }}
-        >
-          {t('This application uses multiple sources. Only the first source is editable here. Use YAML editing for full control.')}
-        </Alert>
-      )}
+  return (
+    <>
+      {error && <Alert variant="danger" isInline title={t('Error saving')} actionClose={<Button variant="plain" onClick={clearFeedback}>x</Button>} className="pf-v6-u-mb-md">{error}</Alert>}
+      {success && <Alert variant="success" isInline title={t('Application updated successfully')} actionClose={<Button variant="plain" onClick={clearFeedback}>x</Button>} className="pf-v6-u-mb-md" />}
+      {multiSource && <Alert variant="info" isInline title={t('Multi-source application')} className="pf-v6-u-mb-md">{t('Only the first source is editable here. Use YAML for full control.')}</Alert>}
 
       <Grid hasGutter>
         <GridItem span={6}>
@@ -129,32 +89,15 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
             <CardBody>
               <Form>
                 <FormGroup label={t('Repository URL')} isRequired fieldId="edit-repo">
-                  <TextInput
-                    id="edit-repo"
-                    isRequired
-                    validated={repoURLValid ? 'default' : 'error'}
-                    value={repoURL}
-                    onChange={(_e, val) => setRepoURL(val)}
-                  />
-                  {!repoURLValid && (
-                    <FormHelperText>
-                      <HelperText>
-                        <HelperTextItem variant="error">{t('Repository URL is required')}</HelperTextItem>
-                      </HelperText>
-                    </FormHelperText>
-                  )}
+                  <TextInput id="edit-repo" isRequired validated={repoURLValid ? 'default' : 'error'} value={repoURL} onChange={(_e, v) => { setRepoURL(v); clearFeedback(); }} />
+                  {validationHelper(repoURLValid, t('Repository URL is required'))}
                 </FormGroup>
                 <FormGroup label={t('Path')} isRequired fieldId="edit-path">
-                  <TextInput
-                    id="edit-path"
-                    isRequired
-                    validated={pathValid ? 'default' : 'error'}
-                    value={path}
-                    onChange={(_e, val) => setPath(val)}
-                  />
+                  <TextInput id="edit-path" isRequired validated={pathValid ? 'default' : 'error'} value={path} onChange={(_e, v) => { setPath(v); clearFeedback(); }} />
+                  {validationHelper(pathValid, t('Path is required'))}
                 </FormGroup>
                 <FormGroup label={t('Target Revision')} fieldId="edit-revision">
-                  <TextInput id="edit-revision" value={targetRevision} onChange={(_e, val) => setTargetRevision(val)} />
+                  <TextInput id="edit-revision" value={targetRevision} onChange={(_e, v) => { setTargetRevision(v); clearFeedback(); }} />
                 </FormGroup>
               </Form>
             </CardBody>
@@ -166,19 +109,14 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
             <CardBody>
               <Form>
                 <FormGroup label={t('Cluster')} fieldId="edit-server">
-                  <TextInput id="edit-server" value={destServer} onChange={(_e, val) => setDestServer(val)} />
+                  <TextInput id="edit-server" value={destServer} onChange={(_e, v) => { setDestServer(v); clearFeedback(); }} />
                 </FormGroup>
                 <FormGroup label={t('Namespace')} isRequired fieldId="edit-namespace">
-                  <TextInput
-                    id="edit-namespace"
-                    isRequired
-                    validated={namespaceValid ? 'default' : 'error'}
-                    value={destNamespace}
-                    onChange={(_e, val) => setDestNamespace(val)}
-                  />
+                  <TextInput id="edit-namespace" isRequired validated={namespaceValid ? 'default' : 'error'} value={destNamespace} onChange={(_e, v) => { setDestNamespace(v); clearFeedback(); }} />
+                  {validationHelper(namespaceValid, t('Namespace is required'))}
                 </FormGroup>
                 <FormGroup label={t('Project')} fieldId="edit-project">
-                  <TextInput id="edit-project" value={project} onChange={(_e, val) => setProject(val)} />
+                  <TextInput id="edit-project" value={project} onChange={(_e, v) => { setProject(v); clearFeedback(); }} />
                 </FormGroup>
               </Form>
             </CardBody>
@@ -190,17 +128,13 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
             <CardBody>
               <Form>
                 <FormGroup fieldId="edit-autosync">
-                  <Checkbox id="edit-autosync" label={t('Enable auto-sync')} isChecked={autoSync} onChange={(_e, val) => setAutoSync(val)} />
+                  <Checkbox id="edit-autosync" label={t('Enable auto-sync')} isChecked={autoSync} onChange={(_e, v) => setAutoSync(v)} />
                 </FormGroup>
                 {autoSync && (
-                  <React.Fragment>
-                    <FormGroup fieldId="edit-prune">
-                      <Checkbox id="edit-prune" label={t('Prune resources')} isChecked={prune} onChange={(_e, val) => setPrune(val)} />
-                    </FormGroup>
-                    <FormGroup fieldId="edit-selfheal">
-                      <Checkbox id="edit-selfheal" label={t('Self-heal')} isChecked={selfHeal} onChange={(_e, val) => setSelfHeal(val)} />
-                    </FormGroup>
-                  </React.Fragment>
+                  <>
+                    <FormGroup fieldId="edit-prune"><Checkbox id="edit-prune" label={t('Prune resources')} isChecked={prune} onChange={(_e, v) => setPrune(v)} /></FormGroup>
+                    <FormGroup fieldId="edit-selfheal"><Checkbox id="edit-selfheal" label={t('Self-heal')} isChecked={selfHeal} onChange={(_e, v) => setSelfHeal(v)} /></FormGroup>
+                  </>
                 )}
               </Form>
             </CardBody>
@@ -208,21 +142,14 @@ export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
         </GridItem>
       </Grid>
 
-      <ActionGroup style={{ marginTop: '1rem' }}>
-        <Button variant="primary" onClick={() => setShowConfirm(true)} isDisabled={saving || !formValid}>
-          {t('Save')}
-        </Button>
+      <ActionGroup className="pf-v6-u-mt-md">
+        <Button variant="primary" onClick={() => setShowConfirm(true)} isDisabled={saving || !formValid}>{t('Save')}</Button>
       </ActionGroup>
 
-      <Modal variant={ModalVariant.small} isOpen={showConfirm} onClose={() => setShowConfirm(false)}>
-        <ModalHeader title={t('Confirm Save')} />
-        <ModalBody>{t('Save changes to {{name}}? This will update the application configuration.', { name: app.metadata.name })}</ModalBody>
-        <ModalFooter>
-          <Button variant="primary" onClick={handleSave} isLoading={saving}>{t('Save')}</Button>
-          <Button variant="link" onClick={() => setShowConfirm(false)}>{t('Cancel')}</Button>
-        </ModalFooter>
-      </Modal>
-    </React.Fragment>
+      <ConfirmModal title={t('Confirm Save')} isOpen={showConfirm} onConfirm={handleSave} onCancel={() => setShowConfirm(false)} isLoading={saving} confirmLabel={t('Save')}>
+        {t('Save changes to {{name}}?', { name: app.metadata.name })}
+      </ConfirmModal>
+    </>
   );
 };
 

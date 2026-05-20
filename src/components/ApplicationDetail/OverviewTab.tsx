@@ -15,10 +15,11 @@ import { useTranslation } from 'react-i18next';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import type { ApplicationResource } from '../../types';
+import { getApplicationSource } from '../../utils/application';
 
 export const OverviewTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const source = app.spec.source ?? app.spec.sources?.[0];
+  const source = getApplicationSource(app);
 
   return (
     <Grid hasGutter>
