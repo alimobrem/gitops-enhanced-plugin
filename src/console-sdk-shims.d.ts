@@ -32,6 +32,11 @@ declare module '@openshift-console/dynamic-plugin-sdk' {
     resource: unknown;
   }): Promise<unknown>;
 
+  export function consoleFetchText(
+    url: string,
+    options?: RequestInit,
+  ): Promise<string>;
+
   export function consoleFetch(
     url: string,
     options?: RequestInit,

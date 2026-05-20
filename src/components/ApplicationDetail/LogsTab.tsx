@@ -2,7 +2,7 @@ import React from 'react';
 import { useState, useEffect, useRef, useCallback, useMemo, type FC } from 'react';
 import {
   useK8sWatchResource,
-  consoleFetch,
+  consoleFetchText,
 } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
@@ -102,17 +102,11 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const fetchLogs = useCallback(async () => {
     if (!selectedPod || !selectedContainer) return;
     abortRef.current?.abort();
-    const controller = new AbortController();
-    abortRef.current = controller;
 
     try {
       const url = `/api/kubernetes/api/v1/namespaces/${destNs}/pods/${selectedPod}/log?container=${selectedContainer}&tailLines=500`;
-      const res = await consoleFetch(url, { signal: controller.signal } as RequestInit);
-      if (res.ok) {
-        setLogs(await res.text());
-      } else {
-        setLogs(`Error fetching logs: ${res.status} ${res.statusText}`);
-      }
+      const text = await consoleFetchText(url);
+      setLogs(text || '(no logs)');
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
         setLogs(`Error: ${(e as Error).message}`);
@@ -128,24 +122,8 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
 
     try {
       const url = `/api/kubernetes/api/v1/namespaces/${destNs}/pods/${selectedPod}/log?container=${selectedContainer}&tailLines=500&follow=true`;
-      const res = await consoleFetch(url, { signal: controller.signal } as RequestInit);
-      if (!res.ok) {
-        setLogs(`Error: ${res.status} ${res.statusText}`);
-        return;
-      }
-      if (res.body && typeof res.body.getReader === 'function') {
-        const reader = res.body.getReader();
-        const decoder = new TextDecoder();
-        let buffer = '';
-        while (true) {
-          const { done, value } = await reader.read();
-          if (done) break;
-          buffer += decoder.decode(value, { stream: true });
-          setLogs(buffer);
-        }
-      } else {
-        setLogs(await res.text());
-      }
+      const text = await consoleFetchText(url);
+      setLogs(text || '(no logs)');
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
         setLogs((prev) => prev + `\n[Stream error: ${(e as Error).message}]`);
