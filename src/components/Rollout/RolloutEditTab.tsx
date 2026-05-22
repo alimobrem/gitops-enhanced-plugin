@@ -1,10 +1,10 @@
 import React from 'react';
-import { useState, useMemo, type FC } from 'react';
+import { useState, useMemo, useEffect, type FC } from 'react';
 import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
-  Form, FormGroup, TextInput, ActionGroup, Button, Alert, NumberInput,
-  Card, CardTitle, CardBody, Grid, GridItem, Checkbox,
+  Form, FormSection, FormGroup, TextInput, ActionGroup, Button, Alert,
+  AlertActionCloseButton, NumberInput, Checkbox, Label, Tooltip,
   HelperText, HelperTextItem, FormHelperText, Select, SelectOption, SelectList, MenuToggle,
 } from '@patternfly/react-core';
 import { TrashIcon } from '@patternfly/react-icons';
@@ -12,6 +12,9 @@ import { ConfirmModal } from '../shared/ConfirmModal';
 import { RolloutModel } from '../../models';
 import type { RolloutResource } from '../../types';
 import { safePatch, type PatchOp } from '../../utils/patch';
+
+const SURGE_PATTERN = /^\d+%?$/;
+const DURATION_PATTERN = /^\d+[smh]$/;
 
 export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
@@ -23,11 +26,11 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
 
   const init = useMemo(() => ({
     replicas: rollout.spec.replicas ?? 1,
-    revisionHistoryLimit: rollout.spec.revisionHistoryLimit ?? 10,
-    minReadySeconds: rollout.spec.minReadySeconds ?? 0,
-    progressDeadlineSeconds: rollout.spec.progressDeadlineSeconds ?? 600,
+    revisionHistoryLimit: String(rollout.spec.revisionHistoryLimit ?? 10),
+    minReadySeconds: String(rollout.spec.minReadySeconds ?? 0),
+    progressDeadlineSeconds: String(rollout.spec.progressDeadlineSeconds ?? 600),
     image: container?.image ?? '',
-    containerPort: container?.ports?.[0]?.containerPort ?? 80,
+    containerPort: String(container?.ports?.[0]?.containerPort ?? 80),
     maxSurge: String(canary?.maxSurge ?? '25%'),
     maxUnavailable: String(canary?.maxUnavailable ?? '25%'),
     stableService: canary?.stableService ?? '',
@@ -36,8 +39,8 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
     activeService: blueGreen?.activeService ?? '',
     previewService: blueGreen?.previewService ?? '',
     autoPromotionEnabled: blueGreen?.autoPromotionEnabled ?? true,
-    autoPromotionSeconds: blueGreen?.autoPromotionSeconds ?? 0,
-    scaleDownDelaySeconds: blueGreen?.scaleDownDelaySeconds ?? 30,
+    autoPromotionSeconds: String(blueGreen?.autoPromotionSeconds ?? 0),
+    scaleDownDelaySeconds: String(blueGreen?.scaleDownDelaySeconds ?? 30),
     previewReplicaCount: blueGreen?.previewReplicaCount ?? 0,
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [rollout.metadata.uid]);
@@ -68,8 +71,22 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
   const [showConfirm, setShowConfirm] = useState(false);
   const [stepTypeOpen, setStepTypeOpen] = useState(false);
 
+  useEffect(() => {
+    if (!success) return;
+    const timer = setTimeout(() => setSuccess(false), 8000);
+    return () => clearTimeout(timer);
+  }, [success]);
+
   const imageValid = image.trim().length > 0;
-  const formValid = imageValid;
+  const surgeValid = !isCanary || SURGE_PATTERN.test(maxSurge);
+  const unavailableValid = !isCanary || SURGE_PATTERN.test(maxUnavailable);
+  const stepsValid = !isCanary || steps.every((s) => {
+    if ('pause' in s && typeof s.pause === 'object') {
+      return DURATION_PATTERN.test((s.pause as Record<string, string>).duration ?? '');
+    }
+    return true;
+  });
+  const formValid = imageValid && surgeValid && unavailableValid && stepsValid;
 
   const stepsKey = useMemo(() => JSON.stringify(steps), [steps]);
   const initStepsKey = useMemo(() => JSON.stringify(init.steps), [init.steps]);
@@ -107,6 +124,8 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
     clearFeedback();
   };
 
+  const toNum = (v: string, fallback: number) => { const n = parseInt(v, 10); return isNaN(n) ? fallback : n; };
+
   const buildPatches = (): PatchOp[] => {
     const patches: PatchOp[] = [];
     const patchIf = (dirty: boolean, path: string, value: unknown) => {
@@ -114,11 +133,11 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
     };
 
     patchIf(replicas !== init.replicas, '/spec/replicas', replicas);
-    patchIf(revisionHistoryLimit !== init.revisionHistoryLimit, '/spec/revisionHistoryLimit', revisionHistoryLimit);
-    patchIf(minReadySeconds !== init.minReadySeconds, '/spec/minReadySeconds', minReadySeconds);
-    patchIf(progressDeadlineSeconds !== init.progressDeadlineSeconds, '/spec/progressDeadlineSeconds', progressDeadlineSeconds);
+    patchIf(revisionHistoryLimit !== init.revisionHistoryLimit, '/spec/revisionHistoryLimit', toNum(revisionHistoryLimit, 10));
+    patchIf(minReadySeconds !== init.minReadySeconds, '/spec/minReadySeconds', toNum(minReadySeconds, 0));
+    patchIf(progressDeadlineSeconds !== init.progressDeadlineSeconds, '/spec/progressDeadlineSeconds', toNum(progressDeadlineSeconds, 600));
     patchIf(image !== init.image, '/spec/template/spec/containers/0/image', image);
-    patchIf(containerPort !== init.containerPort, '/spec/template/spec/containers/0/ports/0/containerPort', containerPort);
+    patchIf(containerPort !== init.containerPort, '/spec/template/spec/containers/0/ports/0/containerPort', toNum(containerPort, 80));
 
     if (isCanary) {
       patchIf(maxSurge !== init.maxSurge, '/spec/strategy/canary/maxSurge', maxSurge);
@@ -132,8 +151,8 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
       patchIf(activeService !== init.activeService, '/spec/strategy/blueGreen/activeService', activeService);
       patchIf(previewService !== init.previewService, '/spec/strategy/blueGreen/previewService', previewService);
       patchIf(autoPromotionEnabled !== init.autoPromotionEnabled, '/spec/strategy/blueGreen/autoPromotionEnabled', autoPromotionEnabled);
-      patchIf(autoPromotionSeconds !== init.autoPromotionSeconds, '/spec/strategy/blueGreen/autoPromotionSeconds', autoPromotionSeconds);
-      patchIf(scaleDownDelaySeconds !== init.scaleDownDelaySeconds, '/spec/strategy/blueGreen/scaleDownDelaySeconds', scaleDownDelaySeconds);
+      patchIf(autoPromotionSeconds !== init.autoPromotionSeconds, '/spec/strategy/blueGreen/autoPromotionSeconds', toNum(autoPromotionSeconds, 0));
+      patchIf(scaleDownDelaySeconds !== init.scaleDownDelaySeconds, '/spec/strategy/blueGreen/scaleDownDelaySeconds', toNum(scaleDownDelaySeconds, 30));
       patchIf(previewReplicaCount !== init.previewReplicaCount, '/spec/strategy/blueGreen/previewReplicaCount', previewReplicaCount);
     }
 
@@ -141,11 +160,15 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
   };
 
   const handleSave = async () => {
-    setShowConfirm(false); setSaving(true); clearFeedback();
+    setSaving(true); clearFeedback();
     try {
       await k8sPatch({ model: RolloutModel, resource: rollout, data: buildPatches() });
+      setShowConfirm(false);
       setSuccess(true);
-    } catch (e) { setError((e as Error).message); } finally { setSaving(false); }
+    } catch (e) {
+      setShowConfirm(false);
+      setError((e as Error).message);
+    } finally { setSaving(false); }
   };
 
   const addStep = (type: string) => {
@@ -169,113 +192,118 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
   };
 
   return (
-    <>
-      {error && <Alert variant="danger" isInline title={t('Error saving')} actionClose={<Button variant="plain" aria-label={t('Close')} onClick={clearFeedback}>x</Button>} className="pf-v6-u-mb-md">{error}</Alert>}
-      {success && <Alert variant="success" isInline title={t('Rollout updated')} actionClose={<Button variant="plain" aria-label={t('Close')} onClick={clearFeedback}>x</Button>} className="pf-v6-u-mb-md" />}
-      <Grid hasGutter className="pf-v6-u-mt-md">
-        <GridItem span={6}>
-          <Card><CardTitle>{t('Basics')}</CardTitle><CardBody><Form>
-            <FormGroup label={t('Replicas')} fieldId="replicas">
-              <NumberInput value={replicas} onMinus={() => { setReplicas(Math.max(1, replicas - 1)); clearFeedback(); }} onPlus={() => { setReplicas(replicas + 1); clearFeedback(); }} min={1} />
-            </FormGroup>
-            <FormGroup label={t('Revision History Limit')} fieldId="revisionHistoryLimit">
-              <NumberInput value={revisionHistoryLimit} onMinus={() => { setRevisionHistoryLimit(Math.max(0, revisionHistoryLimit - 1)); clearFeedback(); }} onPlus={() => { setRevisionHistoryLimit(revisionHistoryLimit + 1); clearFeedback(); }} min={0} />
-            </FormGroup>
-            <FormGroup label={t('Min Ready Seconds')} fieldId="minReadySeconds">
-              <NumberInput value={minReadySeconds} onMinus={() => { setMinReadySeconds(Math.max(0, minReadySeconds - 1)); clearFeedback(); }} onPlus={() => { setMinReadySeconds(minReadySeconds + 1); clearFeedback(); }} min={0} />
-            </FormGroup>
-            <FormGroup label={t('Progress Deadline Seconds')} fieldId="progressDeadlineSeconds">
-              <NumberInput value={progressDeadlineSeconds} onMinus={() => { setProgressDeadlineSeconds(Math.max(0, progressDeadlineSeconds - 1)); clearFeedback(); }} onPlus={() => { setProgressDeadlineSeconds(progressDeadlineSeconds + 1); clearFeedback(); }} min={0} />
-            </FormGroup>
-          </Form></CardBody></Card>
-        </GridItem>
+    <div className="pf-v6-u-mt-md">
+      {error && <Alert variant="danger" isInline title={t('Error saving')} actionClose={<AlertActionCloseButton onClose={clearFeedback} />} className="pf-v6-u-mb-md">{error}</Alert>}
+      {success && <Alert variant="success" isInline title={t('Rollout updated')} actionClose={<AlertActionCloseButton onClose={clearFeedback} />} className="pf-v6-u-mb-md" />}
+      <Form isWidthLimited>
+        <FormSection title={t('Basics')} titleElement="h3">
+          <FormGroup label={t('Replicas')} fieldId="replicas">
+            <NumberInput id="replicas" value={replicas} onMinus={() => { setReplicas(Math.max(1, replicas - 1)); clearFeedback(); }} onPlus={() => { setReplicas(replicas + 1); clearFeedback(); }} onChange={(e) => { setReplicas(Number((e.target as HTMLInputElement).value) || 1); clearFeedback(); }} min={1} />
+          </FormGroup>
+          <FormGroup label={t('Image')} isRequired fieldId="image">
+            <TextInput id="image" isRequired validated={imageValid ? 'default' : 'error'} value={image} onChange={(_e, v) => { setImage(v); clearFeedback(); }} />
+            {!imageValid && <FormHelperText><HelperText><HelperTextItem variant="error">{t('Image is required')}</HelperTextItem></HelperText></FormHelperText>}
+          </FormGroup>
+          <FormGroup label={t('Container Port')} fieldId="containerPort">
+            <TextInput id="containerPort" type="number" value={containerPort} onChange={(_e, v) => { setContainerPort(v); clearFeedback(); }} />
+          </FormGroup>
+          <FormGroup label={t('Revision History Limit')} fieldId="revisionHistoryLimit">
+            <TextInput id="revisionHistoryLimit" type="number" value={revisionHistoryLimit} onChange={(_e, v) => { setRevisionHistoryLimit(v); clearFeedback(); }} />
+          </FormGroup>
+          <FormGroup label={t('Min Ready Seconds')} fieldId="minReadySeconds">
+            <TextInput id="minReadySeconds" type="number" value={minReadySeconds} onChange={(_e, v) => { setMinReadySeconds(v); clearFeedback(); }} />
+          </FormGroup>
+          <FormGroup label={t('Progress Deadline Seconds')} fieldId="progressDeadlineSeconds">
+            <TextInput id="progressDeadlineSeconds" type="number" value={progressDeadlineSeconds} onChange={(_e, v) => { setProgressDeadlineSeconds(v); clearFeedback(); }} />
+          </FormGroup>
+        </FormSection>
 
-        <GridItem span={6}>
-          <Card><CardTitle>{t('Strategy')} — {isCanary ? t('Canary') : t('Blue-Green')}</CardTitle><CardBody><Form>
-            {isCanary && (
-              <>
-                <FormGroup label={t('Max Surge')} fieldId="maxSurge">
-                  <TextInput id="maxSurge" value={maxSurge} onChange={(_e, v) => { setMaxSurge(v); clearFeedback(); }} />
-                  <FormHelperText><HelperText><HelperTextItem>e.g. &quot;25%&quot; or &quot;1&quot;</HelperTextItem></HelperText></FormHelperText>
-                </FormGroup>
-                <FormGroup label={t('Max Unavailable')} fieldId="maxUnavailable">
-                  <TextInput id="maxUnavailable" value={maxUnavailable} onChange={(_e, v) => { setMaxUnavailable(v); clearFeedback(); }} />
-                </FormGroup>
-                <FormGroup label={t('Stable Service')} fieldId="stableService">
-                  <TextInput id="stableService" value={stableService} onChange={(_e, v) => { setStableService(v); clearFeedback(); }} />
-                </FormGroup>
-                <FormGroup label={t('Canary Service')} fieldId="canaryService">
-                  <TextInput id="canaryService" value={canaryService} onChange={(_e, v) => { setCanaryService(v); clearFeedback(); }} />
-                </FormGroup>
-                <FormGroup label={t('Canary Steps')} fieldId="steps">
-                  {steps.map((step, i) => {
-                    const key = Object.keys(step)[0];
-                    return (
-                      <div key={i} className="pf-v6-u-display-flex pf-v6-u-align-items-center pf-v6-u-mb-sm">
-                        {key === 'setWeight' ? (
-                          <NumberInput value={step.setWeight as number} onMinus={() => updateStep(i, Math.max(0, (step.setWeight as number) - 5))} onPlus={() => updateStep(i, Math.min(100, (step.setWeight as number) + 5))} min={0} max={100} />
-                        ) : (
-                          <TextInput value={typeof step.pause === 'object' ? ((step.pause as Record<string, string>).duration ?? '') : ''} onChange={(_e, v) => updateStep(i, { duration: v })} aria-label={`pause-${i}`} />
-                        )}
-                        <span className="pf-v6-u-ml-sm pf-v6-u-mr-md pf-v6-u-color-200">{key}</span>
-                        <Button variant="plain" aria-label={t('Remove step')} onClick={() => removeStep(i)}><TrashIcon /></Button>
-                      </div>
-                    );
-                  })}
-                  <Select isOpen={stepTypeOpen} onSelect={(_e, val) => addStep(val as string)} onOpenChange={setStepTypeOpen}
-                    toggle={(ref) => <MenuToggle ref={ref} onClick={() => setStepTypeOpen(!stepTypeOpen)} variant="secondary">{t('Add step')}</MenuToggle>}>
-                    <SelectList>
-                      <SelectOption value="setWeight">{t('Set Weight (%)')}</SelectOption>
-                      <SelectOption value="pause">{t('Pause (seconds)')}</SelectOption>
-                    </SelectList>
-                  </Select>
-                </FormGroup>
-              </>
-            )}
-            {isBlueGreen && (
-              <>
-                <FormGroup label={t('Active Service')} fieldId="activeService">
-                  <TextInput id="activeService" value={activeService} onChange={(_e, v) => { setActiveService(v); clearFeedback(); }} />
-                </FormGroup>
-                <FormGroup label={t('Preview Service')} fieldId="previewService">
-                  <TextInput id="previewService" value={previewService} onChange={(_e, v) => { setPreviewService(v); clearFeedback(); }} />
-                </FormGroup>
-                <FormGroup label={t('Auto Promotion')} fieldId="autoPromotionEnabled">
-                  <Checkbox id="autoPromotionEnabled" isChecked={autoPromotionEnabled} onChange={(_e, v) => { setAutoPromotionEnabled(v); clearFeedback(); }} label={t('Enabled')} />
-                </FormGroup>
-                <FormGroup label={t('Auto Promotion Seconds')} fieldId="autoPromotionSeconds">
-                  <NumberInput value={autoPromotionSeconds} onMinus={() => { setAutoPromotionSeconds(Math.max(0, autoPromotionSeconds - 10)); clearFeedback(); }} onPlus={() => { setAutoPromotionSeconds(autoPromotionSeconds + 10); clearFeedback(); }} min={0} />
-                </FormGroup>
-                <FormGroup label={t('Scale Down Delay Seconds')} fieldId="scaleDownDelaySeconds">
-                  <NumberInput value={scaleDownDelaySeconds} onMinus={() => { setScaleDownDelaySeconds(Math.max(0, scaleDownDelaySeconds - 10)); clearFeedback(); }} onPlus={() => { setScaleDownDelaySeconds(scaleDownDelaySeconds + 10); clearFeedback(); }} min={0} />
-                </FormGroup>
-                <FormGroup label={t('Preview Replica Count')} fieldId="previewReplicaCount">
-                  <NumberInput value={previewReplicaCount} onMinus={() => { setPreviewReplicaCount(Math.max(0, previewReplicaCount - 1)); clearFeedback(); }} onPlus={() => { setPreviewReplicaCount(previewReplicaCount + 1); clearFeedback(); }} min={0} />
-                </FormGroup>
-              </>
-            )}
-          </Form></CardBody></Card>
-        </GridItem>
+        <FormSection title={isCanary ? t('Canary strategy') : t('Blue-Green strategy')} titleElement="h3">
+          <FormGroup fieldId="strategyType">
+            <Label isCompact>{isCanary ? t('Canary') : t('Blue-Green')}</Label>
+          </FormGroup>
+          {isCanary && (
+            <>
+              <FormGroup label={t('Max Surge')} fieldId="maxSurge">
+                <TextInput id="maxSurge" validated={surgeValid ? 'default' : 'error'} value={maxSurge} onChange={(_e, v) => { setMaxSurge(v); clearFeedback(); }} />
+                <FormHelperText><HelperText><HelperTextItem variant={surgeValid ? 'default' : 'error'}>e.g. &quot;25%&quot; or &quot;1&quot;</HelperTextItem></HelperText></FormHelperText>
+              </FormGroup>
+              <FormGroup label={t('Max Unavailable')} fieldId="maxUnavailable">
+                <TextInput id="maxUnavailable" validated={unavailableValid ? 'default' : 'error'} value={maxUnavailable} onChange={(_e, v) => { setMaxUnavailable(v); clearFeedback(); }} />
+                <FormHelperText><HelperText><HelperTextItem variant={unavailableValid ? 'default' : 'error'}>e.g. &quot;25%&quot; or &quot;0&quot;</HelperTextItem></HelperText></FormHelperText>
+              </FormGroup>
+              <FormGroup label={t('Stable Service')} fieldId="stableService">
+                <TextInput id="stableService" value={stableService} onChange={(_e, v) => { setStableService(v); clearFeedback(); }} />
+              </FormGroup>
+              <FormGroup label={t('Canary Service')} fieldId="canaryService">
+                <TextInput id="canaryService" value={canaryService} onChange={(_e, v) => { setCanaryService(v); clearFeedback(); }} />
+              </FormGroup>
+              <FormGroup label={t('Canary Steps')} fieldId="steps">
+                {steps.map((step, i) => {
+                  const stepType = Object.keys(step)[0];
+                  const isPause = stepType === 'pause';
+                  const pauseVal = isPause && typeof step.pause === 'object' ? ((step.pause as Record<string, string>).duration ?? '') : '';
+                  const pauseInvalid = isPause && !DURATION_PATTERN.test(pauseVal);
+                  return (
+                    <div key={`${stepType}-${i}`} className="pf-v6-u-display-flex pf-v6-u-align-items-center pf-v6-u-mb-sm">
+                      <span className="pf-v6-u-font-weight-bold pf-v6-u-mr-sm pf-v6-u-min-width">{i + 1}.</span>
+                      <span className="pf-v6-u-mr-sm pf-v6-u-text-nowrap">{isPause ? t('Pause') : t('Traffic weight')}</span>
+                      {stepType === 'setWeight' ? (
+                        <NumberInput value={step.setWeight as number} onMinus={() => updateStep(i, Math.max(0, (step.setWeight as number) - 5))} onPlus={() => updateStep(i, Math.min(100, (step.setWeight as number) + 5))} onChange={(e) => updateStep(i, Number((e.target as HTMLInputElement).value) || 0)} min={0} max={100} />
+                      ) : (
+                        <TextInput value={pauseVal} validated={pauseInvalid ? 'error' : 'default'} onChange={(_e, v) => updateStep(i, { duration: v })} aria-label={`${t('Pause')} ${i + 1}`} placeholder="e.g. 30s" />
+                      )}
+                      <Tooltip content={t('Remove step')}>
+                        <Button variant="plain" aria-label={t('Remove step')} onClick={() => removeStep(i)} className="pf-v6-u-ml-sm"><TrashIcon /></Button>
+                      </Tooltip>
+                    </div>
+                  );
+                })}
+                <Select isOpen={stepTypeOpen} onSelect={(_e, val) => addStep(val as string)} onOpenChange={setStepTypeOpen} aria-label={t('Add step')}
+                  toggle={(ref) => <MenuToggle ref={ref} onClick={() => setStepTypeOpen(!stepTypeOpen)} variant="secondary">{t('Add step')}</MenuToggle>}>
+                  <SelectList>
+                    <SelectOption value="setWeight">{t('Traffic weight (%)')}</SelectOption>
+                    <SelectOption value="pause">{t('Pause duration')}</SelectOption>
+                  </SelectList>
+                </Select>
+              </FormGroup>
+            </>
+          )}
+          {isBlueGreen && (
+            <>
+              <FormGroup label={t('Active Service')} fieldId="activeService">
+                <TextInput id="activeService" value={activeService} onChange={(_e, v) => { setActiveService(v); clearFeedback(); }} />
+              </FormGroup>
+              <FormGroup label={t('Preview Service')} fieldId="previewService">
+                <TextInput id="previewService" value={previewService} onChange={(_e, v) => { setPreviewService(v); clearFeedback(); }} />
+              </FormGroup>
+              <FormGroup label={t('Auto Promotion')} fieldId="autoPromotionEnabled">
+                <Checkbox id="autoPromotionEnabled" isChecked={autoPromotionEnabled} onChange={(_e, v) => { setAutoPromotionEnabled(v); clearFeedback(); }} label={t('Enabled')} />
+              </FormGroup>
+              <FormGroup label={t('Auto Promotion Seconds')} fieldId="autoPromotionSeconds">
+                <TextInput id="autoPromotionSeconds" type="number" value={autoPromotionSeconds} onChange={(_e, v) => { setAutoPromotionSeconds(v); clearFeedback(); }} />
+              </FormGroup>
+              <FormGroup label={t('Scale Down Delay Seconds')} fieldId="scaleDownDelaySeconds">
+                <TextInput id="scaleDownDelaySeconds" type="number" value={scaleDownDelaySeconds} onChange={(_e, v) => { setScaleDownDelaySeconds(v); clearFeedback(); }} />
+              </FormGroup>
+              <FormGroup label={t('Preview Replica Count')} fieldId="previewReplicaCount">
+                <NumberInput id="previewReplicaCount" value={previewReplicaCount} onMinus={() => { setPreviewReplicaCount(Math.max(0, previewReplicaCount - 1)); clearFeedback(); }} onPlus={() => { setPreviewReplicaCount(previewReplicaCount + 1); clearFeedback(); }} onChange={(e) => { setPreviewReplicaCount(Number((e.target as HTMLInputElement).value) || 0); clearFeedback(); }} min={0} />
+              </FormGroup>
+            </>
+          )}
+        </FormSection>
 
-        <GridItem span={12}>
-          <Card><CardTitle>{t('Container')}</CardTitle><CardBody><Form isHorizontal>
-            <FormGroup label={t('Image')} isRequired fieldId="image">
-              <TextInput id="image" isRequired validated={imageValid ? 'default' : 'error'} value={image} onChange={(_e, v) => { setImage(v); clearFeedback(); }} />
-              {!imageValid && <FormHelperText><HelperText><HelperTextItem variant="error">{t('Image is required')}</HelperTextItem></HelperText></FormHelperText>}
-            </FormGroup>
-            <FormGroup label={t('Container Port')} fieldId="containerPort">
-              <NumberInput value={containerPort} onMinus={() => { setContainerPort(Math.max(1, containerPort - 1)); clearFeedback(); }} onPlus={() => { setContainerPort(containerPort + 1); clearFeedback(); }} min={1} max={65535} />
-            </FormGroup>
-          </Form></CardBody></Card>
-        </GridItem>
-      </Grid>
-      <ActionGroup className="pf-v6-u-mt-md">
-        <Button variant="primary" onClick={() => setShowConfirm(true)} isDisabled={saving || !formValid || !isDirty}>{t('Save')}</Button>
-        <Button variant="link" onClick={resetForm} isDisabled={!isDirty}>{t('Cancel')}</Button>
-      </ActionGroup>
+        <ActionGroup>
+          <Button variant="primary" onClick={() => setShowConfirm(true)} isDisabled={saving || !formValid || !isDirty} isLoading={saving}>{t('Save')}</Button>
+          <Button variant="link" onClick={resetForm} isDisabled={!isDirty}>{t('Revert')}</Button>
+        </ActionGroup>
+      </Form>
       <ConfirmModal title={t('Confirm Save')} isOpen={showConfirm} onConfirm={handleSave} onCancel={() => setShowConfirm(false)} isLoading={saving} confirmLabel={t('Save')}>
-        {t('Save changes to {{name}}?', { name: rollout.metadata.name })}
+        <p>{t('Save changes to {{name}}?', { name: rollout.metadata.name })}</p>
+        <p className="pf-v6-u-mt-sm pf-v6-u-color-200">{t('Modifying a live rollout may trigger a new rollout cycle and affect traffic.')}</p>
       </ConfirmModal>
-    </>
+    </div>
   );
 };
+
+export default RolloutEditTab;

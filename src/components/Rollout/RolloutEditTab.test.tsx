@@ -97,10 +97,10 @@ describe('RolloutEditTab', () => {
     expect(screen.getByText('Save').closest('button')).not.toBeDisabled();
   });
 
-  it('Cancel resets form', () => {
+  it('Revert resets form', () => {
     render(<RolloutEditTab rollout={canaryRollout} />);
     fireEvent.change(screen.getByDisplayValue('nginx:latest'), { target: { value: 'changed' } });
-    fireEvent.click(screen.getByText('Cancel'));
+    fireEvent.click(screen.getByText('Revert'));
     expect(screen.getByDisplayValue('nginx:latest')).toBeInTheDocument();
   });
 

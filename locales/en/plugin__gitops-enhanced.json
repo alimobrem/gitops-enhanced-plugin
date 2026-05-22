@@ -244,5 +244,13 @@
   "Repo Pending Requests": "Repo Pending Requests",
   "Reconciliations (1h)": "Reconciliations (1h)",
   "Metrics unavailable": "Metrics unavailable",
-  "Are you sure you want to abort the rollout {{name}}?": "Are you sure you want to abort the rollout {{name}}?"
+  "Are you sure you want to abort the rollout {{name}}?": "Are you sure you want to abort the rollout {{name}}?",
+  "Canary strategy": "Canary strategy",
+  "Blue-Green strategy": "Blue-Green strategy",
+  "Traffic weight": "Traffic weight",
+  "Traffic weight (%)": "Traffic weight (%)",
+  "Pause duration": "Pause duration",
+  "Pause": "Pause",
+  "Revert": "Revert",
+  "Modifying a live rollout may trigger a new rollout cycle and affect traffic.": "Modifying a live rollout may trigger a new rollout cycle and affect traffic."
 }
