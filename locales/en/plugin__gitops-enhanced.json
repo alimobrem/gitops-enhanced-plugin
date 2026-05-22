@@ -243,5 +243,6 @@
   "Cluster Connectivity": "Cluster Connectivity",
   "Repo Pending Requests": "Repo Pending Requests",
   "Reconciliations (1h)": "Reconciliations (1h)",
-  "Metrics unavailable": "Metrics unavailable"
+  "Metrics unavailable": "Metrics unavailable",
+  "Are you sure you want to abort the rollout {{name}}?": "Are you sure you want to abort the rollout {{name}}?"
 }

@@ -100,9 +100,9 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
 
     try {
       const followParam = follow ? '&follow=true' : '';
-      const url = `/api/kubernetes/api/v1/namespaces/${destNs}/pods/${pod}/log?container=${container}&tailLines=500${followParam}`;
+      const url = `/api/kubernetes/api/v1/namespaces/${encodeURIComponent(destNs)}/pods/${encodeURIComponent(pod)}/log?container=${encodeURIComponent(container)}&tailLines=500${followParam}`;
       const text = await consoleFetchText(url);
-      setLogs(text || '(no output from container)');
+      setLogs((text || '(no output from container)').replace(/\x1b\[[0-9;]*m/g, ''));
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
         setLogs(`Error fetching logs: ${(e as Error).message}`);

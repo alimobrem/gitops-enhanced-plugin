@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { useK8sWatchResource, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
+  Alert,
   PageSection,
   Title,
   Bullseye,
@@ -23,19 +24,20 @@ export const RepositoryListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance } = useCurrentInstance();
 
-  const [secrets, secretsLoaded] = useK8sWatchResource<SecretResource[]>({
+  const [secrets, secretsLoaded, secretsError] = useK8sWatchResource<SecretResource[]>({
     groupVersionKind: { group: '', version: 'v1', kind: 'Secret' },
     namespace: instance.namespace,
     isList: true,
   });
 
-  const [apps, appsLoaded] = useK8sWatchResource<ApplicationResource[]>({
+  const [apps, appsLoaded, appsError] = useK8sWatchResource<ApplicationResource[]>({
     groupVersionKind: ApplicationGroupVersionKind,
     isList: true,
     namespace: instance.namespace,
   });
 
   const loaded = secretsLoaded && appsLoaded;
+  const watchError = secretsError || appsError;
 
   const repoSecrets = (secrets ?? []).filter(
     (s) => s.metadata.labels?.['argocd.argoproj.io/secret-type'] === 'repository',
@@ -88,7 +90,8 @@ export const RepositoryListPage: FC = () => {
         <Title headingLevel="h1" className="pf-v6-u-mb-md">
           {t('Repositories')}
         </Title>
-        {!loaded && <Bullseye><Spinner /></Bullseye>}
+        {watchError && <Alert variant="danger" isInline title={t('Error loading resources')} className="pf-v6-u-mb-md">{(watchError as Error).message}</Alert>}
+        {!loaded && !watchError && <Bullseye><Spinner /></Bullseye>}
         {loaded && (
           <Table aria-label={t('Repositories')}>
             <Thead>

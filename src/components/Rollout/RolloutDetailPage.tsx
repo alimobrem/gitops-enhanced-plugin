@@ -12,6 +12,7 @@ import {
 import { RolloutGroupVersionKind, RolloutModel } from '../../models';
 import type { RolloutResource } from '../../types';
 import { RolloutEditTab } from './RolloutEditTab';
+import { ConfirmModal } from '../shared/ConfirmModal';
 
 
 interface DetailPageProps {
@@ -28,6 +29,7 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
   const [activeTab, setActiveTab] = useState(0);
   const [actionsOpen, setActionsOpen] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [showAbortConfirm, setShowAbortConfirm] = useState(false);
 
   const [rollout, loaded, error] = useK8sWatchResource<RolloutResource>({
     groupVersionKind: RolloutGroupVersionKind,
@@ -67,7 +69,7 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
               <DropdownList>
                 {isPaused && <DropdownItem key="promote" onClick={() => runAction(t('Promote'), 'rollout.argoproj.io/promote', 'true')}>{t('Promote')}</DropdownItem>}
                 <DropdownItem key="restart" onClick={() => runAction(t('Restart'), 'rollout.argoproj.io/restart', new Date().toISOString())}>{t('Restart')}</DropdownItem>
-                <DropdownItem key="abort" isDanger onClick={() => runAction(t('Abort'), 'rollout.argoproj.io/abort', 'true')}>{t('Abort')}</DropdownItem>
+                <DropdownItem key="abort" isDanger onClick={() => setShowAbortConfirm(true)}>{t('Abort')}</DropdownItem>
                 <DropdownItem key="edit-yaml" component="a" href={`/k8s/ns/${ns}/argoproj.io~v1alpha1~Rollout/${name}/yaml`}>{t('Edit YAML')}</DropdownItem>
               </DropdownList>
             </Dropdown>
@@ -220,6 +222,9 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
           </Tab>
         </Tabs>
       </PageSection>
+      <ConfirmModal title={t('Confirm')} isOpen={showAbortConfirm} onConfirm={() => { setShowAbortConfirm(false); runAction(t('Abort'), 'rollout.argoproj.io/abort', 'true'); }} onCancel={() => setShowAbortConfirm(false)} confirmLabel={t('Abort')}>
+        {t('Are you sure you want to abort the rollout {{name}}?', { name: rollout.metadata.name })}
+      </ConfirmModal>
     </React.Fragment>
   );
 };

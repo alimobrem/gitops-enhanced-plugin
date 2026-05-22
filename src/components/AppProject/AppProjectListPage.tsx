@@ -9,6 +9,7 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   PageSection,
+  Alert,
   Bullseye,
   Spinner,
   EmptyState,
@@ -27,7 +28,7 @@ import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 export const AppProjectListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance } = useCurrentInstance();
-  const [projects, loaded] = useK8sWatchResource<AppProjectResource[]>({
+  const [projects, loaded, watchError] = useK8sWatchResource<AppProjectResource[]>({
     groupVersionKind: AppProjectGroupVersionKind,
     isList: true,
     namespace: instance.namespace,
@@ -42,7 +43,8 @@ export const AppProjectListPage: FC = () => {
         <Button variant="primary" component="a" href="/gitops/create-project">{t('Create AppProject')}</Button>
       </ListPageHeader>
       <PageSection>
-        {!loaded && <Bullseye><Spinner /></Bullseye>}
+        {watchError && <Alert variant="danger" isInline title={t('Error loading resources')} className="pf-v6-u-mb-md">{(watchError as Error).message}</Alert>}
+        {!loaded && !watchError && <Bullseye><Spinner /></Bullseye>}
         {loaded && items.length === 0 && (
           <EmptyState><EmptyStateBody>{t('No AppProjects found.')}</EmptyStateBody></EmptyState>
         )}

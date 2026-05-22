@@ -6,6 +6,7 @@ import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 import {
   PageSection,
   Title,
+  Alert,
   Bullseye,
   Spinner,
   EmptyState,
@@ -23,7 +24,7 @@ export const ClusterListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance } = useCurrentInstance();
 
-  const [secrets, loaded] = useK8sWatchResource<SecretResource[]>({
+  const [secrets, loaded, watchError] = useK8sWatchResource<SecretResource[]>({
     groupVersionKind: { group: '', version: 'v1', kind: 'Secret' },
     namespace: instance.namespace,
     isList: true,
@@ -45,7 +46,8 @@ export const ClusterListPage: FC = () => {
         <Title headingLevel="h1" className="pf-v6-u-mb-md">
           {t('Clusters')}
         </Title>
-        {!loaded && <Bullseye><Spinner /></Bullseye>}
+        {watchError && <Alert variant="danger" isInline title={t('Error loading resources')} className="pf-v6-u-mb-md">{(watchError as Error).message}</Alert>}
+        {!loaded && !watchError && <Bullseye><Spinner /></Bullseye>}
         {loaded && clusterSecrets.length === 0 && (
           <EmptyState>
             <EmptyStateBody>

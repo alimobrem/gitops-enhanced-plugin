@@ -13,7 +13,7 @@ OpenShift Console dynamic plugin for ArgoCD/GitOps management.
 
 ```bash
 npm install          # install deps
-npm test             # run 49 tests
+npm test             # run tests (130+)
 npm run build        # production webpack build
 make ship            # build image on cluster, helm deploy, rollout restart
 ```
