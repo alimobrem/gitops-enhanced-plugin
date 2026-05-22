@@ -1,4 +1,4 @@
-interface PatchOp {
+export interface PatchOp {
   op: 'add' | 'replace' | 'remove';
   path: string;
   value: unknown;

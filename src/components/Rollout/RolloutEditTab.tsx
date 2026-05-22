@@ -11,9 +11,7 @@ import { TrashIcon } from '@patternfly/react-icons';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { RolloutModel } from '../../models';
 import type { RolloutResource } from '../../types';
-import { safePatch } from '../../utils/patch';
-
-type PatchOp = { op: string; path: string; value: unknown };
+import { safePatch, type PatchOp } from '../../utils/patch';
 
 export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
@@ -72,7 +70,11 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
   const imageValid = image.trim().length > 0;
   const formValid = imageValid;
 
-  const isDirty = replicas !== init.replicas
+  const stepsKey = useMemo(() => JSON.stringify(steps), [steps]);
+  const initStepsKey = useMemo(() => JSON.stringify(init.steps), [init.steps]);
+
+  const isDirty = useMemo(() =>
+    replicas !== init.replicas
     || revisionHistoryLimit !== init.revisionHistoryLimit
     || minReadySeconds !== init.minReadySeconds
     || progressDeadlineSeconds !== init.progressDeadlineSeconds
@@ -80,10 +82,14 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
     || containerPort !== init.containerPort
     || (isCanary && (maxSurge !== init.maxSurge || maxUnavailable !== init.maxUnavailable
       || stableService !== init.stableService || canaryService !== init.canaryService
-      || JSON.stringify(steps) !== JSON.stringify(init.steps)))
+      || stepsKey !== initStepsKey))
     || (isBlueGreen && (activeService !== init.activeService || previewService !== init.previewService
       || autoPromotionEnabled !== init.autoPromotionEnabled || autoPromotionSeconds !== init.autoPromotionSeconds
-      || scaleDownDelaySeconds !== init.scaleDownDelaySeconds || previewReplicaCount !== init.previewReplicaCount));
+      || scaleDownDelaySeconds !== init.scaleDownDelaySeconds || previewReplicaCount !== init.previewReplicaCount)),
+  [replicas, revisionHistoryLimit, minReadySeconds, progressDeadlineSeconds, image, containerPort,
+    maxSurge, maxUnavailable, stableService, canaryService, stepsKey, initStepsKey,
+    activeService, previewService, autoPromotionEnabled, autoPromotionSeconds,
+    scaleDownDelaySeconds, previewReplicaCount, init, isCanary, isBlueGreen]);
 
   const clearFeedback = () => { setError(''); setSuccess(false); };
 
@@ -102,30 +108,32 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
 
   const buildPatches = (): PatchOp[] => {
     const patches: PatchOp[] = [];
-    const add = (path: string, value: unknown) => patches.push(safePatch(rollout, path, value));
+    const patchIf = (dirty: boolean, path: string, value: unknown) => {
+      if (dirty) patches.push(safePatch(rollout, path, value));
+    };
 
-    add('/spec/replicas', replicas);
-    add('/spec/revisionHistoryLimit', revisionHistoryLimit);
-    add('/spec/minReadySeconds', minReadySeconds);
-    add('/spec/progressDeadlineSeconds', progressDeadlineSeconds);
-    add('/spec/template/spec/containers/0/image', image);
-    add('/spec/template/spec/containers/0/ports/0/containerPort', containerPort);
+    patchIf(replicas !== init.replicas, '/spec/replicas', replicas);
+    patchIf(revisionHistoryLimit !== init.revisionHistoryLimit, '/spec/revisionHistoryLimit', revisionHistoryLimit);
+    patchIf(minReadySeconds !== init.minReadySeconds, '/spec/minReadySeconds', minReadySeconds);
+    patchIf(progressDeadlineSeconds !== init.progressDeadlineSeconds, '/spec/progressDeadlineSeconds', progressDeadlineSeconds);
+    patchIf(image !== init.image, '/spec/template/spec/containers/0/image', image);
+    patchIf(containerPort !== init.containerPort, '/spec/template/spec/containers/0/ports/0/containerPort', containerPort);
 
     if (isCanary) {
-      add('/spec/strategy/canary/maxSurge', maxSurge);
-      add('/spec/strategy/canary/maxUnavailable', maxUnavailable);
-      if (stableService) add('/spec/strategy/canary/stableService', stableService);
-      if (canaryService) add('/spec/strategy/canary/canaryService', canaryService);
-      add('/spec/strategy/canary/steps', steps);
+      patchIf(maxSurge !== init.maxSurge, '/spec/strategy/canary/maxSurge', maxSurge);
+      patchIf(maxUnavailable !== init.maxUnavailable, '/spec/strategy/canary/maxUnavailable', maxUnavailable);
+      patchIf(stableService !== init.stableService, '/spec/strategy/canary/stableService', stableService);
+      patchIf(canaryService !== init.canaryService, '/spec/strategy/canary/canaryService', canaryService);
+      patchIf(stepsKey !== initStepsKey, '/spec/strategy/canary/steps', steps);
     }
 
     if (isBlueGreen) {
-      add('/spec/strategy/blueGreen/activeService', activeService);
-      if (previewService) add('/spec/strategy/blueGreen/previewService', previewService);
-      add('/spec/strategy/blueGreen/autoPromotionEnabled', autoPromotionEnabled);
-      add('/spec/strategy/blueGreen/autoPromotionSeconds', autoPromotionSeconds);
-      add('/spec/strategy/blueGreen/scaleDownDelaySeconds', scaleDownDelaySeconds);
-      if (previewReplicaCount > 0) add('/spec/strategy/blueGreen/previewReplicaCount', previewReplicaCount);
+      patchIf(activeService !== init.activeService, '/spec/strategy/blueGreen/activeService', activeService);
+      patchIf(previewService !== init.previewService, '/spec/strategy/blueGreen/previewService', previewService);
+      patchIf(autoPromotionEnabled !== init.autoPromotionEnabled, '/spec/strategy/blueGreen/autoPromotionEnabled', autoPromotionEnabled);
+      patchIf(autoPromotionSeconds !== init.autoPromotionSeconds, '/spec/strategy/blueGreen/autoPromotionSeconds', autoPromotionSeconds);
+      patchIf(scaleDownDelaySeconds !== init.scaleDownDelaySeconds, '/spec/strategy/blueGreen/scaleDownDelaySeconds', scaleDownDelaySeconds);
+      patchIf(previewReplicaCount !== init.previewReplicaCount, '/spec/strategy/blueGreen/previewReplicaCount', previewReplicaCount);
     }
 
     return patches;
