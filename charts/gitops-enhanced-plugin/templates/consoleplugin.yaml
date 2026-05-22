@@ -17,6 +17,7 @@ spec:
       port: {{ .Values.plugin.port }}
       basePath: "/"
   proxy:
+    {{- if .Values.argocd.instances }}
     {{- range .Values.argocd.instances }}
     - alias: {{ .alias }}
       authorization: UserToken
@@ -26,4 +27,14 @@ spec:
           name: {{ .serviceName }}
           namespace: {{ .namespace }}
           port: {{ .port }}
+    {{- end }}
+    {{- else }}
+    - alias: argocd
+      authorization: UserToken
+      endpoint:
+        type: Service
+        service:
+          name: {{ .Values.argocd.serviceName | default "openshift-gitops-server" }}
+          namespace: {{ .Values.argocd.namespace | default "openshift-gitops" }}
+          port: {{ .Values.argocd.port | default 443 }}
     {{- end }}
