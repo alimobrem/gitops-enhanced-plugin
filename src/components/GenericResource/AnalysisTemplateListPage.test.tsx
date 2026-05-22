@@ -1,0 +1,31 @@
+import React from 'react';
+import { render, screen } from '@testing-library/react';
+
+jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  useK8sWatchResource: () => [[], true, null],
+  DocumentTitle: ({ children }: { children: string }) => <title>{children}</title>,
+  ListPageHeader: ({ title, children }: { title: string; children?: React.ReactNode }) => <div><h1>{title}</h1>{children}</div>,
+  ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
+  k8sPatch: jest.fn(),
+  k8sCreate: jest.fn(),
+  k8sDelete: jest.fn(),
+}));
+jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
+jest.mock('react-router', () => ({ useParams: () => ({ name: 'test', ns: 'default' }) }));
+jest.mock('react-router-dom', () => ({ useHistory: () => ({ push: jest.fn() }) }));
+jest.mock('../../hooks/useArgoCDInstances', () => ({
+  useCurrentInstance: () => ({ instance: { name: 'test', namespace: 'default' }, instances: [], setInstance: jest.fn() }),
+}));
+
+import { AnalysisTemplateListPage } from './AnalysisTemplateListPage';
+
+describe('AnalysisTemplateListPage', () => {
+  it('renders without crashing', () => {
+    render(<AnalysisTemplateListPage />);
+  });
+
+  it('renders the page title', () => {
+    render(<AnalysisTemplateListPage />);
+    expect(screen.getByRole('heading', { name: 'AnalysisTemplates' })).toBeInTheDocument();
+  });
+});

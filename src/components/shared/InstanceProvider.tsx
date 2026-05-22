@@ -27,7 +27,7 @@ export const InstanceProvider: FC<PropsWithChildren> = ({ children }) => {
     if (!stillExists) {
       setInstanceState(instances[0]);
     }
-  }, [instances, loaded]);
+  }, [instances, loaded, instance.namespace, instance.name]);
 
   const setInstance = (inst: ArgoCDInstance) => {
     setInstanceState(inst);

@@ -38,7 +38,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const destNs = app.spec.destination.namespace ?? 'default';
 
-  const [pods, , podsError] = useK8sWatchResource<PodResource[]>({
+  const [pods, , _podsError] = useK8sWatchResource<PodResource[]>({
     groupVersionKind: { group: '', version: 'v1', kind: 'Pod' },
     namespace: destNs,
     isList: true,
@@ -110,6 +110,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
     }
   };
 
+  /* eslint-disable react-hooks/exhaustive-deps */
   useEffect(() => {
     if (appPods.length > 0 && !selectedPod) {
       const pod = appPods[0].metadata.name;
@@ -125,6 +126,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
     doFetchLogs(selectedPod, selectedContainer, following);
     return () => abortRef.current?.abort();
   }, [selectedPod, selectedContainer, following, destNs]);
+  /* eslint-enable react-hooks/exhaustive-deps */
 
   if (appPods.length === 0) {
     return (

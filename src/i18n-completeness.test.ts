@@ -45,8 +45,7 @@ describe('i18n completeness', () => {
     }
 
     if (missing.length > 0) {
-      const report = missing.map((m) => `  ${m.file}: "${m.key}"`).join('\n');
-      expect(missing).toEqual([]);
+      fail(`Missing i18n keys:\n${missing.map((m) => `  ${m.file}: "${m.key}"`).join('\n')}`);
     }
   });
 });

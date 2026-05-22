@@ -18,6 +18,8 @@ export const DismissibleAlert: FC<DismissibleAlertProps> = ({ variant, title, ch
       title={title}
       actionClose={<button onClick={() => setDismissed(true)} aria-label="Close">x</button>}
       className="pf-v6-u-mb-md"
-    />
+    >
+      {children}
+    </Alert>
   );
 };

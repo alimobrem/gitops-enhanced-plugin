@@ -8,6 +8,20 @@ const config: Config = {
   },
   setupFilesAfterEnv: ['<rootDir>/setup-tests.ts'],
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
+  collectCoverageFrom: [
+    'src/**/*.{ts,tsx}',
+    '!src/**/*.test.{ts,tsx}',
+    '!src/test-utils/**',
+    '!src/console-sdk-shims.d.ts',
+  ],
+  coverageThreshold: {
+    global: {
+      statements: 50,
+      branches: 30,
+      functions: 40,
+      lines: 50,
+    },
+  },
 };
 
 export default config;

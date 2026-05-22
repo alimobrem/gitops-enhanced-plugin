@@ -5,7 +5,7 @@ import { k8sCreate, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk'
 import { useTranslation } from 'react-i18next';
 import {
   PageSection, Title, Wizard, WizardStep, Form, FormGroup, TextInput,
-  Alert, Button, Checkbox, FormSelect, FormSelectOption,
+  Alert, Checkbox, FormSelect, FormSelectOption,
 } from '@patternfly/react-core';
 import { ApplicationSetModel } from '../../models';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';

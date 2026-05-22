@@ -1,6 +1,5 @@
 import React from 'react';
 import { useState, type FC } from 'react';
-import { useTranslation } from 'react-i18next';
 import {
   Select,
   SelectOption,
@@ -14,7 +13,6 @@ import { ServerIcon } from '@patternfly/react-icons';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 
 export const InstancePicker: FC = () => {
-  const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance, instances, setInstance } = useCurrentInstance();
   const [isOpen, setIsOpen] = useState(false);
 

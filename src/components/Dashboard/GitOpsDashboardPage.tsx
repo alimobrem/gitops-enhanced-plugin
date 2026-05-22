@@ -175,6 +175,7 @@ export const GitOpsDashboardPage: FC = () => {
       })
       .slice(0, 10);
     return { total: t, synced: s, outOfSync: o, unknown: t - s - o, healthy: h, degraded: d, progressing: p, recentApps: recent };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appsKey]);
 
   const syncedPct = total > 0 ? Math.round((synced / total) * 100) : 0;

@@ -20,7 +20,6 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AppProjectGroupVersionKind } from '../../models';
 import type { AppProjectResource } from '../../types';
-import { CreateResourceButton } from '../shared/CreateResourceButton';
 import { InstanceProvider } from '../shared/InstanceProvider';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 

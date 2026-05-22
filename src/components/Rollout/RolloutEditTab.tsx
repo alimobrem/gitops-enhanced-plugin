@@ -39,6 +39,7 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
     autoPromotionSeconds: blueGreen?.autoPromotionSeconds ?? 0,
     scaleDownDelaySeconds: blueGreen?.scaleDownDelaySeconds ?? 30,
     previewReplicaCount: blueGreen?.previewReplicaCount ?? 0,
+  // eslint-disable-next-line react-hooks/exhaustive-deps
   }), [rollout.metadata.uid]);
 
   const [replicas, setReplicas] = useState(init.replicas);

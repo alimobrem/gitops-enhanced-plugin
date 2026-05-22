@@ -5,7 +5,7 @@ import { useK8sWatchResource, DocumentTitle } from '@openshift-console/dynamic-p
 import { useTranslation } from 'react-i18next';
 import {
   PageSection, Title, Bullseye, Spinner, Alert, Tabs, Tab, TabTitleText,
-  Card, CardTitle, CardBody, Label, EmptyState, EmptyStateBody,
+  Card, CardBody, Label, EmptyState, EmptyStateBody,
   DescriptionList, DescriptionListGroup, DescriptionListTerm, DescriptionListDescription,
   Flex, FlexItem, Dropdown, DropdownList, DropdownItem, MenuToggle,
 } from '@patternfly/react-core';
