@@ -1,7 +1,7 @@
 import {
   fetchResourceTree,
   fetchManagedResources,
-  ARGOCD_PROXY_BASE,
+  getProxyBase,
 } from './argocd-api';
 
 const mockConsoleFetch = jest.fn();
@@ -15,6 +15,14 @@ describe('argocd-api', () => {
     mockConsoleFetch.mockReset();
   });
 
+  it('getProxyBase returns default alias', () => {
+    expect(getProxyBase()).toBe('/api/proxy/plugin/gitops-enhanced/argocd');
+  });
+
+  it('getProxyBase returns custom alias', () => {
+    expect(getProxyBase('team-b-argocd')).toBe('/api/proxy/plugin/gitops-enhanced/team-b-argocd');
+  });
+
   it('fetchResourceTree calls correct proxy URL', async () => {
     const tree = { nodes: [], orphanedNodes: [] };
     mockConsoleFetch.mockResolvedValue({
@@ -25,10 +33,24 @@ describe('argocd-api', () => {
     const result = await fetchResourceTree('openshift-gitops', 'my-app');
 
     expect(mockConsoleFetch).toHaveBeenCalledWith(
-      `${ARGOCD_PROXY_BASE}/api/v1/applications/my-app/resource-tree`,
+      `${getProxyBase()}/api/v1/applications/my-app/resource-tree`,
       expect.objectContaining({ method: 'GET' }),
     );
     expect(result).toEqual(tree);
+  });
+
+  it('fetchResourceTree uses custom alias', async () => {
+    mockConsoleFetch.mockResolvedValue({
+      ok: true,
+      json: () => Promise.resolve({ nodes: [] }),
+    });
+
+    await fetchResourceTree('ns', 'app', 'custom-alias');
+
+    expect(mockConsoleFetch).toHaveBeenCalledWith(
+      `${getProxyBase('custom-alias')}/api/v1/applications/app/resource-tree`,
+      expect.objectContaining({ method: 'GET' }),
+    );
   });
 
   it('fetchManagedResources calls correct proxy URL', async () => {
@@ -41,7 +63,7 @@ describe('argocd-api', () => {
     const result = await fetchManagedResources('openshift-gitops', 'my-app');
 
     expect(mockConsoleFetch).toHaveBeenCalledWith(
-      `${ARGOCD_PROXY_BASE}/api/v1/applications/my-app/managed-resources`,
+      `${getProxyBase()}/api/v1/applications/my-app/managed-resources`,
       expect.objectContaining({ method: 'GET' }),
     );
     expect(result).toEqual(resources);

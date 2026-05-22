@@ -12,6 +12,10 @@ plugin:
       memory: 64Mi
 
 argocd:
-  namespace: openshift-gitops
-  serviceName: openshift-gitops-server
-  port: 443
+  # Multi-instance: define each ArgoCD instance as a proxy alias.
+  # The alias is used in API calls: /api/proxy/plugin/gitops-enhanced/<alias>
+  instances:
+    - alias: argocd
+      namespace: openshift-gitops
+      serviceName: openshift-gitops-server
+      port: 443

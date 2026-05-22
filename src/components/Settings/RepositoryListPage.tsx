@@ -32,6 +32,7 @@ export const RepositoryListPage: FC = () => {
   const [apps, appsLoaded] = useK8sWatchResource<ApplicationResource[]>({
     groupVersionKind: ApplicationGroupVersionKind,
     isList: true,
+    namespace: instance.namespace,
   });
 
   const loaded = secretsLoaded && appsLoaded;

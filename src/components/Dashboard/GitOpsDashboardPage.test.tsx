@@ -7,6 +7,8 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   ], true, null],
   DocumentTitle: ({ children }: { children: string }) => <title>{children}</title>,
   ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
+  usePrometheusPoll: () => [undefined, true, null],
+  PrometheusEndpoint: { QUERY: 'api/v1/query' },
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
 jest.mock('../../hooks/useArgoCDInstances', () => ({
@@ -31,5 +33,18 @@ describe('GitOpsDashboardPage', () => {
   it('renders recent applications', () => {
     render(<GitOpsDashboardPage />);
     expect(screen.getByText('app1')).toBeInTheDocument();
+  });
+
+  it('renders metrics section', () => {
+    render(<GitOpsDashboardPage />);
+    expect(screen.getByText('Metrics')).toBeInTheDocument();
+    expect(screen.getByText('Sync Success Rate')).toBeInTheDocument();
+    expect(screen.getByText('Failed Syncs (24h)')).toBeInTheDocument();
+    expect(screen.getByText('Cluster Connectivity')).toBeInTheDocument();
+  });
+
+  it('shows metrics unavailable when Prometheus returns no data', () => {
+    render(<GitOpsDashboardPage />);
+    expect(screen.getAllByText('Metrics unavailable').length).toBeGreaterThanOrEqual(1);
   });
 });

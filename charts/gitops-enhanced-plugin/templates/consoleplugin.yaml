@@ -17,11 +17,13 @@ spec:
       port: {{ .Values.plugin.port }}
       basePath: "/"
   proxy:
-    - alias: argocd
+    {{- range .Values.argocd.instances }}
+    - alias: {{ .alias }}
       authorization: UserToken
       endpoint:
         type: Service
         service:
-          name: {{ .Values.argocd.serviceName }}
-          namespace: {{ .Values.argocd.namespace }}
-          port: {{ .Values.argocd.port }}
+          name: {{ .serviceName }}
+          namespace: {{ .namespace }}
+          port: {{ .port }}
+    {{- end }}

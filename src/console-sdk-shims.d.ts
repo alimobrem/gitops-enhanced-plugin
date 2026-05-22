@@ -59,4 +59,34 @@ declare module '@openshift-console/dynamic-plugin-sdk' {
     label: string;
     labelPlural: string;
   }
+
+  export enum PrometheusEndpoint {
+    LABEL = 'api/v1/label',
+    QUERY = 'api/v1/query',
+    QUERY_RANGE = 'api/v1/query_range',
+    RULES = 'api/v1/rules',
+    TARGETS = 'api/v1/targets',
+  }
+
+  export interface PrometheusData {
+    resultType: string;
+    result: Array<{
+      metric: Record<string, string>;
+      value?: [number, string];
+      values?: Array<[number, string]>;
+    }>;
+  }
+
+  export interface PrometheusResponse {
+    status: string;
+    data: PrometheusData;
+  }
+
+  export const usePrometheusPoll: (props: {
+    endpoint: PrometheusEndpoint;
+    query?: string;
+    delay?: number;
+    namespace?: string;
+    timespan?: number;
+  }) => [PrometheusResponse | undefined, boolean, unknown];
 }

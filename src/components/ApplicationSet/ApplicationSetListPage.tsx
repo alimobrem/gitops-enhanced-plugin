@@ -30,6 +30,7 @@ export const ApplicationSetListPage: FC = () => {
   const [appsets, loaded] = useK8sWatchResource<AppSetResource[]>({
     groupVersionKind: ApplicationSetGroupVersionKind,
     isList: true,
+    namespace: instance.namespace,
   });
 
   const items = appsets ?? [];

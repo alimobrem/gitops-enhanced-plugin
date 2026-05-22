@@ -71,6 +71,7 @@
       "ApplicationSetCreatePage": "./components/ApplicationSetCreate/ApplicationSetCreatePage",
       "AppProjectCreatePage": "./components/AppProjectCreate/AppProjectCreatePage",
       "RolloutCreatePage": "./components/RolloutCreate/RolloutCreatePage",
+      "RolloutListPage": "./components/Rollout/RolloutListPage",
       "RolloutDetailPage": "./components/Rollout/RolloutDetailPage"
     },
     "dependencies": {

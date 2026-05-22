@@ -30,6 +30,7 @@ export const AppProjectListPage: FC = () => {
   const [projects, loaded] = useK8sWatchResource<AppProjectResource[]>({
     groupVersionKind: AppProjectGroupVersionKind,
     isList: true,
+    namespace: instance.namespace,
   });
 
   const items = projects ?? [];

@@ -45,7 +45,7 @@ const HEALTH_OPTIONS: HealthStatusCode[] = ['Healthy', 'Degraded', 'Progressing'
 export const ApplicationListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance } = useCurrentInstance();
-  const [applications, loaded, error] = useApplications();
+  const [applications, loaded, error] = useApplications(instance.namespace);
 
   const [nameFilter, setNameFilter] = useState('');
   const [syncFilter, setSyncFilter] = useState<string>('');

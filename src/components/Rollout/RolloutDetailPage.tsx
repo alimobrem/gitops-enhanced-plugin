@@ -97,6 +97,18 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
                       <DescriptionListDescription>{rollout.status.currentStepIndex}</DescriptionListDescription>
                     </DescriptionListGroup>
                   )}
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Revision History Limit')}</DescriptionListTerm>
+                    <DescriptionListDescription>{rollout.spec.revisionHistoryLimit ?? 10}</DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Min Ready Seconds')}</DescriptionListTerm>
+                    <DescriptionListDescription>{rollout.spec.minReadySeconds ?? 0}</DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Progress Deadline Seconds')}</DescriptionListTerm>
+                    <DescriptionListDescription>{rollout.spec.progressDeadlineSeconds ?? 600}</DescriptionListDescription>
+                  </DescriptionListGroup>
                   {container && (
                     <>
                       <DescriptionListGroup>
@@ -105,7 +117,7 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
                       </DescriptionListGroup>
                       {container.ports?.[0] && (
                         <DescriptionListGroup>
-                          <DescriptionListTerm>{t('Port')}</DescriptionListTerm>
+                          <DescriptionListTerm>{t('Container Port')}</DescriptionListTerm>
                           <DescriptionListDescription>{container.ports[0].containerPort}</DescriptionListDescription>
                         </DescriptionListGroup>
                       )}
@@ -114,20 +126,91 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
                 </DescriptionList>
               </CardBody>
             </Card>
-            {rollout.spec.strategy?.canary?.steps && (
+            {rollout.spec.strategy?.canary && (
               <Card className="pf-v6-u-mt-md">
-                <CardTitle>{t('Canary Steps')}</CardTitle>
+                <CardTitle>{t('Canary')}</CardTitle>
                 <CardBody>
-                  {rollout.spec.strategy.canary.steps.map((step, i) => {
-                    const key = Object.keys(step)[0];
-                    const val = step[key];
-                    const isCurrent = rollout.status?.currentStepIndex === i;
-                    return (
-                      <Label key={i} isCompact color={isCurrent ? 'blue' : 'grey'} className="pf-v6-u-mr-sm">
-                        {key}: {typeof val === 'object' ? JSON.stringify(val) : String(val)}
-                      </Label>
-                    );
-                  })}
+                  <DescriptionList isHorizontal>
+                    {rollout.spec.strategy.canary.maxSurge !== undefined && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Max Surge')}</DescriptionListTerm>
+                        <DescriptionListDescription>{String(rollout.spec.strategy.canary.maxSurge)}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    {rollout.spec.strategy.canary.maxUnavailable !== undefined && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Max Unavailable')}</DescriptionListTerm>
+                        <DescriptionListDescription>{String(rollout.spec.strategy.canary.maxUnavailable)}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    {rollout.spec.strategy.canary.stableService && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Stable Service')}</DescriptionListTerm>
+                        <DescriptionListDescription>{rollout.spec.strategy.canary.stableService}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    {rollout.spec.strategy.canary.canaryService && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Canary Service')}</DescriptionListTerm>
+                        <DescriptionListDescription>{rollout.spec.strategy.canary.canaryService}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                  </DescriptionList>
+                  {rollout.spec.strategy.canary.steps && (
+                    <div className="pf-v6-u-mt-md">
+                      {rollout.spec.strategy.canary.steps.map((step, i) => {
+                        const key = Object.keys(step)[0];
+                        const val = step[key];
+                        const isCurrent = rollout.status?.currentStepIndex === i;
+                        return (
+                          <Label key={i} isCompact color={isCurrent ? 'blue' : 'grey'} className="pf-v6-u-mr-sm">
+                            {key}: {typeof val === 'object' ? JSON.stringify(val) : String(val)}
+                          </Label>
+                        );
+                      })}
+                    </div>
+                  )}
+                </CardBody>
+              </Card>
+            )}
+            {rollout.spec.strategy?.blueGreen && (
+              <Card className="pf-v6-u-mt-md">
+                <CardTitle>{t('Blue-Green')}</CardTitle>
+                <CardBody>
+                  <DescriptionList isHorizontal>
+                    <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Active Service')}</DescriptionListTerm>
+                      <DescriptionListDescription>{rollout.spec.strategy.blueGreen.activeService ?? '-'}</DescriptionListDescription>
+                    </DescriptionListGroup>
+                    {rollout.spec.strategy.blueGreen.previewService && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Preview Service')}</DescriptionListTerm>
+                        <DescriptionListDescription>{rollout.spec.strategy.blueGreen.previewService}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    <DescriptionListGroup>
+                      <DescriptionListTerm>{t('Auto Promotion')}</DescriptionListTerm>
+                      <DescriptionListDescription>{rollout.spec.strategy.blueGreen.autoPromotionEnabled !== false ? t('Enabled') : t('Disabled')}</DescriptionListDescription>
+                    </DescriptionListGroup>
+                    {rollout.spec.strategy.blueGreen.autoPromotionSeconds !== undefined && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Auto Promotion Seconds')}</DescriptionListTerm>
+                        <DescriptionListDescription>{rollout.spec.strategy.blueGreen.autoPromotionSeconds}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    {rollout.spec.strategy.blueGreen.scaleDownDelaySeconds !== undefined && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Scale Down Delay Seconds')}</DescriptionListTerm>
+                        <DescriptionListDescription>{rollout.spec.strategy.blueGreen.scaleDownDelaySeconds}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                    {rollout.spec.strategy.blueGreen.previewReplicaCount !== undefined && rollout.spec.strategy.blueGreen.previewReplicaCount > 0 && (
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Preview Replica Count')}</DescriptionListTerm>
+                        <DescriptionListDescription>{rollout.spec.strategy.blueGreen.previewReplicaCount}</DescriptionListDescription>
+                      </DescriptionListGroup>
+                    )}
+                  </DescriptionList>
                 </CardBody>
               </Card>
             )}

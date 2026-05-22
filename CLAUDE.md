@@ -63,5 +63,4 @@ make ship            # build image on cluster, helm deploy, rollout restart
 - `src/services/` — Argo CD API proxy service (consoleFetch)
 - `src/components/` — React components organized by feature
 - `src/utils/` — Shared utilities (status colors, URL builders, app helpers)
-- `src/topology/` — Topology view data/component factories (WIP)
 - `charts/` — Helm chart with ConsolePlugin CR and proxy config

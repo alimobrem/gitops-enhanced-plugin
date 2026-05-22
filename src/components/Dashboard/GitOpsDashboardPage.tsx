@@ -4,7 +4,10 @@ import {
   useK8sWatchResource,
   DocumentTitle,
   ResourceLink,
+  usePrometheusPoll,
+  PrometheusEndpoint,
 } from '@openshift-console/dynamic-plugin-sdk';
+import type { PrometheusResponse } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
   PageSection,
@@ -43,6 +46,7 @@ import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { InstancePicker } from '../shared/InstancePicker';
 import { InstanceProvider } from '../shared/InstanceProvider';
+import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 import type { ApplicationResource } from '../../types';
 import './GitOpsDashboardPage.css';
 
@@ -80,20 +84,68 @@ const StatusCard: FC<StatusCardProps> = ({ title, count, icon, color, href }) =>
   </Card>
 );
 
+function parsePrometheusScalar(response: PrometheusResponse | undefined): number | null {
+  if (!response?.data?.result?.[0]?.value) return null;
+  const val = parseFloat(response.data.result[0].value[1]);
+  return isNaN(val) ? null : val;
+}
+
+interface MetricCardProps {
+  title: string;
+  value: number | null;
+  loaded: boolean;
+  error: unknown;
+  suffix?: string;
+  isPercent?: boolean;
+  isDanger?: boolean;
+  unavailableText: string;
+}
+
+const MetricCard: FC<MetricCardProps> = ({ title, value, loaded, error, suffix, isPercent, isDanger, unavailableText }) => (
+  <Card isCompact>
+    <CardBody>
+      <div className="gitops-dashboard__metric-label">{title}</div>
+      {!loaded && !error ? (
+        <Spinner size="md" />
+      ) : value !== null ? (
+        <>
+          {isPercent ? (
+            <Progress
+              value={Math.round(value)}
+              variant={value >= 90 ? ProgressVariant.success : value >= 50 ? ProgressVariant.warning : ProgressVariant.danger}
+              measureLocation={ProgressMeasureLocation.outside}
+            />
+          ) : (
+            <div className={`gitops-dashboard__metric-value${isDanger && value > 0 ? ' gitops-dashboard__metric-value--danger' : ''}`}>
+              {Math.round(value)}{suffix ? ` ${suffix}` : ''}
+            </div>
+          )}
+        </>
+      ) : (
+        <div className="gitops-dashboard__metric-unavailable">{unavailableText}</div>
+      )}
+    </CardBody>
+  </Card>
+);
+
 export const GitOpsDashboardPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const { instance } = useCurrentInstance();
 
   const [apps, appsLoaded, appsError] = useK8sWatchResource<ApplicationResource[]>({
     groupVersionKind: ApplicationGroupVersionKind,
     isList: true,
+    namespace: instance.namespace,
   });
   const [appsets, , appsetsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: ApplicationSetGroupVersionKind,
     isList: true,
+    namespace: instance.namespace,
   });
   const [projects, , projectsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: AppProjectGroupVersionKind,
     isList: true,
+    namespace: instance.namespace,
   });
   const [instances, , instancesError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: ArgoCDGroupVersionKind,
@@ -127,6 +179,27 @@ export const GitOpsDashboardPage: FC = () => {
 
   const syncedPct = total > 0 ? Math.round((synced / total) * 100) : 0;
   const oosPct = total > 0 ? Math.round((outOfSync / total) * 100) : 0;
+
+  const [syncSuccessResp, syncSuccessLoaded, syncSuccessErr] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(argocd_app_sync_total{phase="Succeeded"}) / sum(argocd_app_sync_total) * 100',
+  });
+  const [failedSyncsResp, failedSyncsLoaded, failedSyncsErr] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(increase(argocd_app_sync_total{phase=~"Error|Failed"}[24h]))',
+  });
+  const [clusterConnResp, clusterConnLoaded, clusterConnErr] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(argocd_cluster_connection_status) / count(argocd_cluster_connection_status) * 100',
+  });
+  const [repoQueueResp, repoQueueLoaded, repoQueueErr] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(argocd_repo_pending_request_total)',
+  });
+  const [reconcileResp, reconcileLoaded, reconcileErr] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(increase(argocd_app_reconcile_count[1h]))',
+  });
 
   if (!appsLoaded && errors.length === 0) {
     return (
@@ -224,6 +297,31 @@ export const GitOpsDashboardPage: FC = () => {
                     measureLocation={ProgressMeasureLocation.outside}
                   />
                 )}
+              </CardBody>
+            </Card>
+          </GridItem>
+
+          <GridItem span={12}>
+            <Card>
+              <CardTitle>{t('Metrics')}</CardTitle>
+              <CardBody>
+                <Grid hasGutter>
+                  <GridItem span={3}>
+                    <MetricCard title={t('Sync Success Rate')} value={parsePrometheusScalar(syncSuccessResp)} loaded={syncSuccessLoaded} error={syncSuccessErr} isPercent unavailableText={t('Metrics unavailable')} />
+                  </GridItem>
+                  <GridItem span={2}>
+                    <MetricCard title={t('Failed Syncs (24h)')} value={parsePrometheusScalar(failedSyncsResp)} loaded={failedSyncsLoaded} error={failedSyncsErr} isDanger unavailableText={t('Metrics unavailable')} />
+                  </GridItem>
+                  <GridItem span={3}>
+                    <MetricCard title={t('Cluster Connectivity')} value={parsePrometheusScalar(clusterConnResp)} loaded={clusterConnLoaded} error={clusterConnErr} isPercent unavailableText={t('Metrics unavailable')} />
+                  </GridItem>
+                  <GridItem span={2}>
+                    <MetricCard title={t('Repo Pending Requests')} value={parsePrometheusScalar(repoQueueResp)} loaded={repoQueueLoaded} error={repoQueueErr} unavailableText={t('Metrics unavailable')} />
+                  </GridItem>
+                  <GridItem span={2}>
+                    <MetricCard title={t('Reconciliations (1h)')} value={parsePrometheusScalar(reconcileResp)} loaded={reconcileLoaded} error={reconcileErr} unavailableText={t('Metrics unavailable')} />
+                  </GridItem>
+                </Grid>
               </CardBody>
             </Card>
           </GridItem>

@@ -22,3 +22,26 @@
   font-size: 1.25rem;
   color: var(--pf-t--global--color--brand--default);
 }
+
+.gitops-dashboard__metric-label {
+  font-size: 0.8125rem;
+  font-weight: 600;
+  margin-bottom: 0.5rem;
+  color: var(--pf-t--global--color--status--default--default);
+}
+
+.gitops-dashboard__metric-value {
+  font-size: 1.75rem;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.gitops-dashboard__metric-value--danger {
+  color: var(--pf-t--global--color--status--danger--default);
+}
+
+.gitops-dashboard__metric-unavailable {
+  font-size: 0.8125rem;
+  color: var(--pf-t--global--color--status--default--default);
+  font-style: italic;
+}
