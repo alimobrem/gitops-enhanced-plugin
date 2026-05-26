@@ -81,9 +81,7 @@ export const ActionsMenu: FC<{ app: ApplicationResource }> = ({ app }) => {
           <DropdownItem key="hard-refresh" onClick={() => runAction(t('Hard Refresh'), () => refresh(true))}>
             {t('Hard Refresh')}
           </DropdownItem>
-          <DropdownItem key="edit-yaml" component="a"
-            href={`/k8s/ns/${app.metadata.namespace}/argoproj.io~v1alpha1~Application/${app.metadata.name}/yaml`}
-          >
+          <DropdownItem key="edit-yaml" onClick={() => { window.location.href = `/k8s/ns/${app.metadata.namespace}/argoproj.io~v1alpha1~Application/${app.metadata.name}/yaml`; }}>
             {t('Edit YAML')}
           </DropdownItem>
           <DropdownItem key="terminate" isDanger

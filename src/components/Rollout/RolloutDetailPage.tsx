@@ -70,7 +70,7 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
                 {isPaused && <DropdownItem key="promote" onClick={() => runAction(t('Promote'), 'rollout.argoproj.io/promote', 'true')}>{t('Promote')}</DropdownItem>}
                 <DropdownItem key="restart" onClick={() => runAction(t('Restart'), 'rollout.argoproj.io/restart', new Date().toISOString())}>{t('Restart')}</DropdownItem>
                 <DropdownItem key="abort" isDanger onClick={() => setShowAbortConfirm(true)}>{t('Abort')}</DropdownItem>
-                <DropdownItem key="edit-yaml" component="a" href={`/k8s/ns/${ns}/argoproj.io~v1alpha1~Rollout/${name}/yaml`}>{t('Edit YAML')}</DropdownItem>
+                <DropdownItem key="edit-yaml" onClick={() => { window.location.href = `/k8s/ns/${ns}/argoproj.io~v1alpha1~Rollout/${name}/yaml`; }}>{t('Edit YAML')}</DropdownItem>
               </DropdownList>
             </Dropdown>
           </FlexItem>

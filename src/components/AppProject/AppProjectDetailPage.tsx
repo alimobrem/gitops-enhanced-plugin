@@ -54,7 +54,7 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
               toggle={(ref) => <MenuToggle ref={ref} onClick={() => setActionsOpen(!actionsOpen)} variant="primary">{t('Actions')}</MenuToggle>}
             >
               <DropdownList>
-                <DropdownItem key="edit-yaml" component="a" href={`/k8s/ns/${ns}/argoproj.io~v1alpha1~AppProject/${name}/yaml`}>{t('Edit YAML')}</DropdownItem>
+                <DropdownItem key="edit-yaml" onClick={() => { window.location.href = `/k8s/ns/${ns}/argoproj.io~v1alpha1~AppProject/${name}/yaml`; }}>{t('Edit YAML')}</DropdownItem>
               </DropdownList>
             </Dropdown>
           </FlexItem>
