@@ -13,6 +13,9 @@ import {
   RolloutManagerGroupVersionKind,
   ImageUpdaterGroupVersionKind,
   NamespaceManagementGroupVersionKind,
+  AnalysisTemplateGroupVersionKind,
+  AnalysisRunGroupVersionKind,
+  ExperimentGroupVersionKind,
 } from '../../models';
 
 export const SettingsPage: FC = () => {
@@ -60,6 +63,27 @@ export const SettingsPage: FC = () => {
               title="NamespaceManagements"
               groupVersionKind={NamespaceManagementGroupVersionKind}
               columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }]}
+            />
+          </Tab>
+          <Tab eventKey={7} title={<TabTitleText>{t('AnalysisTemplates')}</TabTitleText>}>
+            <GenericResourceListPage
+              title="AnalysisTemplates"
+              groupVersionKind={AnalysisTemplateGroupVersionKind}
+              columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }]}
+            />
+          </Tab>
+          <Tab eventKey={8} title={<TabTitleText>{t('AnalysisRuns')}</TabTitleText>}>
+            <GenericResourceListPage
+              title="AnalysisRuns"
+              groupVersionKind={AnalysisRunGroupVersionKind}
+              columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }, { title: 'Phase', field: 'status.phase' }]}
+            />
+          </Tab>
+          <Tab eventKey={9} title={<TabTitleText>{t('Experiments')}</TabTitleText>}>
+            <GenericResourceListPage
+              title="Experiments"
+              groupVersionKind={ExperimentGroupVersionKind}
+              columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }, { title: 'Phase', field: 'status.phase' }]}
             />
           </Tab>
         </Tabs>

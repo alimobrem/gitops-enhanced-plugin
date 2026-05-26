@@ -3,9 +3,6 @@
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"ApplicationSet"},"flag":"ARGOCD_APPLICATIONSET"}},
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AppProject"},"flag":"ARGOCD_APPPROJECT"}},
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Rollout"},"flag":"ARGOCD_ROLLOUT"}},
-  {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AnalysisTemplate"},"flag":"ARGOCD_ANALYSISTEMPLATE"}},
-  {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Experiment"},"flag":"ARGOCD_EXPERIMENT"}},
-
   {"type":"console.navigation/section","properties":{"id":"gitops","perspective":"admin","name":"%plugin__gitops-enhanced~GitOps%","insertAfter":"workloads"},"flags":{"required":["ARGOCD_APPLICATION"]}},
 
   {"type":"console.navigation/href","properties":{"id":"gitops-dashboard","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~Dashboard%","href":"/gitops/dashboard"},"flags":{"required":["ARGOCD_APPLICATION"]}},
@@ -30,15 +27,6 @@
   {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AppProject"},"component":{"$codeRef":"AppProjectListPage"}},"flags":{"required":["ARGOCD_APPPROJECT"]}},
   {"type":"console.page/resource/details","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AppProject"},"component":{"$codeRef":"AppProjectDetailPage"}},"flags":{"required":["ARGOCD_APPPROJECT"]}},
   {"type":"console.page/route","properties":{"exact":true,"path":"/gitops/create-project","component":{"$codeRef":"AppProjectCreatePage"}},"flags":{"required":["ARGOCD_APPPROJECT"]}},
-
-  {"type":"console.navigation/resource-ns","properties":{"id":"gitops-analysistemplates","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~AnalysisTemplates%","model":{"group":"argoproj.io","version":"v1alpha1","kind":"AnalysisTemplate"}},"flags":{"required":["ARGOCD_ANALYSISTEMPLATE"]}},
-  {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AnalysisTemplate"},"component":{"$codeRef":"AnalysisTemplateListPage"}},"flags":{"required":["ARGOCD_ANALYSISTEMPLATE"]}},
-
-  {"type":"console.navigation/resource-ns","properties":{"id":"gitops-analysisruns","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~AnalysisRuns%","model":{"group":"argoproj.io","version":"v1alpha1","kind":"AnalysisRun"}},"flags":{"required":["ARGOCD_ANALYSISTEMPLATE"]}},
-  {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AnalysisRun"},"component":{"$codeRef":"AnalysisRunListPage"}},"flags":{"required":["ARGOCD_ANALYSISTEMPLATE"]}},
-
-  {"type":"console.navigation/resource-ns","properties":{"id":"gitops-experiments","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~Experiments%","model":{"group":"argoproj.io","version":"v1alpha1","kind":"Experiment"}},"flags":{"required":["ARGOCD_EXPERIMENT"]}},
-  {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Experiment"},"component":{"$codeRef":"ExperimentListPage"}},"flags":{"required":["ARGOCD_EXPERIMENT"]}},
 
   {"type":"console.navigation/href","properties":{"id":"gitops-settings","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~Settings%","href":"/gitops/settings"},"flags":{"required":["ARGOCD_APPLICATION"]}},
   {"type":"console.page/route","properties":{"exact":true,"path":"/gitops/settings","component":{"$codeRef":"SettingsPage"}},"flags":{"required":["ARGOCD_APPLICATION"]}},

@@ -77,10 +77,7 @@
       "AppProjectCreatePage": "./components/AppProjectCreate/AppProjectCreatePage",
       "RolloutCreatePage": "./components/RolloutCreate/RolloutCreatePage",
       "RolloutListPage": "./components/Rollout/RolloutListPage",
-      "RolloutDetailPage": "./components/Rollout/RolloutDetailPage",
-      "AnalysisTemplateListPage": "./components/GenericResource/AnalysisTemplateListPage",
-      "AnalysisRunListPage": "./components/GenericResource/AnalysisRunListPage",
-      "ExperimentListPage": "./components/GenericResource/ExperimentListPage"
+      "RolloutDetailPage": "./components/Rollout/RolloutDetailPage"
     },
     "dependencies": {
       "@console/pluginAPI": "*"
