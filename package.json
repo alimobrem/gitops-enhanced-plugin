@@ -93,6 +93,9 @@
       "AppProjectWindowsTab": "./components/AppProject/WindowsTab",
       "AppProjectConfigTab": "./components/AppProject/AppProjectEditTab",
       "RolloutOverviewTab": "./components/Rollout/OverviewTab",
+      "RolloutPodsTab": "./components/Rollout/PodsTab",
+      "RolloutAnalysisRunsTab": "./components/Rollout/AnalysisRunsTab",
+      "RolloutExperimentsTab": "./components/Rollout/ExperimentsTab",
       "RolloutConfigTab": "./components/Rollout/RolloutEditTab"
     },
     "dependencies": {
