@@ -281,5 +281,18 @@
   "No recent operations.": "No recent operations.",
   "Operation failed": "Operation failed",
   "Issue": "Issue",
-  "Last Operation": "Last Operation"
+  "Last Operation": "Last Operation",
+  "Group/Version": "Group/Version",
+  "Error loading events": "Error loading events",
+  "No events found.": "No events found.",
+  "Last Seen": "Last Seen",
+  "Reason": "Reason",
+  "Error loading manifest": "Error loading manifest",
+  "Live Manifest": "Live Manifest",
+  "Last Sync Revision": "Last Sync Revision",
+  "Sync Message": "Sync Message",
+  "Operation Phase": "Operation Phase",
+  "Error updating sync policy": "Error updating sync policy",
+  "Refresh Selected": "Refresh Selected",
+  "Bulk action failed": "Bulk action failed"
 }

@@ -4,6 +4,7 @@ import {
   DocumentTitle,
   ListPageHeader,
   ResourceLink,
+  k8sPatch,
 } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
@@ -13,6 +14,7 @@ import {
   EmptyState,
   EmptyStateBody,
   Alert,
+  AlertActionCloseButton,
   Toolbar,
   ToolbarContent,
   ToolbarItem,
@@ -35,7 +37,7 @@ import { InstanceProvider } from '../shared/InstanceProvider';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { RowActions } from './RowActions';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
-import { ApplicationGroupVersionKind } from '../../models';
+import { ApplicationModel, ApplicationGroupVersionKind } from '../../models';
 import { getApplicationSource } from '../../utils/application';
 import type { ApplicationResource, SyncStatusCode, HealthStatusCode } from '../../types';
 
@@ -54,6 +56,9 @@ export const ApplicationListPage: FC = () => {
   const [syncOpen, setSyncOpen] = useState(false);
   const [healthOpen, setHealthOpen] = useState(false);
   const [projectOpen, setProjectOpen] = useState(false);
+  const [selected, setSelected] = useState<Set<string>>(new Set());
+  const [bulkRunning, setBulkRunning] = useState(false);
+  const [bulkError, setBulkError] = useState('');
 
   const projects = useMemo(() => {
     const set = new Set(applications.map((a) => a.spec?.project));
@@ -71,6 +76,70 @@ export const ApplicationListPage: FC = () => {
   }, [applications, nameFilter, syncFilter, healthFilter, projectFilter]);
 
   const activeFilterCount = [syncFilter, healthFilter, projectFilter, nameFilter].filter(Boolean).length;
+
+  const toggleSelect = (uid: string) => {
+    setSelected((prev) => {
+      const next = new Set(prev);
+      if (next.has(uid)) next.delete(uid); else next.add(uid);
+      return next;
+    });
+  };
+
+  const toggleAllFiltered = () => {
+    if (selected.size === filtered.length && filtered.length > 0) {
+      setSelected(new Set());
+    } else {
+      setSelected(new Set(filtered.map((a) => a.metadata.uid)));
+    }
+  };
+
+  const bulkSyncSelected = async () => {
+    setBulkRunning(true);
+    setBulkError('');
+    try {
+      const selectedApps = applications.filter((a) => selected.has(a.metadata.uid));
+      await Promise.all(selectedApps.map((app) =>
+        k8sPatch({
+          model: ApplicationModel,
+          resource: app,
+          data: [{
+            op: 'add',
+            path: '/operation',
+            value: { sync: { revision: getApplicationSource(app)?.targetRevision ?? 'HEAD' } },
+          }],
+        }),
+      ));
+      setSelected(new Set());
+    } catch (e) {
+      setBulkError((e as Error).message);
+    } finally {
+      setBulkRunning(false);
+    }
+  };
+
+  const bulkRefreshSelected = async () => {
+    setBulkRunning(true);
+    setBulkError('');
+    try {
+      const selectedApps = applications.filter((a) => selected.has(a.metadata.uid));
+      await Promise.all(selectedApps.map((app) =>
+        k8sPatch({
+          model: ApplicationModel,
+          resource: app,
+          data: [{
+            op: 'replace',
+            path: '/metadata/annotations/argocd.argoproj.io~1refresh',
+            value: 'normal',
+          }],
+        }),
+      ));
+      setSelected(new Set());
+    } catch (e) {
+      setBulkError((e as Error).message);
+    } finally {
+      setBulkRunning(false);
+    }
+  };
 
   const sortGetters = useMemo(() => [
     (app: ApplicationResource) => app.metadata.name,
@@ -94,6 +163,12 @@ export const ApplicationListPage: FC = () => {
           <Alert variant="danger" isInline title={t('Error loading applications')}>
             {error.message}
           </Alert>
+        )}
+        {bulkError && (
+          <Alert variant="danger" isInline title={t('Bulk action failed')}
+            actionClose={<AlertActionCloseButton onClose={() => setBulkError('')} />}
+            className="pf-v6-u-mb-md"
+          >{bulkError}</Alert>
         )}
         {!loaded && !error && (
           <Bullseye><Spinner /></Bullseye>
@@ -129,7 +204,7 @@ export const ApplicationListPage: FC = () => {
                       selected={syncFilter}
                     >
                       <SelectList>
-                        {SYNC_OPTIONS.map((s) => <SelectOption key={s} value={s}>{s}</SelectOption>)}
+                        {SYNC_OPTIONS.map((s) => <SelectOption key={s} value={s}>{s} ({applications.filter((a) => (a.status?.sync?.status ?? 'Unknown') === s).length})</SelectOption>)}
                       </SelectList>
                     </Select>
                   </ToolbarFilter>
@@ -152,7 +227,7 @@ export const ApplicationListPage: FC = () => {
                       selected={healthFilter}
                     >
                       <SelectList>
-                        {HEALTH_OPTIONS.map((h) => <SelectOption key={h} value={h}>{h}</SelectOption>)}
+                        {HEALTH_OPTIONS.map((h) => <SelectOption key={h} value={h}>{h} ({applications.filter((a) => (a.status?.health?.status ?? 'Unknown') === h).length})</SelectOption>)}
                       </SelectList>
                     </Select>
                   </ToolbarFilter>
@@ -176,7 +251,7 @@ export const ApplicationListPage: FC = () => {
                         selected={projectFilter}
                       >
                         <SelectList>
-                          {projects.map((p) => <SelectOption key={p} value={p}>{p}</SelectOption>)}
+                          {projects.map((p) => <SelectOption key={p} value={p}>{p} ({applications.filter((a) => a.spec?.project === p).length})</SelectOption>)}
                         </SelectList>
                       </Select>
                     </ToolbarFilter>
@@ -186,6 +261,24 @@ export const ApplicationListPage: FC = () => {
                   <ToolbarItem>
                     <Badge isRead>{filtered.length} / {applications.length}</Badge>
                   </ToolbarItem>
+                )}
+                {selected.size > 0 && (
+                  <>
+                    <ToolbarItem>
+                      <Button variant="primary" onClick={bulkSyncSelected}
+                        isDisabled={bulkRunning} isLoading={bulkRunning}
+                      >
+                        {t('Sync Selected')} ({selected.size})
+                      </Button>
+                    </ToolbarItem>
+                    <ToolbarItem>
+                      <Button variant="secondary" onClick={bulkRefreshSelected}
+                        isDisabled={bulkRunning} isLoading={bulkRunning}
+                      >
+                        {t('Refresh Selected')} ({selected.size})
+                      </Button>
+                    </ToolbarItem>
+                  </>
                 )}
               </ToolbarContent>
             </Toolbar>
@@ -203,6 +296,7 @@ export const ApplicationListPage: FC = () => {
               <Table aria-label={t('Applications')}>
                 <Thead>
                   <Tr>
+                    <Th select={{ onSelect: toggleAllFiltered, isSelected: selected.size === filtered.length && filtered.length > 0 }} />
                     <Th {...getSortParams(0)}>{t('Name')}</Th>
                     <Th {...getSortParams(1)}>{t('Project')}</Th>
                     <Th {...getSortParams(2)}>{t('Sync Status')}</Th>
@@ -215,6 +309,7 @@ export const ApplicationListPage: FC = () => {
                 <Tbody>
                   {paginatedItems.map((app: ApplicationResource) => (
                     <Tr key={app.metadata.uid}>
+                      <Td select={{ rowIndex: 0, onSelect: () => toggleSelect(app.metadata.uid), isSelected: selected.has(app.metadata.uid) }} />
                       <Td>
                         <ResourceLink
                           groupVersionKind={ApplicationGroupVersionKind}

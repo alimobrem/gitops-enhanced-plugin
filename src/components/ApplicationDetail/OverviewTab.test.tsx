@@ -2,6 +2,10 @@ import React from 'react';
 import { render, screen } from '@testing-library/react';
 import { OverviewTab } from './OverviewTab';
 
+jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  k8sPatch: jest.fn().mockResolvedValue({}),
+}));
+
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (s: string) => s }),
 }));
