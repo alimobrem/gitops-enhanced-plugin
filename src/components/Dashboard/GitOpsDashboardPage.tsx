@@ -383,9 +383,12 @@ export const GitOpsDashboardPage: FC = () => {
                       <Th>{t('Finished')}</Th>
                     </Tr></Thead>
                     <Tbody>
-                      {recentOps.map((app) => (
+                      {recentOps.map((app) => {
+                        const msg = app.status?.operationState?.message ?? '-';
+                        const shortMsg = msg.length > 80 ? `${msg.slice(0, 80)}...` : msg;
+                        return (
                         <Tr key={app.metadata.uid}>
-                          <Td>
+                          <Td className="gitops-dashboard__name-cell">
                             <ResourceLink groupVersionKind={ApplicationGroupVersionKind} name={app.metadata.name} namespace={app.metadata.namespace} />
                           </Td>
                           <Td>
@@ -393,16 +396,17 @@ export const GitOpsDashboardPage: FC = () => {
                               {app.status?.operationState?.phase ?? '-'}
                             </Label>
                           </Td>
-                          <Td className="gitops-dashboard__message-cell">
-                            {app.status?.operationState?.message ?? '-'}
+                          <Td className="gitops-dashboard__message-cell" title={msg}>
+                            {shortMsg}
                           </Td>
-                          <Td>
+                          <Td className="gitops-dashboard__finished-cell">
                             {app.status?.operationState?.finishedAt
                               ? timeAgo(app.status.operationState.finishedAt)
                               : '-'}
                           </Td>
                         </Tr>
-                      ))}
+                        );
+                      })}
                     </Tbody>
                   </Table>
                 )}

@@ -55,11 +55,20 @@
 }
 
 .gitops-dashboard__message-cell {
-  max-width: 400px;
+  max-width: 500px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
   font-size: 0.8125rem;
+}
+
+.gitops-dashboard__name-cell {
+  min-width: 140px;
+  white-space: nowrap;
+}
+
+.gitops-dashboard__finished-cell {
+  white-space: nowrap;
 }
 
 .gitops-dashboard__empty-text {
