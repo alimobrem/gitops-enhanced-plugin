@@ -160,13 +160,16 @@ export const GitOpsDashboardPage: FC = () => {
   const allApps = apps ?? [];
   const appsKey = allApps.map((a) => `${a.metadata.uid}:${a.status?.sync?.status}:${a.status?.health?.status}`).join('|');
 
-  const { total, synced, outOfSync, unknown, healthy, degraded, progressing, recentApps } = useMemo(() => {
+  const { total, synced, outOfSync, unknown, healthy, degraded, progressing, suspended, missing, healthUnknown, recentApps } = useMemo(() => {
     const t = allApps.length;
     const s = allApps.filter((a) => a.status?.sync?.status === 'Synced').length;
     const o = allApps.filter((a) => a.status?.sync?.status === 'OutOfSync').length;
     const h = allApps.filter((a) => a.status?.health?.status === 'Healthy').length;
     const d = allApps.filter((a) => a.status?.health?.status === 'Degraded').length;
     const p = allApps.filter((a) => a.status?.health?.status === 'Progressing').length;
+    const su = allApps.filter((a) => a.status?.health?.status === 'Suspended').length;
+    const mi = allApps.filter((a) => a.status?.health?.status === 'Missing').length;
+    const hu = t - h - d - p - su - mi;
     const recent = [...allApps]
       .sort((a, b) => {
         const aTime = a.status?.reconciledAt ?? a.metadata.creationTimestamp ?? '';
@@ -174,7 +177,7 @@ export const GitOpsDashboardPage: FC = () => {
         return bTime.localeCompare(aTime);
       })
       .slice(0, 10);
-    return { total: t, synced: s, outOfSync: o, unknown: t - s - o, healthy: h, degraded: d, progressing: p, recentApps: recent };
+    return { total: t, synced: s, outOfSync: o, unknown: t - s - o, healthy: h, degraded: d, progressing: p, suspended: su, missing: mi, healthUnknown: hu, recentApps: recent };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appsKey]);
 
@@ -291,10 +294,38 @@ export const GitOpsDashboardPage: FC = () => {
                   />
                 </div>
                 {degraded > 0 && (
+                  <div className="pf-v6-u-mb-sm">
+                    <Progress
+                      value={total > 0 ? Math.round((degraded / total) * 100) : 0}
+                      title={t('Degraded')}
+                      variant={ProgressVariant.danger}
+                      measureLocation={ProgressMeasureLocation.outside}
+                    />
+                  </div>
+                )}
+                {suspended > 0 && (
+                  <div className="pf-v6-u-mb-sm">
+                    <Progress
+                      value={total > 0 ? Math.round((suspended / total) * 100) : 0}
+                      title={t('Suspended')}
+                      measureLocation={ProgressMeasureLocation.outside}
+                    />
+                  </div>
+                )}
+                {missing > 0 && (
+                  <div className="pf-v6-u-mb-sm">
+                    <Progress
+                      value={total > 0 ? Math.round((missing / total) * 100) : 0}
+                      title={t('Missing')}
+                      variant={ProgressVariant.warning}
+                      measureLocation={ProgressMeasureLocation.outside}
+                    />
+                  </div>
+                )}
+                {healthUnknown > 0 && (
                   <Progress
-                    value={total > 0 ? Math.round((degraded / total) * 100) : 0}
-                    title={t('Degraded')}
-                    variant={ProgressVariant.danger}
+                    value={total > 0 ? Math.round((healthUnknown / total) * 100) : 0}
+                    title={t('Unknown')}
                     measureLocation={ProgressMeasureLocation.outside}
                   />
                 )}
