@@ -2,13 +2,14 @@ import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { RolloutModel } from '../models';
 import type { RolloutResource } from '../types';
 import type { Action } from './types';
+import { safePatch } from '../utils/patch';
 
 const useRolloutActionsProvider = (resource: RolloutResource): [Action[], boolean, null] => {
   const isPaused = resource?.status?.phase === 'Paused';
 
   const runAction = async (annotation: string, value: string) => {
     await k8sPatch({ model: RolloutModel, resource, data: [
-      { op: 'add', path: `/metadata/annotations/${annotation.replace(/\//g, '~1')}`, value },
+      safePatch(resource, `/metadata/annotations/${annotation.replace(/\//g, '~1')}`, value),
     ] });
   };
 
