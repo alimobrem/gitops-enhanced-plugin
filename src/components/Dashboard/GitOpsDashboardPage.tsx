@@ -108,6 +108,7 @@ export const GitOpsDashboardPage: FC = () => {
     namespace: 'openshift-gitops',
   });
 
+  const csvKey = useMemo(() => (csvs ?? []).map((c) => (c.metadata as Record<string, string>)?.name).join(','), [csvs]);
   const gitopsOperator = useMemo(() => {
     const csv = (csvs ?? []).find((c) => {
       const name = (c.metadata as Record<string, string>)?.name ?? '';
@@ -117,7 +118,24 @@ export const GitOpsDashboardPage: FC = () => {
     const meta = csv.metadata as Record<string, string>;
     const status = csv.status as Record<string, string> | undefined;
     return { name: meta.name, phase: status?.phase ?? 'Unknown', version: (csv.spec as Record<string, string>)?.version ?? '' };
-  }, [csvs]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [csvKey]);
+
+  const rolloutCount = (rollouts ?? []).length;
+  const rmKey = useMemo(() => (rolloutManagers ?? []).map((r) => `${(r.metadata as Record<string, string>)?.uid}:${(r.status as Record<string, string>)?.phase}`).join(','), [rolloutManagers]);
+  const stableRolloutManagers = useMemo(() => (rolloutManagers ?? []).map((rm) => {
+    const meta = rm.metadata as Record<string, string>;
+    const status = rm.status as Record<string, string> | undefined;
+    return { uid: meta.uid, name: meta.name, namespace: meta.namespace, phase: status?.phase ?? 'Unknown' };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [rmKey]);
+  const instancesKey = useMemo(() => (instances ?? []).map((i) => `${(i.metadata as Record<string, string>)?.uid}:${(i.status as Record<string, string>)?.phase}`).join(','), [instances]);
+  const stableInstances = useMemo(() => (instances ?? []).map((inst) => {
+    const meta = inst.metadata as Record<string, string>;
+    const status = inst.status as Record<string, string> | undefined;
+    return { uid: meta.uid, name: meta.name, namespace: meta.namespace, phase: status?.phase ?? 'Unknown' };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }), [instancesKey]);
 
   const errors = useMemo(
     () => [appsError, appsetsError, projectsError, instancesError].filter(Boolean) as Error[],
@@ -500,19 +518,15 @@ export const GitOpsDashboardPage: FC = () => {
                       <DescriptionListGroup>
                         <DescriptionListTerm>{t('ArgoCD Instances')}</DescriptionListTerm>
                         <DescriptionListDescription>
-                          {(instances ?? []).map((inst) => {
-                            const meta = inst.metadata as Record<string, string>;
-                            const status = inst.status as Record<string, string> | undefined;
-                            return (
-                              <div key={meta.uid} className="pf-v6-u-mb-xs">
+                          {stableInstances.map((inst) => (
+                              <div key={inst.uid} className="pf-v6-u-mb-xs">
                                 <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
-                                  <FlexItem><Label isCompact color={status?.phase === 'Available' ? 'green' : 'gold'}>{status?.phase ?? 'Unknown'}</Label></FlexItem>
-                                  <FlexItem>{meta.name}</FlexItem>
-                                  <FlexItem><span className="gitops-dashboard__version-text">{meta.namespace}</span></FlexItem>
+                                  <FlexItem><Label isCompact color={inst.phase === 'Available' ? 'green' : 'gold'}>{inst.phase}</Label></FlexItem>
+                                  <FlexItem>{inst.name}</FlexItem>
+                                  <FlexItem><span className="gitops-dashboard__version-text">{inst.namespace}</span></FlexItem>
                                 </Flex>
                               </div>
-                            );
-                          })}
+                          ))}
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                     </DescriptionList>
@@ -522,27 +536,23 @@ export const GitOpsDashboardPage: FC = () => {
                       <DescriptionListGroup>
                         <DescriptionListTerm>{t('Rollout Managers')}</DescriptionListTerm>
                         <DescriptionListDescription>
-                          {(rolloutManagers ?? []).length === 0 ? (
+                          {stableRolloutManagers.length === 0 ? (
                             <span className="gitops-dashboard__empty-text">{t('None')}</span>
-                          ) : (rolloutManagers ?? []).map((rm) => {
-                            const meta = rm.metadata as Record<string, string>;
-                            const status = rm.status as Record<string, string> | undefined;
-                            return (
-                              <div key={meta.uid} className="pf-v6-u-mb-xs">
+                          ) : stableRolloutManagers.map((rm) => (
+                              <div key={rm.uid} className="pf-v6-u-mb-xs">
                                 <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
-                                  <FlexItem><Label isCompact color={status?.phase === 'Available' ? 'green' : 'red'}>{status?.phase ?? 'Unknown'}</Label></FlexItem>
-                                  <FlexItem>{meta.name}</FlexItem>
-                                  <FlexItem><span className="gitops-dashboard__version-text">{meta.namespace}</span></FlexItem>
+                                  <FlexItem><Label isCompact color={rm.phase === 'Available' ? 'green' : 'red'}>{rm.phase}</Label></FlexItem>
+                                  <FlexItem>{rm.name}</FlexItem>
+                                  <FlexItem><span className="gitops-dashboard__version-text">{rm.namespace}</span></FlexItem>
                                 </Flex>
                               </div>
-                            );
-                          })}
+                          ))}
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                       <DescriptionListGroup>
                         <DescriptionListTerm>{t('Rollouts')}</DescriptionListTerm>
                         <DescriptionListDescription>
-                          <Label isCompact>{(rollouts ?? []).length}</Label>
+                          <Label isCompact>{rolloutCount}</Label>
                         </DescriptionListDescription>
                       </DescriptionListGroup>
                     </DescriptionList>
