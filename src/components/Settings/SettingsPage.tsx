@@ -8,7 +8,12 @@ import { RepositoryListPage } from './RepositoryListPage';
 import { ClusterListPage } from './ClusterListPage';
 import { GenericResourceListPage } from '../GenericResource/GenericResourceListPage';
 import { InstanceProvider } from '../shared/InstanceProvider';
-import { NotificationsConfigurationGroupVersionKind } from '../../models';
+import {
+  NotificationsConfigurationGroupVersionKind,
+  RolloutManagerGroupVersionKind,
+  ImageUpdaterGroupVersionKind,
+  NamespaceManagementGroupVersionKind,
+} from '../../models';
 
 export const SettingsPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
@@ -33,6 +38,27 @@ export const SettingsPage: FC = () => {
             <GenericResourceListPage
               title="Notifications Configurations"
               groupVersionKind={NotificationsConfigurationGroupVersionKind}
+              columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }]}
+            />
+          </Tab>
+          <Tab eventKey={4} title={<TabTitleText>{t('Rollout Managers')}</TabTitleText>}>
+            <GenericResourceListPage
+              title="RolloutManagers"
+              groupVersionKind={RolloutManagerGroupVersionKind}
+              columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }, { title: 'Phase', field: 'status.phase' }]}
+            />
+          </Tab>
+          <Tab eventKey={5} title={<TabTitleText>{t('Image Updaters')}</TabTitleText>}>
+            <GenericResourceListPage
+              title="ImageUpdaters"
+              groupVersionKind={ImageUpdaterGroupVersionKind}
+              columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }]}
+            />
+          </Tab>
+          <Tab eventKey={6} title={<TabTitleText>{t('Namespace Mgmt')}</TabTitleText>}>
+            <GenericResourceListPage
+              title="NamespaceManagements"
+              groupVersionKind={NamespaceManagementGroupVersionKind}
               columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }]}
             />
           </Tab>
