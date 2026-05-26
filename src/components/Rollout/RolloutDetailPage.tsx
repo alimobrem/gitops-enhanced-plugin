@@ -12,6 +12,7 @@ import {
 import { RolloutGroupVersionKind, RolloutModel } from '../../models';
 import type { RolloutResource } from '../../types';
 import { RolloutEditTab } from './RolloutEditTab';
+import { YamlTab } from '../shared/YamlTab';
 import { ConfirmModal } from '../shared/ConfirmModal';
 
 
@@ -70,7 +71,7 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
                 {isPaused && <DropdownItem key="promote" onClick={() => runAction(t('Promote'), 'rollout.argoproj.io/promote', 'true')}>{t('Promote')}</DropdownItem>}
                 <DropdownItem key="restart" onClick={() => runAction(t('Restart'), 'rollout.argoproj.io/restart', new Date().toISOString())}>{t('Restart')}</DropdownItem>
                 <DropdownItem key="abort" isDanger onClick={() => setShowAbortConfirm(true)}>{t('Abort')}</DropdownItem>
-                <DropdownItem key="edit-yaml" onClick={() => { window.location.href = `/k8s/ns/${ns}/argoproj.io~v1alpha1~Rollout/${name}/yaml`; }}>{t('Edit YAML')}</DropdownItem>
+                <DropdownItem key="edit-yaml" onClick={() => { setActionsOpen(false); setActiveTab(2); }}>{t('Edit YAML')}</DropdownItem>
               </DropdownList>
             </Dropdown>
           </FlexItem>
@@ -219,6 +220,9 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
           </Tab>
           <Tab eventKey={1} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
             <RolloutEditTab rollout={rollout} />
+          </Tab>
+          <Tab eventKey={2} title={<TabTitleText>{t('YAML')}</TabTitleText>}>
+            <YamlTab resource={rollout as unknown as Record<string, unknown>} model={RolloutModel} />
           </Tab>
         </Tabs>
       </PageSection>

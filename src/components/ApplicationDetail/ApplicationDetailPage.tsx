@@ -22,6 +22,8 @@ import { ApplicationGroupVersionKind } from '../../models';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ActionsMenu } from './ActionsMenu';
+import { YamlTab } from '../shared/YamlTab';
+import { ApplicationModel } from '../../models';
 import { OverviewTab } from './OverviewTab';
 import { ResourcesTab } from './ResourcesTab';
 import { LogsTab } from './LogsTab';
@@ -97,7 +99,7 @@ export const ApplicationDetailPage: FC<DetailPageProps> = (props) => {
             </Flex>
           </FlexItem>
           <FlexItem>
-            <ActionsMenu app={app} />
+            <ActionsMenu app={app} onEditYaml={() => setActiveTab(6)} />
           </FlexItem>
         </Flex>
       </PageSection>
@@ -123,6 +125,9 @@ export const ApplicationDetailPage: FC<DetailPageProps> = (props) => {
           </Tab>
           <Tab eventKey={5} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
             <EditTab app={app} />
+          </Tab>
+          <Tab eventKey={6} title={<TabTitleText>{t('YAML')}</TabTitleText>}>
+            <YamlTab resource={app as unknown as Record<string, unknown>} model={ApplicationModel} />
           </Tab>
         </Tabs>
       </PageSection>

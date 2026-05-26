@@ -15,6 +15,8 @@ import type { AppSetResource } from '../../types';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ApplicationSetEditTab } from './ApplicationSetEditTab';
+import { YamlTab } from '../shared/YamlTab';
+import { ApplicationSetModel } from '../../models';
 import {
   Flex, FlexItem, Dropdown, DropdownList, DropdownItem, MenuToggle,
 } from '@patternfly/react-core';
@@ -68,7 +70,7 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
               toggle={(ref) => <MenuToggle ref={ref} onClick={() => setActionsOpen(!actionsOpen)} variant="primary">{t('Actions')}</MenuToggle>}
             >
               <DropdownList>
-                <DropdownItem key="edit-yaml" onClick={() => { window.location.href = `/k8s/ns/${ns}/argoproj.io~v1alpha1~ApplicationSet/${name}/yaml`; }}>{t('Edit YAML')}</DropdownItem>
+                <DropdownItem key="edit-yaml" onClick={() => { setActionsOpen(false); setActiveTab(3); }}>{t('Edit YAML')}</DropdownItem>
               </DropdownList>
             </Dropdown>
           </FlexItem>
@@ -132,6 +134,9 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
           </Tab>
           <Tab eventKey={2} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
             <ApplicationSetEditTab appset={appset} />
+          </Tab>
+          <Tab eventKey={3} title={<TabTitleText>{t('YAML')}</TabTitleText>}>
+            <YamlTab resource={appset as unknown as Record<string, unknown>} model={ApplicationSetModel} />
           </Tab>
         </Tabs>
       </PageSection>

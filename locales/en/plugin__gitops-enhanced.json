@@ -260,6 +260,8 @@
   "GitOps Operator": "GitOps Operator",
   "Not installed": "Not installed",
   "Rollout Managers": "Rollout Managers",
+  "YAML": "YAML",
+  "Resource updated": "Resource updated",
   "Needs Attention": "Needs Attention",
   "AppSets": "AppSets",
   "Projects": "Projects",

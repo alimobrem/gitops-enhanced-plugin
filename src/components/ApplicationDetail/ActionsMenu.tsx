@@ -10,7 +10,7 @@ import { ConfirmModal } from '../shared/ConfirmModal';
 import { useApplicationActions } from '../../hooks/useApplicationActions';
 import type { ApplicationResource } from '../../types';
 
-export const ActionsMenu: FC<{ app: ApplicationResource }> = ({ app }) => {
+export const ActionsMenu: FC<{ app: ApplicationResource; onEditYaml?: () => void }> = ({ app, onEditYaml }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const history = useHistory();
   const [isOpen, setIsOpen] = useState(false);
@@ -81,7 +81,7 @@ export const ActionsMenu: FC<{ app: ApplicationResource }> = ({ app }) => {
           <DropdownItem key="hard-refresh" onClick={() => runAction(t('Hard Refresh'), () => refresh(true))}>
             {t('Hard Refresh')}
           </DropdownItem>
-          <DropdownItem key="edit-yaml" onClick={() => { window.location.href = `/k8s/ns/${app.metadata.namespace}/argoproj.io~v1alpha1~Application/${app.metadata.name}/yaml`; }}>
+          <DropdownItem key="edit-yaml" onClick={() => { setActionsOpen(false); onEditYaml?.(); }}>
             {t('Edit YAML')}
           </DropdownItem>
           <DropdownItem key="terminate" isDanger

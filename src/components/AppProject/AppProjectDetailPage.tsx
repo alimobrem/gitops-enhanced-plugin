@@ -13,6 +13,8 @@ import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AppProjectGroupVersionKind } from '../../models';
 import type { AppProjectResource } from '../../types';
 import { AppProjectEditTab } from './AppProjectEditTab';
+import { YamlTab } from '../shared/YamlTab';
+import { AppProjectModel } from '../../models';
 
 
 interface DetailPageProps {
@@ -54,7 +56,7 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
               toggle={(ref) => <MenuToggle ref={ref} onClick={() => setActionsOpen(!actionsOpen)} variant="primary">{t('Actions')}</MenuToggle>}
             >
               <DropdownList>
-                <DropdownItem key="edit-yaml" onClick={() => { window.location.href = `/k8s/ns/${ns}/argoproj.io~v1alpha1~AppProject/${name}/yaml`; }}>{t('Edit YAML')}</DropdownItem>
+                <DropdownItem key="edit-yaml" onClick={() => { setActionsOpen(false); setActiveTab(6); }}>{t('Edit YAML')}</DropdownItem>
               </DropdownList>
             </Dropdown>
           </FlexItem>
@@ -145,6 +147,9 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
           </Tab>
           <Tab eventKey={5} title={<TabTitleText>{t('Configuration')}</TabTitleText>}>
             <AppProjectEditTab project={project} />
+          </Tab>
+          <Tab eventKey={6} title={<TabTitleText>{t('YAML')}</TabTitleText>}>
+            <YamlTab resource={project as unknown as Record<string, unknown>} model={AppProjectModel} />
           </Tab>
         </Tabs>
       </PageSection>
