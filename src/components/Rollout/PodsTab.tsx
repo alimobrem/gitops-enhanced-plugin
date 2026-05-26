@@ -17,7 +17,7 @@ export const PodsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const rollout = obj as RolloutResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
   const ns = rollout?.metadata?.namespace ?? '';
-  const selector = rollout?.spec?.selector?.matchLabels;
+  const selectorKey = JSON.stringify(rollout?.spec?.selector?.matchLabels ?? {});
 
   const [pods, loaded] = useK8sWatchResource<PodResource[]>({
     groupVersionKind: { group: '', version: 'v1', kind: 'Pod' },
@@ -25,13 +25,17 @@ export const PodsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
     isList: true,
   });
 
+  const podsKey = useMemo(() => (pods ?? []).map((p) => `${p.metadata.uid}:${p.status?.phase}`).join(','), [pods]);
+
   const matchedPods = useMemo(() => {
-    if (!selector || !pods) return [];
+    const selector = JSON.parse(selectorKey) as Record<string, string>;
+    if (!Object.keys(selector).length || !pods) return [];
     return pods.filter((p) => {
       const labels = p.metadata.labels ?? {};
       return Object.entries(selector).every(([k, v]) => labels[k] === v);
     });
-  }, [pods, selector]);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [podsKey, selectorKey]);
 
   if (!rollout?.metadata || !loaded) return <Bullseye><Spinner /></Bullseye>;
 
