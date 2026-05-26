@@ -1,46 +1,68 @@
-.gitops-dashboard__status-icon {
-  font-size: 1.5rem;
+.gitops-dashboard__stat {
+  text-align: center;
 }
 
-.gitops-dashboard__status-count {
-  font-size: 2rem;
-  font-weight: 700;
-  line-height: 1;
-}
-
-.gitops-dashboard__status-label {
-  font-size: 0.875rem;
-  color: var(--pf-t--global--color--status--default--default);
-}
-
-.gitops-dashboard__status-link {
-  text-decoration: none;
-  color: inherit;
-}
-
-.gitops-dashboard__resource-icon {
-  font-size: 1.25rem;
-  color: var(--pf-t--global--color--brand--default);
-}
-
-.gitops-dashboard__metric-label {
-  font-size: 0.8125rem;
-  font-weight: 600;
-  margin-bottom: 0.5rem;
-  color: var(--pf-t--global--color--status--default--default);
-}
-
-.gitops-dashboard__metric-value {
+.gitops-dashboard__stat-value {
   font-size: 1.75rem;
   font-weight: 700;
-  line-height: 1;
+  line-height: 1.2;
 }
 
-.gitops-dashboard__metric-value--danger {
+.gitops-dashboard__stat-value-sm {
+  font-size: 1.125rem;
+  font-weight: 700;
+}
+
+.gitops-dashboard__stat-label {
+  font-size: 0.8125rem;
+  color: var(--pf-t--global--color--status--default--default);
+  margin-top: 0.125rem;
+}
+
+.gitops-dashboard__stat-label--danger {
+  color: var(--pf-t--global--color--status--danger--default);
+  font-weight: 600;
+}
+
+.gitops-dashboard__stat-label-inline {
+  font-size: 0.8125rem;
+  color: var(--pf-t--global--color--status--default--default);
+}
+
+.gitops-dashboard__icon--success {
+  color: var(--pf-t--global--color--status--success--default);
+}
+
+.gitops-dashboard__icon--warning {
+  color: var(--pf-t--global--color--status--warning--default);
+}
+
+.gitops-dashboard__icon--danger {
   color: var(--pf-t--global--color--status--danger--default);
 }
 
-.gitops-dashboard__metric-unavailable {
+.gitops-dashboard__card-equal {
+  height: 100%;
+}
+
+.gitops-dashboard__issue-cell {
+  max-width: 300px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+  color: var(--pf-t--global--color--status--default--default);
+}
+
+.gitops-dashboard__message-cell {
+  max-width: 400px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 0.8125rem;
+}
+
+.gitops-dashboard__empty-text {
   font-size: 0.8125rem;
   color: var(--pf-t--global--color--status--default--default);
   font-style: italic;

@@ -25,16 +25,17 @@ import {
   Progress,
   ProgressMeasureLocation,
   ProgressVariant,
+  Label,
+  DescriptionList,
+  DescriptionListGroup,
+  DescriptionListTerm,
+  DescriptionListDescription,
+  Divider,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import {
   CheckCircleIcon,
   ExclamationTriangleIcon,
-  ExclamationCircleIcon,
-  CubesIcon,
-  LayerGroupIcon,
-  FolderOpenIcon,
-  ServerIcon,
 } from '@patternfly/react-icons';
 import {
   ApplicationGroupVersionKind,
@@ -50,83 +51,22 @@ import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 import type { ApplicationResource } from '../../types';
 import './GitOpsDashboardPage.css';
 
-interface StatusCardProps {
-  title: string;
-  count: number;
-  icon: React.ReactNode;
-  color?: string;
-  href?: string;
-}
-
-const StatusCard: FC<StatusCardProps> = ({ title, count, icon, color, href }) => (
-  <Card isCompact isSelectable={!!href} isClickable={!!href}>
-    <CardBody>
-      {href ? (
-        <a href={href} className="gitops-dashboard__status-link">
-          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-            <FlexItem className="gitops-dashboard__status-icon" style={color ? { color } : undefined}>{icon}</FlexItem>
-            <FlexItem>
-              <div className="gitops-dashboard__status-count">{count}</div>
-              <div className="gitops-dashboard__status-label">{title}</div>
-            </FlexItem>
-          </Flex>
-        </a>
-      ) : (
-        <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-          <FlexItem className="gitops-dashboard__status-icon" style={color ? { color } : undefined}>{icon}</FlexItem>
-          <FlexItem>
-            <div className="gitops-dashboard__status-count">{count}</div>
-            <div className="gitops-dashboard__status-label">{title}</div>
-          </FlexItem>
-        </Flex>
-      )}
-    </CardBody>
-  </Card>
-);
-
 function parsePrometheusScalar(response: PrometheusResponse | undefined): number | null {
   if (!response?.data?.result?.[0]?.value) return null;
   const val = parseFloat(response.data.result[0].value[1]);
   return isNaN(val) ? null : val;
 }
 
-interface MetricCardProps {
-  title: string;
-  value: number | null;
-  loaded: boolean;
-  error: unknown;
-  suffix?: string;
-  isPercent?: boolean;
-  isDanger?: boolean;
-  unavailableText: string;
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
 }
-
-const MetricCard: FC<MetricCardProps> = ({ title, value, loaded, error, suffix, isPercent, isDanger, unavailableText }) => (
-  <Card isCompact>
-    <CardBody>
-      <div className="gitops-dashboard__metric-label">{title}</div>
-      {!loaded && !error ? (
-        <Spinner size="md" />
-      ) : value !== null ? (
-        <>
-          {isPercent ? (
-            <Progress
-              value={Math.round(value)}
-              variant={value >= 90 ? ProgressVariant.success : value >= 50 ? ProgressVariant.warning : ProgressVariant.danger}
-              measureLocation={ProgressMeasureLocation.outside}
-            />
-          ) : (
-            <div className={`gitops-dashboard__metric-value${isDanger && value > 0 ? ' gitops-dashboard__metric-value--danger' : ''}`}>
-              {Math.round(value)}{suffix ? ` ${suffix}` : ''}
-            </div>
-          )}
-        </>
-      ) : (
-        <div className="gitops-dashboard__metric-unavailable">{unavailableText}</div>
-      )}
-    </CardBody>
-  </Card>
-);
 
 export const GitOpsDashboardPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
@@ -158,49 +98,47 @@ export const GitOpsDashboardPage: FC = () => {
   );
 
   const allApps = apps ?? [];
-  const appsKey = allApps.map((a) => `${a.metadata.uid}:${a.status?.sync?.status}:${a.status?.health?.status}`).join('|');
+  const appsKey = allApps.map((a) => `${a.metadata.uid}:${a.status?.sync?.status}:${a.status?.health?.status}:${a.status?.operationState?.phase}`).join('|');
 
-  const { total, synced, outOfSync, unknown, healthy, degraded, progressing, suspended, missing, healthUnknown, recentApps } = useMemo(() => {
-    const t = allApps.length;
-    const s = allApps.filter((a) => a.status?.sync?.status === 'Synced').length;
-    const o = allApps.filter((a) => a.status?.sync?.status === 'OutOfSync').length;
-    const h = allApps.filter((a) => a.status?.health?.status === 'Healthy').length;
-    const d = allApps.filter((a) => a.status?.health?.status === 'Degraded').length;
-    const p = allApps.filter((a) => a.status?.health?.status === 'Progressing').length;
-    const su = allApps.filter((a) => a.status?.health?.status === 'Suspended').length;
-    const mi = allApps.filter((a) => a.status?.health?.status === 'Missing').length;
-    const hu = t - h - d - p - su - mi;
-    const recent = [...allApps]
-      .sort((a, b) => {
-        const aTime = a.status?.reconciledAt ?? a.metadata.creationTimestamp ?? '';
-        const bTime = b.status?.reconciledAt ?? b.metadata.creationTimestamp ?? '';
-        return bTime.localeCompare(aTime);
-      })
-      .slice(0, 10);
-    return { total: t, synced: s, outOfSync: o, unknown: t - s - o, healthy: h, degraded: d, progressing: p, suspended: su, missing: mi, healthUnknown: hu, recentApps: recent };
+  const computed = useMemo(() => {
+    const total = allApps.length;
+    const synced = allApps.filter((a) => a.status?.sync?.status === 'Synced').length;
+    const outOfSync = allApps.filter((a) => a.status?.sync?.status === 'OutOfSync').length;
+    const healthy = allApps.filter((a) => a.status?.health?.status === 'Healthy').length;
+    const degraded = allApps.filter((a) => a.status?.health?.status === 'Degraded').length;
+    const progressing = allApps.filter((a) => a.status?.health?.status === 'Progressing').length;
+    const suspended = allApps.filter((a) => a.status?.health?.status === 'Suspended').length;
+    const missing = allApps.filter((a) => a.status?.health?.status === 'Missing').length;
+
+    const needsAttention = allApps.filter((a) =>
+      a.status?.health?.status === 'Degraded'
+      || a.status?.health?.status === 'Missing'
+      || a.status?.sync?.status === 'OutOfSync'
+      || a.status?.operationState?.phase === 'Error'
+      || a.status?.operationState?.phase === 'Failed'
+      || (a.status?.conditions?.length ?? 0) > 0,
+    );
+
+    const recentOps = allApps
+      .filter((a) => a.status?.operationState?.finishedAt)
+      .sort((a, b) => (b.status?.operationState?.finishedAt ?? '').localeCompare(a.status?.operationState?.finishedAt ?? ''))
+      .slice(0, 5);
+
+    return { total, synced, outOfSync, healthy, degraded, progressing, suspended, missing, needsAttention, recentOps };
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [appsKey]);
 
-  const syncedPct = total > 0 ? Math.round((synced / total) * 100) : 0;
-  const oosPct = total > 0 ? Math.round((outOfSync / total) * 100) : 0;
+  const { total, synced, outOfSync, healthy, degraded, progressing, suspended, missing, needsAttention, recentOps } = computed;
 
-  const [syncSuccessResp, syncSuccessLoaded, syncSuccessErr] = usePrometheusPoll({
+  const [syncSuccessResp, syncSuccessLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
     query: 'sum(argocd_app_sync_total{phase="Succeeded"}) / sum(argocd_app_sync_total) * 100',
   });
-  const [failedSyncsResp, failedSyncsLoaded, failedSyncsErr] = usePrometheusPoll({
+  const [failedSyncsResp, failedSyncsLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
     query: 'sum(increase(argocd_app_sync_total{phase=~"Error|Failed"}[24h]))',
   });
-  const [clusterConnResp, clusterConnLoaded, clusterConnErr] = usePrometheusPoll({
-    endpoint: PrometheusEndpoint.QUERY,
-    query: 'sum(argocd_cluster_connection_status) / count(argocd_cluster_connection_status) * 100',
-  });
-  const [repoQueueResp, repoQueueLoaded, repoQueueErr] = usePrometheusPoll({
-    endpoint: PrometheusEndpoint.QUERY,
-    query: 'sum(argocd_repo_pending_request_total)',
-  });
-  const [reconcileResp, reconcileLoaded, reconcileErr] = usePrometheusPoll({
+  const [reconcileResp, reconcileLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
     query: 'sum(increase(argocd_app_reconcile_count[1h]))',
   });
@@ -213,6 +151,21 @@ export const GitOpsDashboardPage: FC = () => {
       </React.Fragment>
     );
   }
+
+  const syncPct = total > 0 ? Math.round((synced / total) * 100) : 0;
+  const healthPct = total > 0 ? Math.round((healthy / total) * 100) : 0;
+  const syncSuccess = parsePrometheusScalar(syncSuccessResp);
+  const failedSyncs = parsePrometheusScalar(failedSyncsResp);
+  const reconciliations = parsePrometheusScalar(reconcileResp);
+
+  const opPhaseColor = (phase?: string): 'green' | 'red' | 'blue' | 'grey' => {
+    switch (phase) {
+      case 'Succeeded': return 'green';
+      case 'Failed': case 'Error': return 'red';
+      case 'Running': case 'Terminating': return 'blue';
+      default: return 'grey';
+    }
+  };
 
   return (
     <React.Fragment>
@@ -230,165 +183,224 @@ export const GitOpsDashboardPage: FC = () => {
         ))}
 
         <Grid hasGutter>
-          <GridItem span={3}>
-            <StatusCard title={t('Total Applications')} count={total} icon={<CubesIcon />} color="var(--pf-t--global--color--brand--default)" href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application" />
-          </GridItem>
-          <GridItem span={3}>
-            <StatusCard title={t('Synced')} count={synced} icon={<CheckCircleIcon />} color="var(--pf-t--global--color--status--success--default)" href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application" />
-          </GridItem>
-          <GridItem span={3}>
-            <StatusCard title={t('OutOfSync')} count={outOfSync} icon={<ExclamationTriangleIcon />} color="var(--pf-t--global--color--status--warning--default)" href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application" />
-          </GridItem>
-          <GridItem span={3}>
-            <StatusCard title={t('Degraded')} count={degraded} icon={<ExclamationCircleIcon />} color="var(--pf-t--global--color--status--danger--default)" href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application" />
+          {/* Row 1: Summary strip */}
+          <GridItem span={12}>
+            <Card>
+              <CardBody>
+                <Flex justifyContent={{ default: 'justifyContentSpaceEvenly' }} alignItems={{ default: 'alignItemsCenter' }}>
+                  <FlexItem>
+                    <div className="gitops-dashboard__stat">
+                      <div className="gitops-dashboard__stat-value">{total}</div>
+                      <div className="gitops-dashboard__stat-label">{t('Applications')}</div>
+                    </div>
+                  </FlexItem>
+                  <Divider orientation={{ default: 'vertical' }} />
+                  <FlexItem>
+                    <div className="gitops-dashboard__stat">
+                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem><CheckCircleIcon className="gitops-dashboard__icon--success" /></FlexItem>
+                        <FlexItem><span className="gitops-dashboard__stat-value">{syncPct}%</span></FlexItem>
+                      </Flex>
+                      <div className="gitops-dashboard__stat-label">{t('Synced')}</div>
+                    </div>
+                  </FlexItem>
+                  <Divider orientation={{ default: 'vertical' }} />
+                  <FlexItem>
+                    <div className="gitops-dashboard__stat">
+                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                        <FlexItem><CheckCircleIcon className="gitops-dashboard__icon--success" /></FlexItem>
+                        <FlexItem><span className="gitops-dashboard__stat-value">{healthPct}%</span></FlexItem>
+                      </Flex>
+                      <div className="gitops-dashboard__stat-label">{t('Healthy')}</div>
+                    </div>
+                  </FlexItem>
+                  <Divider orientation={{ default: 'vertical' }} />
+                  <FlexItem>
+                    <div className="gitops-dashboard__stat">
+                      <div className="gitops-dashboard__stat-value">{needsAttention.length}</div>
+                      <div className={`gitops-dashboard__stat-label${needsAttention.length > 0 ? ' gitops-dashboard__stat-label--danger' : ''}`}>{t('Needs Attention')}</div>
+                    </div>
+                  </FlexItem>
+                  <Divider orientation={{ default: 'vertical' }} />
+                  <FlexItem>
+                    <div className="gitops-dashboard__stat">
+                      <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+                        <FlexItem><span className="gitops-dashboard__stat-value-sm">{appsets?.length ?? 0}</span> <span className="gitops-dashboard__stat-label-inline">{t('AppSets')}</span></FlexItem>
+                        <FlexItem><span className="gitops-dashboard__stat-value-sm">{projects?.length ?? 0}</span> <span className="gitops-dashboard__stat-label-inline">{t('Projects')}</span></FlexItem>
+                        <FlexItem><span className="gitops-dashboard__stat-value-sm">{instances?.length ?? 0}</span> <span className="gitops-dashboard__stat-label-inline">{t('Instances')}</span></FlexItem>
+                      </Flex>
+                    </div>
+                  </FlexItem>
+                </Flex>
+              </CardBody>
+            </Card>
           </GridItem>
 
-          <GridItem span={6}>
-            <Card>
+          {/* Row 2: Needs Attention (if any) */}
+          {needsAttention.length > 0 && (
+            <GridItem span={12}>
+              <Card>
+                <CardTitle>
+                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                    <FlexItem><ExclamationTriangleIcon className="gitops-dashboard__icon--warning" /></FlexItem>
+                    <FlexItem>{t('Needs Attention')} ({needsAttention.length})</FlexItem>
+                  </Flex>
+                </CardTitle>
+                <CardBody>
+                  <Table aria-label={t('Needs Attention')} isCompact isStriped>
+                    <Thead><Tr>
+                      <Th>{t('Name')}</Th>
+                      <Th>{t('Sync Status')}</Th>
+                      <Th>{t('Health')}</Th>
+                      <Th>{t('Last Operation')}</Th>
+                      <Th>{t('Issue')}</Th>
+                    </Tr></Thead>
+                    <Tbody>
+                      {needsAttention.map((app) => {
+                        const issues: string[] = [];
+                        if (app.status?.health?.status === 'Degraded') issues.push(t('Degraded'));
+                        if (app.status?.health?.status === 'Missing') issues.push(t('Missing'));
+                        if (app.status?.sync?.status === 'OutOfSync') issues.push(t('OutOfSync'));
+                        if (app.status?.operationState?.phase === 'Error' || app.status?.operationState?.phase === 'Failed') {
+                          issues.push(app.status.operationState.message ?? t('Operation failed'));
+                        }
+                        if (app.status?.conditions?.length) {
+                          issues.push(...app.status.conditions.map((c) => c.message).slice(0, 2));
+                        }
+                        return (
+                          <Tr key={app.metadata.uid}>
+                            <Td>
+                              <ResourceLink groupVersionKind={ApplicationGroupVersionKind} name={app.metadata.name} namespace={app.metadata.namespace} />
+                            </Td>
+                            <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
+                            <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
+                            <Td>
+                              {app.status?.operationState?.phase && (
+                                <Label isCompact color={opPhaseColor(app.status.operationState.phase)}>{app.status.operationState.phase}</Label>
+                              )}
+                            </Td>
+                            <Td className="gitops-dashboard__issue-cell">{issues.join('; ') || '-'}</Td>
+                          </Tr>
+                        );
+                      })}
+                    </Tbody>
+                  </Table>
+                </CardBody>
+              </Card>
+            </GridItem>
+          )}
+
+          {/* Row 3: Status breakdown + Metrics */}
+          <GridItem span={4}>
+            <Card className="gitops-dashboard__card-equal">
               <CardTitle>{t('Sync Status')}</CardTitle>
               <CardBody>
-                <div className="pf-v6-u-mb-sm">
-                  <Progress
-                    value={syncedPct}
-                    title={t('Synced')}
-                    variant={ProgressVariant.success}
-                    measureLocation={ProgressMeasureLocation.outside}
-                  />
+                <div className="pf-v6-u-mb-md">
+                  <Progress value={syncPct} title={`${synced} ${t('Synced')}`} variant={ProgressVariant.success} measureLocation={ProgressMeasureLocation.outside} />
                 </div>
-                <div className="pf-v6-u-mb-sm">
-                  <Progress
-                    value={oosPct}
-                    title={t('OutOfSync')}
-                    variant={ProgressVariant.warning}
-                    measureLocation={ProgressMeasureLocation.outside}
-                  />
-                </div>
-                {unknown > 0 && (
-                  <Progress
-                    value={total > 0 ? Math.round((unknown / total) * 100) : 0}
-                    title={t('Unknown')}
-                    measureLocation={ProgressMeasureLocation.outside}
-                  />
+                {outOfSync > 0 && (
+                  <div className="pf-v6-u-mb-md">
+                    <Progress value={total > 0 ? Math.round((outOfSync / total) * 100) : 0} title={`${outOfSync} ${t('OutOfSync')}`} variant={ProgressVariant.warning} measureLocation={ProgressMeasureLocation.outside} />
+                  </div>
                 )}
               </CardBody>
             </Card>
           </GridItem>
 
-          <GridItem span={6}>
-            <Card>
+          <GridItem span={4}>
+            <Card className="gitops-dashboard__card-equal">
               <CardTitle>{t('Health Status')}</CardTitle>
               <CardBody>
-                <div className="pf-v6-u-mb-sm">
-                  <Progress
-                    value={total > 0 ? Math.round((healthy / total) * 100) : 0}
-                    title={t('Healthy')}
-                    variant={ProgressVariant.success}
-                    measureLocation={ProgressMeasureLocation.outside}
-                  />
-                </div>
-                <div className="pf-v6-u-mb-sm">
-                  <Progress
-                    value={total > 0 ? Math.round((progressing / total) * 100) : 0}
-                    title={t('Progressing')}
-                    measureLocation={ProgressMeasureLocation.outside}
-                  />
-                </div>
-                {degraded > 0 && (
-                  <div className="pf-v6-u-mb-sm">
-                    <Progress
-                      value={total > 0 ? Math.round((degraded / total) * 100) : 0}
-                      title={t('Degraded')}
-                      variant={ProgressVariant.danger}
-                      measureLocation={ProgressMeasureLocation.outside}
-                    />
+                {[
+                  { count: healthy, label: t('Healthy'), variant: ProgressVariant.success },
+                  { count: progressing, label: t('Progressing'), variant: undefined },
+                  { count: degraded, label: t('Degraded'), variant: ProgressVariant.danger },
+                  { count: suspended, label: t('Suspended'), variant: undefined },
+                  { count: missing, label: t('Missing'), variant: ProgressVariant.warning },
+                ].filter((s) => s.count > 0).map((s) => (
+                  <div key={s.label} className="pf-v6-u-mb-md">
+                    <Progress value={total > 0 ? Math.round((s.count / total) * 100) : 0} title={`${s.count} ${s.label}`} variant={s.variant} measureLocation={ProgressMeasureLocation.outside} />
                   </div>
-                )}
-                {suspended > 0 && (
-                  <div className="pf-v6-u-mb-sm">
-                    <Progress
-                      value={total > 0 ? Math.round((suspended / total) * 100) : 0}
-                      title={t('Suspended')}
-                      measureLocation={ProgressMeasureLocation.outside}
-                    />
-                  </div>
-                )}
-                {missing > 0 && (
-                  <div className="pf-v6-u-mb-sm">
-                    <Progress
-                      value={total > 0 ? Math.round((missing / total) * 100) : 0}
-                      title={t('Missing')}
-                      variant={ProgressVariant.warning}
-                      measureLocation={ProgressMeasureLocation.outside}
-                    />
-                  </div>
-                )}
-                {healthUnknown > 0 && (
-                  <Progress
-                    value={total > 0 ? Math.round((healthUnknown / total) * 100) : 0}
-                    title={t('Unknown')}
-                    measureLocation={ProgressMeasureLocation.outside}
-                  />
-                )}
+                ))}
+                {total === 0 && <div className="gitops-dashboard__empty-text">{t('No applications found.')}</div>}
               </CardBody>
             </Card>
           </GridItem>
 
-          <GridItem span={12}>
-            <Card>
+          <GridItem span={4}>
+            <Card className="gitops-dashboard__card-equal">
               <CardTitle>{t('Metrics')}</CardTitle>
               <CardBody>
-                <Grid hasGutter>
-                  <GridItem span={3}>
-                    <MetricCard title={t('Sync Success Rate')} value={parsePrometheusScalar(syncSuccessResp)} loaded={syncSuccessLoaded} error={syncSuccessErr} isPercent unavailableText={t('Metrics unavailable')} />
-                  </GridItem>
-                  <GridItem span={2}>
-                    <MetricCard title={t('Failed Syncs (24h)')} value={parsePrometheusScalar(failedSyncsResp)} loaded={failedSyncsLoaded} error={failedSyncsErr} isDanger unavailableText={t('Metrics unavailable')} />
-                  </GridItem>
-                  <GridItem span={3}>
-                    <MetricCard title={t('Cluster Connectivity')} value={parsePrometheusScalar(clusterConnResp)} loaded={clusterConnLoaded} error={clusterConnErr} isPercent unavailableText={t('Metrics unavailable')} />
-                  </GridItem>
-                  <GridItem span={2}>
-                    <MetricCard title={t('Repo Pending Requests')} value={parsePrometheusScalar(repoQueueResp)} loaded={repoQueueLoaded} error={repoQueueErr} unavailableText={t('Metrics unavailable')} />
-                  </GridItem>
-                  <GridItem span={2}>
-                    <MetricCard title={t('Reconciliations (1h)')} value={parsePrometheusScalar(reconcileResp)} loaded={reconcileLoaded} error={reconcileErr} unavailableText={t('Metrics unavailable')} />
-                  </GridItem>
-                </Grid>
+                <DescriptionList isCompact>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Sync Success Rate')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      {syncSuccessLoaded && syncSuccess !== null ? (
+                        <Label isCompact color={syncSuccess >= 90 ? 'green' : syncSuccess >= 50 ? 'gold' : 'red'}>{Math.round(syncSuccess)}%</Label>
+                      ) : syncSuccessLoaded ? (
+                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                      ) : <Spinner size="sm" />}
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Failed Syncs (24h)')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      {failedSyncsLoaded && failedSyncs !== null ? (
+                        <Label isCompact color={failedSyncs > 0 ? 'red' : 'green'}>{Math.round(failedSyncs)}</Label>
+                      ) : failedSyncsLoaded ? (
+                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                      ) : <Spinner size="sm" />}
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Reconciliations (1h)')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      {reconcileLoaded && reconciliations !== null ? (
+                        <Label isCompact color="blue">{Math.round(reconciliations)}</Label>
+                      ) : reconcileLoaded ? (
+                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                      ) : <Spinner size="sm" />}
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                </DescriptionList>
               </CardBody>
             </Card>
           </GridItem>
 
+          {/* Row 4: Recent Operations */}
           <GridItem span={12}>
             <Card>
-              <CardTitle>{t('Recent Applications')}</CardTitle>
+              <CardTitle>{t('Recent Operations')}</CardTitle>
               <CardBody>
-                {recentApps.length === 0 ? (
-                  <div>{t('No applications found.')}</div>
+                {recentOps.length === 0 ? (
+                  <div className="gitops-dashboard__empty-text">{t('No recent operations.')}</div>
                 ) : (
-                  <Table aria-label={t('Recent Applications')} isCompact>
-                    <Thead>
-                      <Tr>
-                        <Th>{t('Name')}</Th>
-                        <Th>{t('Project')}</Th>
-                        <Th>{t('Sync Status')}</Th>
-                        <Th>{t('Health')}</Th>
-                        <Th>{t('Last Reconciled')}</Th>
-                      </Tr>
-                    </Thead>
+                  <Table aria-label={t('Recent Operations')} isCompact>
+                    <Thead><Tr>
+                      <Th>{t('Name')}</Th>
+                      <Th>{t('Phase')}</Th>
+                      <Th>{t('Message')}</Th>
+                      <Th>{t('Finished')}</Th>
+                    </Tr></Thead>
                     <Tbody>
-                      {recentApps.map((app) => (
+                      {recentOps.map((app) => (
                         <Tr key={app.metadata.uid}>
                           <Td>
-                            <ResourceLink
-                              groupVersionKind={ApplicationGroupVersionKind}
-                              name={app.metadata.name}
-                              namespace={app.metadata.namespace}
-                            />
+                            <ResourceLink groupVersionKind={ApplicationGroupVersionKind} name={app.metadata.name} namespace={app.metadata.namespace} />
                           </Td>
-                          <Td>{app.spec.project}</Td>
-                          <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
-                          <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
-                          <Td>{app.status?.reconciledAt ? new Date(app.status.reconciledAt).toLocaleString() : '-'}</Td>
+                          <Td>
+                            <Label isCompact color={opPhaseColor(app.status?.operationState?.phase)}>
+                              {app.status?.operationState?.phase ?? '-'}
+                            </Label>
+                          </Td>
+                          <Td className="gitops-dashboard__message-cell">
+                            {app.status?.operationState?.message ?? '-'}
+                          </Td>
+                          <Td>
+                            {app.status?.operationState?.finishedAt
+                              ? timeAgo(app.status.operationState.finishedAt)
+                              : '-'}
+                          </Td>
                         </Tr>
                       ))}
                     </Tbody>
@@ -398,39 +410,39 @@ export const GitOpsDashboardPage: FC = () => {
             </Card>
           </GridItem>
 
-          <GridItem span={4}>
-            <Card isCompact>
+          {/* Row 5: All applications */}
+          <GridItem span={12}>
+            <Card>
+              <CardTitle>{t('Applications')}</CardTitle>
               <CardBody>
-                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <FlexItem className="gitops-dashboard__resource-icon"><LayerGroupIcon /></FlexItem>
-                  <FlexItem>
-                    <strong>{appsets?.length ?? 0}</strong> {t('ApplicationSets')}
-                  </FlexItem>
-                </Flex>
-              </CardBody>
-            </Card>
-          </GridItem>
-          <GridItem span={4}>
-            <Card isCompact>
-              <CardBody>
-                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <FlexItem className="gitops-dashboard__resource-icon"><FolderOpenIcon /></FlexItem>
-                  <FlexItem>
-                    <strong>{projects?.length ?? 0}</strong> {t('AppProjects')}
-                  </FlexItem>
-                </Flex>
-              </CardBody>
-            </Card>
-          </GridItem>
-          <GridItem span={4}>
-            <Card isCompact>
-              <CardBody>
-                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsMd' }}>
-                  <FlexItem className="gitops-dashboard__resource-icon"><ServerIcon /></FlexItem>
-                  <FlexItem>
-                    <strong>{instances?.length ?? 0}</strong> {t('ArgoCD Instances')}
-                  </FlexItem>
-                </Flex>
+                {allApps.length === 0 ? (
+                  <div className="gitops-dashboard__empty-text">{t('No applications found.')}</div>
+                ) : (
+                  <Table aria-label={t('Applications')} isCompact isStriped>
+                    <Thead><Tr>
+                      <Th>{t('Name')}</Th>
+                      <Th>{t('Project')}</Th>
+                      <Th>{t('Sync Status')}</Th>
+                      <Th>{t('Health')}</Th>
+                      <Th>{t('Destination')}</Th>
+                      <Th>{t('Last Reconciled')}</Th>
+                    </Tr></Thead>
+                    <Tbody>
+                      {allApps.map((app) => (
+                        <Tr key={app.metadata.uid}>
+                          <Td>
+                            <ResourceLink groupVersionKind={ApplicationGroupVersionKind} name={app.metadata.name} namespace={app.metadata.namespace} />
+                          </Td>
+                          <Td>{app.spec.project}</Td>
+                          <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
+                          <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
+                          <Td>{app.spec.destination.namespace ?? '-'}</Td>
+                          <Td>{app.status?.reconciledAt ? timeAgo(app.status.reconciledAt) : '-'}</Td>
+                        </Tr>
+                      ))}
+                    </Tbody>
+                  </Table>
+                )}
               </CardBody>
             </Card>
           </GridItem>

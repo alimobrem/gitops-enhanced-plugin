@@ -3,7 +3,7 @@ import { render, screen } from '@testing-library/react';
 
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   useK8sWatchResource: () => [[
-    { metadata: { uid: '1', name: 'app1', namespace: 'ns', creationTimestamp: '2026-01-01' }, spec: { project: 'default', source: { repoURL: 'https://github.com/org/repo' }, destination: { namespace: 'default' } }, status: { sync: { status: 'Synced' }, health: { status: 'Healthy' }, reconciledAt: '2026-01-01' } },
+    { metadata: { uid: '1', name: 'app1', namespace: 'ns', creationTimestamp: '2026-01-01' }, spec: { project: 'default', source: { repoURL: 'https://github.com/org/repo' }, destination: { namespace: 'default' } }, status: { sync: { status: 'Synced' }, health: { status: 'Healthy' }, reconciledAt: '2026-01-01', operationState: { phase: 'Succeeded', message: 'ok', finishedAt: '2026-01-01' } } },
   ], true, null],
   DocumentTitle: ({ children }: { children: string }) => <title>{children}</title>,
   ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
@@ -25,14 +25,16 @@ describe('GitOpsDashboardPage', () => {
     expect(screen.getByText('GitOps Overview')).toBeInTheDocument();
   });
 
-  it('renders status cards', () => {
+  it('renders summary strip', () => {
     render(<GitOpsDashboardPage />);
-    expect(screen.getByText('Total Applications')).toBeInTheDocument();
+    expect(screen.getAllByText('Applications').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Synced').length).toBeGreaterThanOrEqual(1);
+    expect(screen.getAllByText('Healthy').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders recent applications', () => {
+  it('renders applications table', () => {
     render(<GitOpsDashboardPage />);
-    expect(screen.getByText('app1')).toBeInTheDocument();
+    expect(screen.getAllByText('app1').length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders metrics section', () => {
@@ -40,7 +42,12 @@ describe('GitOpsDashboardPage', () => {
     expect(screen.getByText('Metrics')).toBeInTheDocument();
     expect(screen.getByText('Sync Success Rate')).toBeInTheDocument();
     expect(screen.getByText('Failed Syncs (24h)')).toBeInTheDocument();
-    expect(screen.getByText('Cluster Connectivity')).toBeInTheDocument();
+    expect(screen.getByText('Reconciliations (1h)')).toBeInTheDocument();
+  });
+
+  it('renders recent operations', () => {
+    render(<GitOpsDashboardPage />);
+    expect(screen.getByText('Recent Operations')).toBeInTheDocument();
   });
 
   it('shows metrics unavailable when Prometheus returns no data', () => {

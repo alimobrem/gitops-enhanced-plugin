@@ -252,5 +252,14 @@
   "Pause duration": "Pause duration",
   "Pause": "Pause",
   "Revert": "Revert",
-  "Modifying a live rollout may trigger a new rollout cycle and affect traffic.": "Modifying a live rollout may trigger a new rollout cycle and affect traffic."
+  "Modifying a live rollout may trigger a new rollout cycle and affect traffic.": "Modifying a live rollout may trigger a new rollout cycle and affect traffic.",
+  "Needs Attention": "Needs Attention",
+  "AppSets": "AppSets",
+  "Projects": "Projects",
+  "Instances": "Instances",
+  "Recent Operations": "Recent Operations",
+  "No recent operations.": "No recent operations.",
+  "Operation failed": "Operation failed",
+  "Issue": "Issue",
+  "Last Operation": "Last Operation"
 }
