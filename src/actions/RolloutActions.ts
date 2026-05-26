@@ -1,14 +1,7 @@
 import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { RolloutModel } from '../models';
 import type { RolloutResource } from '../types';
-
-interface Action {
-  id: string;
-  label: string;
-  cta: () => void;
-  disabled?: boolean;
-  tooltip?: string;
-}
+import type { Action } from './types';
 
 const useRolloutActionsProvider = (resource: RolloutResource): [Action[], boolean, null] => {
   const isPaused = resource?.status?.phase === 'Paused';

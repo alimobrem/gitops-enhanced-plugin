@@ -1,13 +1,6 @@
 import { useApplicationActions } from '../hooks/useApplicationActions';
 import type { ApplicationResource } from '../types';
-
-interface Action {
-  id: string;
-  label: string;
-  cta: () => void;
-  disabled?: boolean;
-  tooltip?: string;
-}
+import type { Action } from './types';
 
 const useApplicationActionsProvider = (resource: ApplicationResource): [Action[], boolean, null] => {
   const { sync, refresh, terminate, deleteApp, retry } = useApplicationActions(resource);
