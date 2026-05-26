@@ -3,6 +3,7 @@ import { useState, useEffect, useRef, useMemo, type FC } from 'react';
 import {
   useK8sWatchResource,
   consoleFetchText,
+  consoleFetch,
 } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
@@ -55,7 +56,6 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const [logs, setLogs] = useState<string>('');
   const [podSelectOpen, setPodSelectOpen] = useState(false);
   const [containerSelectOpen, setContainerSelectOpen] = useState(false);
-  const [following, setFollowing] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
 
   const appPods = useMemo(() => {
@@ -92,17 +92,33 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
 
   const podNames = useMemo(() => appPods.map((p) => p.metadata.name).join(','), [appPods]);
 
-  const doFetchLogs = async (pod: string, container: string, follow: boolean) => {
+  const stripAnsi = (s: string) => s.replace(/\x1b\[[0-9;]*m/g, '');
+
+  const doFetchLogs = async (pod: string, container: string) => {
     abortRef.current?.abort();
     const controller = new AbortController();
     abortRef.current = controller;
-    setLogs('Loading logs...');
+    setLogs('');
 
     try {
-      const followParam = follow ? '&follow=true' : '';
-      const url = `/api/kubernetes/api/v1/namespaces/${encodeURIComponent(destNs)}/pods/${encodeURIComponent(pod)}/log?container=${encodeURIComponent(container)}&tailLines=500${followParam}`;
-      const text = await consoleFetchText(url);
-      setLogs((text || '(no output from container)').replace(/\x1b\[[0-9;]*m/g, ''));
+      const url = `/api/kubernetes/api/v1/namespaces/${encodeURIComponent(destNs)}/pods/${encodeURIComponent(pod)}/log?container=${encodeURIComponent(container)}&tailLines=500&follow=true`;
+      const response = await consoleFetch(url, { signal: controller.signal });
+      const reader = response.body?.getReader();
+      if (!reader) {
+        const text = await consoleFetchText(`/api/kubernetes/api/v1/namespaces/${encodeURIComponent(destNs)}/pods/${encodeURIComponent(pod)}/log?container=${encodeURIComponent(container)}&tailLines=500`);
+        setLogs(stripAnsi(text) || '(no output from container)');
+        return;
+      }
+      const decoder = new TextDecoder();
+      let buffer = '';
+
+      while (true) {
+        const { done, value } = await reader.read();
+        if (done) break;
+        buffer += stripAnsi(decoder.decode(value, { stream: true }));
+        setLogs(buffer);
+      }
+      if (!buffer) setLogs('(no output from container)');
     } catch (e) {
       if ((e as Error).name !== 'AbortError') {
         setLogs(`Error fetching logs: ${(e as Error).message}`);
@@ -117,15 +133,15 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
       const container = appPods[0].spec.containers[0]?.name ?? '';
       setSelectedPod(pod);
       setSelectedContainer(container);
-      doFetchLogs(pod, container, false);
+      doFetchLogs(pod, container);
     }
   }, [podNames]);
 
   useEffect(() => {
     if (!selectedPod || !selectedContainer) return;
-    doFetchLogs(selectedPod, selectedContainer, following);
+    doFetchLogs(selectedPod, selectedContainer);
     return () => abortRef.current?.abort();
-  }, [selectedPod, selectedContainer, following, destNs]);
+  }, [selectedPod, selectedContainer, destNs]);
   /* eslint-enable react-hooks/exhaustive-deps */
 
   if (appPods.length === 0) {
@@ -190,20 +206,12 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
           </FlexItem>
         )}
         <FlexItem>
-          <Button
-            variant={following ? 'primary' : 'secondary'}
-            onClick={() => setFollowing(!following)}
-          >
-            {following ? t('Stop Following') : t('Follow')}
-          </Button>
-        </FlexItem>
-        <FlexItem>
-          <Button variant="secondary" onClick={() => doFetchLogs(selectedPod, selectedContainer, false)}>
+          <Button variant="secondary" onClick={() => doFetchLogs(selectedPod, selectedContainer)}>
             {t('Refresh')}
           </Button>
         </FlexItem>
       </Flex>
-      <pre className="gitops-log-viewer" ref={(el) => { if (el && following) el.scrollTop = el.scrollHeight; }}>
+      <pre className="gitops-log-viewer" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
         {logs || t('Loading logs...')}
       </pre>
     </PageSection>

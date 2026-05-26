@@ -1,7 +1,26 @@
 import React from 'react';
 import { render, screen, waitFor } from '@testing-library/react';
 
-const mockConsoleFetchText = jest.fn();
+const mockConsoleFetch = jest.fn();
+
+function makeStreamResponse(text: string) {
+  let done = false;
+  return {
+    body: {
+      getReader: () => ({
+        read: () => {
+          if (!done) {
+            done = true;
+            const arr = new Uint8Array(text.length);
+            for (let i = 0; i < text.length; i++) arr[i] = text.charCodeAt(i);
+            return Promise.resolve({ done: false, value: arr });
+          }
+          return Promise.resolve({ done: true, value: undefined });
+        },
+      }),
+    },
+  };
+}
 
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   useK8sWatchResource: (resource: { groupVersionKind?: { kind?: string }; isList?: boolean }) => {
@@ -14,7 +33,8 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
     ], true, null];
     return [{ metadata: { name: 'testuser' } }, true, null];
   },
-  consoleFetchText: (...args: unknown[]) => mockConsoleFetchText(...args),
+  consoleFetch: (...args: unknown[]) => mockConsoleFetch(...args),
+  consoleFetchText: jest.fn(),
   k8sPatch: jest.fn(),
   k8sDelete: jest.fn(),
 }));
@@ -38,8 +58,8 @@ const mockApp = {
 
 describe('LogsTab', () => {
   beforeEach(() => {
-    mockConsoleFetchText.mockReset();
-    mockConsoleFetchText.mockResolvedValue('Apache log line 1\nApache log line 2');
+    mockConsoleFetch.mockReset();
+    mockConsoleFetch.mockResolvedValue(makeStreamResponse('Apache log line 1\nApache log line 2'));
   });
 
   it('finds pods via ownerReference chain', () => {
@@ -47,28 +67,31 @@ describe('LogsTab', () => {
     expect(screen.getByText('pod-1')).toBeInTheDocument();
   });
 
-  it('calls consoleFetchText on mount with correct URL', async () => {
+  it('calls consoleFetch on mount with streaming URL', async () => {
     render(<LogsTab app={mockApp} />);
-    await waitFor(() => expect(mockConsoleFetchText).toHaveBeenCalled());
-    const url = mockConsoleFetchText.mock.calls[0][0] as string;
+    await waitFor(() => expect(mockConsoleFetch).toHaveBeenCalled());
+    const url = mockConsoleFetch.mock.calls[0][0] as string;
     expect(url).toContain('/api/kubernetes/api/v1/namespaces/default/pods/pod-1/log');
     expect(url).toContain('container=main');
+    expect(url).toContain('follow=true');
   });
 
-  it('displays fetched log content', async () => {
+  it('streams logs via consoleFetch with follow', async () => {
     render(<LogsTab app={mockApp} />);
-    await waitFor(() => expect(screen.getByText(/Apache log line 1/)).toBeInTheDocument());
+    await waitFor(() => expect(mockConsoleFetch).toHaveBeenCalled());
+    const url = mockConsoleFetch.mock.calls[0][0] as string;
+    expect(url).toContain('follow=true');
+    expect(url).toContain('tailLines=500');
   });
 
   it('shows error message when fetch fails', async () => {
-    mockConsoleFetchText.mockRejectedValue(new Error('403 Forbidden'));
+    mockConsoleFetch.mockRejectedValue(new Error('403 Forbidden'));
     render(<LogsTab app={mockApp} />);
     await waitFor(() => expect(screen.getByText(/Error fetching logs: 403 Forbidden/)).toBeInTheDocument());
   });
 
-  it('renders follow and refresh buttons', () => {
+  it('renders refresh button', () => {
     render(<LogsTab app={mockApp} />);
-    expect(screen.getByText('Follow')).toBeInTheDocument();
     expect(screen.getByText('Refresh')).toBeInTheDocument();
   });
 });
