@@ -42,6 +42,8 @@ import {
   ApplicationSetGroupVersionKind,
   AppProjectGroupVersionKind,
   ArgoCDGroupVersionKind,
+  RolloutGroupVersionKind,
+  RolloutManagerGroupVersionKind,
 } from '../../models';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
@@ -91,6 +93,31 @@ export const GitOpsDashboardPage: FC = () => {
     groupVersionKind: ArgoCDGroupVersionKind,
     isList: true,
   });
+
+  const [rollouts] = useK8sWatchResource<Array<Record<string, unknown>>>({
+    groupVersionKind: RolloutGroupVersionKind,
+    isList: true,
+  });
+  const [rolloutManagers] = useK8sWatchResource<Array<Record<string, unknown>>>({
+    groupVersionKind: RolloutManagerGroupVersionKind,
+    isList: true,
+  });
+  const [csvs] = useK8sWatchResource<Array<Record<string, unknown>>>({
+    groupVersionKind: { group: 'operators.coreos.com', version: 'v1alpha1', kind: 'ClusterServiceVersion' },
+    isList: true,
+    namespace: 'openshift-gitops',
+  });
+
+  const gitopsOperator = useMemo(() => {
+    const csv = (csvs ?? []).find((c) => {
+      const name = (c.metadata as Record<string, string>)?.name ?? '';
+      return name.startsWith('openshift-gitops-operator');
+    });
+    if (!csv) return null;
+    const meta = csv.metadata as Record<string, string>;
+    const status = csv.status as Record<string, string> | undefined;
+    return { name: meta.name, phase: status?.phase ?? 'Unknown', version: (csv.spec as Record<string, string>)?.version ?? '' };
+  }, [csvs]);
 
   const errors = useMemo(
     () => [appsError, appsetsError, projectsError, instancesError].filter(Boolean) as Error[],
@@ -447,6 +474,92 @@ export const GitOpsDashboardPage: FC = () => {
                     </Tbody>
                   </Table>
                 )}
+              </CardBody>
+            </Card>
+          </GridItem>
+
+          {/* Row 6: Infrastructure */}
+          <GridItem span={12}>
+            <Card>
+              <CardTitle>{t('Infrastructure')}</CardTitle>
+              <CardBody>
+                <Grid hasGutter>
+                  <GridItem span={4}>
+                    <DescriptionList isCompact>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('GitOps Operator')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {gitopsOperator ? (
+                            <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                              <FlexItem><Label isCompact color={gitopsOperator.phase === 'Succeeded' ? 'green' : 'red'}>{gitopsOperator.phase}</Label></FlexItem>
+                              <FlexItem><span className="gitops-dashboard__version-text">v{gitopsOperator.version}</span></FlexItem>
+                            </Flex>
+                          ) : <span className="gitops-dashboard__empty-text">{t('Not installed')}</span>}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('ArgoCD Instances')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {(instances ?? []).map((inst) => {
+                            const meta = inst.metadata as Record<string, string>;
+                            const status = inst.status as Record<string, string> | undefined;
+                            return (
+                              <div key={meta.uid} className="pf-v6-u-mb-xs">
+                                <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                                  <FlexItem><Label isCompact color={status?.phase === 'Available' ? 'green' : 'gold'}>{status?.phase ?? 'Unknown'}</Label></FlexItem>
+                                  <FlexItem>{meta.name}</FlexItem>
+                                  <FlexItem><span className="gitops-dashboard__version-text">{meta.namespace}</span></FlexItem>
+                                </Flex>
+                              </div>
+                            );
+                          })}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </GridItem>
+                  <GridItem span={4}>
+                    <DescriptionList isCompact>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Rollout Managers')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {(rolloutManagers ?? []).length === 0 ? (
+                            <span className="gitops-dashboard__empty-text">{t('None')}</span>
+                          ) : (rolloutManagers ?? []).map((rm) => {
+                            const meta = rm.metadata as Record<string, string>;
+                            const status = rm.status as Record<string, string> | undefined;
+                            return (
+                              <div key={meta.uid} className="pf-v6-u-mb-xs">
+                                <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                                  <FlexItem><Label isCompact color={status?.phase === 'Available' ? 'green' : 'red'}>{status?.phase ?? 'Unknown'}</Label></FlexItem>
+                                  <FlexItem>{meta.name}</FlexItem>
+                                  <FlexItem><span className="gitops-dashboard__version-text">{meta.namespace}</span></FlexItem>
+                                </Flex>
+                              </div>
+                            );
+                          })}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Rollouts')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Label isCompact>{(rollouts ?? []).length}</Label>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </GridItem>
+                  <GridItem span={4}>
+                    <DescriptionList isCompact>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('ApplicationSets')}</DescriptionListTerm>
+                        <DescriptionListDescription><Label isCompact>{appsets?.length ?? 0}</Label></DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('AppProjects')}</DescriptionListTerm>
+                        <DescriptionListDescription><Label isCompact>{projects?.length ?? 0}</Label></DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </GridItem>
+                </Grid>
               </CardBody>
             </Card>
           </GridItem>

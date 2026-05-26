@@ -71,6 +71,11 @@
   white-space: nowrap;
 }
 
+.gitops-dashboard__version-text {
+  font-size: 0.75rem;
+  color: var(--pf-t--global--color--status--default--default);
+}
+
 .gitops-dashboard__empty-text {
   font-size: 0.8125rem;
   color: var(--pf-t--global--color--status--default--default);
