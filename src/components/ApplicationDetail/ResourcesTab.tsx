@@ -1,9 +1,11 @@
 import React from 'react';
-import { useState, type FC } from 'react';
+import { useState, useMemo, type FC } from 'react';
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
-  EmptyState, EmptyStateBody, Button, Alert, Toolbar, ToolbarContent, ToolbarItem,
+  EmptyState, EmptyStateBody, Button, Alert, AlertActionCloseButton,
+  Toolbar, ToolbarContent, ToolbarItem,
+  Select, SelectOption, SelectList, MenuToggle, Label,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
@@ -24,12 +26,20 @@ interface ManagedResource {
 export const ResourcesTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { sync } = useApplicationActions(app);
-  const resources = app.status?.resources ?? [];
+  const resources = useMemo(() => app.status?.resources ?? [], [app.status?.resources]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
+  const [kindFilter, setKindFilter] = useState('');
+  const [kindOpen, setKindOpen] = useState(false);
 
   const resourceKey = (r: ManagedResource) => `${r.group ?? ''}/${r.kind}/${r.namespace ?? ''}/${r.name}`;
+
+  const kinds = useMemo(() => [...new Set(resources.map((r) => r.kind))].sort(), [resources]);
+
+  const filtered = useMemo(() =>
+    kindFilter ? resources.filter((r) => r.kind === kindFilter) : resources,
+  [resources, kindFilter]);
 
   const toggleSelect = (r: ManagedResource) => {
     const key = resourceKey(r);
@@ -41,10 +51,10 @@ export const ResourcesTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   };
 
   const toggleAll = () => {
-    if (selected.size === resources.length) {
+    if (selected.size === filtered.length) {
       setSelected(new Set());
     } else {
-      setSelected(new Set(resources.map(resourceKey)));
+      setSelected(new Set(filtered.map(resourceKey)));
     }
   };
 
@@ -71,11 +81,11 @@ export const ResourcesTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const outOfSyncCount = resources.filter((r) => r.status !== 'Synced').length;
 
   return (
-    <>
+    <div className="pf-v6-u-mt-md">
       {syncError && (
         <Alert variant="danger" isInline title={t('Sync failed')}
-          actionClose={<Button variant="plain" onClick={() => setSyncError('')}>x</Button>}
-          className="pf-v6-u-mb-sm"
+          actionClose={<AlertActionCloseButton onClose={() => setSyncError('')} />}
+          className="pf-v6-u-mb-md"
         >{syncError}</Alert>
       )}
       <Toolbar>
@@ -98,12 +108,37 @@ export const ResourcesTab: FC<{ app: ApplicationResource }> = ({ app }) => {
               </Button>
             </ToolbarItem>
           )}
+          <ToolbarItem>
+            <Select
+              isOpen={kindOpen}
+              onOpenChange={setKindOpen}
+              onSelect={(_e, val) => { setKindFilter(val === 'all' ? '' : val as string); setKindOpen(false); }}
+              toggle={(ref) => (
+                <MenuToggle ref={ref} onClick={() => setKindOpen(!kindOpen)}>
+                  {kindFilter || t('All Kinds')} ({kindFilter ? filtered.length : resources.length})
+                </MenuToggle>
+              )}
+              selected={kindFilter || 'all'}
+              aria-label={t('Filter by kind')}
+            >
+              <SelectList>
+                <SelectOption value="all">{t('All Kinds')} ({resources.length})</SelectOption>
+                {kinds.map((k) => {
+                  const count = resources.filter((r) => r.kind === k).length;
+                  return <SelectOption key={k} value={k}>{k} ({count})</SelectOption>;
+                })}
+              </SelectList>
+            </Select>
+          </ToolbarItem>
+          <ToolbarItem>
+            <Label isCompact>{filtered.length} {t('resources')}</Label>
+          </ToolbarItem>
         </ToolbarContent>
       </Toolbar>
-      <Table aria-label={t('Managed Resources')}>
+      <Table aria-label={t('Managed Resources')} isStriped isCompact>
         <Thead>
           <Tr>
-            <Th select={{ onSelect: toggleAll, isSelected: selected.size === resources.length }} />
+            <Th select={{ onSelect: toggleAll, isSelected: selected.size === filtered.length && filtered.length > 0 }} />
             <Th>{t('Name')}</Th>
             <Th>{t('Kind')}</Th>
             <Th>{t('Namespace')}</Th>
@@ -112,14 +147,14 @@ export const ResourcesTab: FC<{ app: ApplicationResource }> = ({ app }) => {
           </Tr>
         </Thead>
         <Tbody>
-          {resources.map((res) => {
+          {filtered.map((res) => {
             const key = resourceKey(res);
             const gvk = { group: res.group ?? '', version: res.version, kind: res.kind };
             return (
               <Tr key={key}>
                 <Td select={{ rowIndex: 0, onSelect: () => toggleSelect(res), isSelected: selected.has(key) }} />
                 <Td><ResourceLink groupVersionKind={gvk} name={res.name} namespace={res.namespace} /></Td>
-                <Td>{res.kind}</Td>
+                <Td><Label isCompact>{res.kind}</Label></Td>
                 <Td>{res.namespace ?? '-'}</Td>
                 <Td><SyncStatusIcon status={res.status ?? 'Unknown'} /></Td>
                 <Td>{res.health ? <HealthStatusIcon status={res.health.status as never} /> : '-'}</Td>
@@ -128,7 +163,7 @@ export const ResourcesTab: FC<{ app: ApplicationResource }> = ({ app }) => {
           })}
         </Tbody>
       </Table>
-    </>
+    </div>
   );
 };
 
