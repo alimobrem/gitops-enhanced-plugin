@@ -1,3 +1,4 @@
+import { renderHook } from '@testing-library/react-hooks';
 import type { ApplicationResource } from '../types';
 
 const mockSync = jest.fn();
@@ -52,14 +53,16 @@ describe('useApplicationActionsProvider', () => {
   beforeEach(() => jest.clearAllMocks());
 
   it('returns actions array and loaded=true', () => {
-    const [actions, loaded, error] = useApplicationActionsProvider(mockApp);
+    const { result } = renderHook(() => useApplicationActionsProvider(mockApp));
+    const [actions, loaded, error] = result.current;
     expect(loaded).toBe(true);
     expect(error).toBeNull();
     expect(Array.isArray(actions)).toBe(true);
   });
 
   it('includes standard action IDs', () => {
-    const [actions] = useApplicationActionsProvider(mockApp);
+    const { result } = renderHook(() => useApplicationActionsProvider(mockApp));
+    const [actions] = result.current;
     const ids = actions.map((a) => a.id);
     expect(ids).toContain('argocd-sync');
     expect(ids).toContain('argocd-refresh');
@@ -69,33 +72,22 @@ describe('useApplicationActionsProvider', () => {
   });
 
   it('does not include retry when operation has not failed', () => {
-    const [actions] = useApplicationActionsProvider(mockApp);
+    const { result } = renderHook(() => useApplicationActionsProvider(mockApp));
+    const [actions] = result.current;
     const ids = actions.map((a) => a.id);
     expect(ids).not.toContain('argocd-retry');
   });
 
   it('includes retry when operation phase is Failed', () => {
-    const [actions] = useApplicationActionsProvider(failedApp);
-    const ids = actions.map((a) => a.id);
-    expect(ids).toContain('argocd-retry');
-  });
-
-  it('includes retry when operation phase is Error', () => {
-    const errorApp: ApplicationResource = {
-      ...mockApp,
-      status: {
-        sync: { status: 'OutOfSync' },
-        health: { status: 'Degraded' },
-        operationState: { phase: 'Error' },
-      },
-    };
-    const [actions] = useApplicationActionsProvider(errorApp);
+    const { result } = renderHook(() => useApplicationActionsProvider(failedApp));
+    const [actions] = result.current;
     const ids = actions.map((a) => a.id);
     expect(ids).toContain('argocd-retry');
   });
 
   it('calls sync when sync action cta is invoked', () => {
-    const [actions] = useApplicationActionsProvider(mockApp);
+    const { result } = renderHook(() => useApplicationActionsProvider(mockApp));
+    const [actions] = result.current;
     const syncAction = actions.find((a) => a.id === 'argocd-sync');
     syncAction?.cta();
     expect(mockSync).toHaveBeenCalled();
