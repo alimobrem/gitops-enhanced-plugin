@@ -49,11 +49,18 @@ export const ClusterListPage: FC = () => {
         {watchError && <Alert variant="danger" isInline title={t('Error loading resources')} className="pf-v6-u-mb-md">{(watchError as Error).message}</Alert>}
         {!loaded && !watchError && <Bullseye><Spinner /></Bullseye>}
         {loaded && clusterSecrets.length === 0 && (
-          <EmptyState>
-            <EmptyStateBody>
-              {t('No external clusters configured. The in-cluster server is always available.')}
-            </EmptyStateBody>
-          </EmptyState>
+          <>
+            <EmptyState>
+              <EmptyStateBody>
+                {t('No external clusters configured. The in-cluster server is always available.')}
+              </EmptyStateBody>
+            </EmptyState>
+            <Alert variant="info" isInline isPlain title={t('Adding clusters')} className="pf-v6-u-mt-md">
+              {t('To register an external cluster, use the Argo CD CLI:')}
+              <pre className="pf-v6-u-mt-sm pf-v6-u-font-size-sm">argocd cluster add CONTEXT_NAME --name my-cluster</pre>
+              {t('This creates a ServiceAccount on the remote cluster and registers it with Argo CD.')}
+            </Alert>
+          </>
         )}
         {loaded && clusterSecrets.length > 0 && (
           <Table aria-label={t('Clusters')}>
