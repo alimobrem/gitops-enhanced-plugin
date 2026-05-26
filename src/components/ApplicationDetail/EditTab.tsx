@@ -3,6 +3,7 @@ import { useState, type FC } from 'react';
 import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
+  Bullseye, Spinner,
   Form, FormGroup, TextInput, Checkbox, ActionGroup, Button, Alert,
   Card, CardTitle, CardBody, Grid, GridItem,
   HelperText, HelperTextItem, FormHelperText,
@@ -13,42 +14,45 @@ import { isMultiSource, getApplicationSource } from '../../utils/application';
 import { safePatch, safeRemove } from '../../utils/patch';
 import type { ApplicationResource } from '../../types';
 
-export const EditTab: FC<{ app: ApplicationResource }> = ({ app }) => {
+export const EditTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const app = obj as ApplicationResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const multiSource = isMultiSource(app);
-  const source = getApplicationSource(app);
+  const multiSource = app ? isMultiSource(app) : false;
+  const source = app ? getApplicationSource(app) : undefined;
 
   const [repoURL, setRepoURL] = useState(source?.repoURL ?? '');
   const [path, setPath] = useState(source?.path ?? '');
   const [targetRevision, setTargetRevision] = useState(source?.targetRevision ?? 'HEAD');
-  const [destServer, setDestServer] = useState(app.spec?.destination.server ?? '');
-  const [destNamespace, setDestNamespace] = useState(app.spec?.destination.namespace ?? '');
-  const [project, setProject] = useState(app.spec?.project);
-  const [autoSync, setAutoSync] = useState(!!app.spec?.syncPolicy?.automated);
-  const [prune, setPrune] = useState(!!app.spec?.syncPolicy?.automated?.prune);
-  const [selfHeal, setSelfHeal] = useState(!!app.spec?.syncPolicy?.automated?.selfHeal);
+  const [destServer, setDestServer] = useState(app?.spec?.destination?.server ?? '');
+  const [destNamespace, setDestNamespace] = useState(app?.spec?.destination?.namespace ?? '');
+  const [project, setProject] = useState(app?.spec?.project);
+  const [autoSync, setAutoSync] = useState(!!app?.spec?.syncPolicy?.automated);
+  const [prune, setPrune] = useState(!!app?.spec?.syncPolicy?.automated?.prune);
+  const [selfHeal, setSelfHeal] = useState(!!app?.spec?.syncPolicy?.automated?.selfHeal);
 
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
 
+  if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
+
   const repoURLValid = repoURL.trim().length > 0;
   const pathValid = path.trim().length > 0;
   const namespaceValid = destNamespace.trim().length > 0;
 
   const isDirty = repoURL !== (source?.repoURL ?? '') || path !== (source?.path ?? '') ||
-    targetRevision !== (source?.targetRevision ?? 'HEAD') || destServer !== (app.spec?.destination.server ?? '') ||
-    destNamespace !== (app.spec?.destination.namespace ?? '') || project !== app.spec?.project ||
-    autoSync !== !!app.spec?.syncPolicy?.automated || prune !== !!app.spec?.syncPolicy?.automated?.prune ||
-    selfHeal !== !!app.spec?.syncPolicy?.automated?.selfHeal;
+    targetRevision !== (source?.targetRevision ?? 'HEAD') || destServer !== (app?.spec?.destination?.server ?? '') ||
+    destNamespace !== (app?.spec?.destination?.namespace ?? '') || project !== app?.spec?.project ||
+    autoSync !== !!app?.spec?.syncPolicy?.automated || prune !== !!app?.spec?.syncPolicy?.automated?.prune ||
+    selfHeal !== !!app?.spec?.syncPolicy?.automated?.selfHeal;
 
   const resetForm = () => {
     setRepoURL(source?.repoURL ?? ''); setPath(source?.path ?? '');
     setTargetRevision(source?.targetRevision ?? 'HEAD');
-    setDestServer(app.spec?.destination.server ?? ''); setDestNamespace(app.spec?.destination.namespace ?? '');
-    setProject(app.spec?.project); setAutoSync(!!app.spec?.syncPolicy?.automated);
-    setPrune(!!app.spec?.syncPolicy?.automated?.prune); setSelfHeal(!!app.spec?.syncPolicy?.automated?.selfHeal);
+    setDestServer(app?.spec?.destination?.server ?? ''); setDestNamespace(app?.spec?.destination?.namespace ?? '');
+    setProject(app?.spec?.project); setAutoSync(!!app?.spec?.syncPolicy?.automated);
+    setPrune(!!app?.spec?.syncPolicy?.automated?.prune); setSelfHeal(!!app?.spec?.syncPolicy?.automated?.selfHeal);
     clearFeedback();
   };
   const formValid = repoURLValid && pathValid && namespaceValid;

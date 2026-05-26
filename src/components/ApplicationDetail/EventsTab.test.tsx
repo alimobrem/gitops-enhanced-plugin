@@ -13,7 +13,7 @@ const baseApp = {
 
 describe('EventsTab', () => {
   it('shows empty conditions', () => {
-    render(<EventsTab app={{ ...baseApp, status: { sync: { status: 'Synced' }, health: { status: 'Healthy' } } }} />);
+    render(<EventsTab obj={{ ...baseApp, status: { sync: { status: 'Synced' }, health: { status: 'Healthy' } } }} />);
     expect(screen.getByText('No conditions.')).toBeInTheDocument();
   });
 
@@ -26,7 +26,7 @@ describe('EventsTab', () => {
         operationState: { phase: 'Succeeded', message: 'synced', startedAt: '2026-01-01T00:00:00Z', finishedAt: '2026-01-01T00:01:00Z' },
       },
     };
-    render(<EventsTab app={app} />);
+    render(<EventsTab obj={app} />);
     expect(screen.getByText('Succeeded')).toBeInTheDocument();
     expect(screen.getByText('synced')).toBeInTheDocument();
   });
@@ -40,7 +40,7 @@ describe('EventsTab', () => {
         conditions: [{ type: 'SyncError', message: 'something failed' }],
       },
     };
-    render(<EventsTab app={app} />);
+    render(<EventsTab obj={app} />);
     expect(screen.getByText('SyncError')).toBeInTheDocument();
     expect(screen.getByText('something failed')).toBeInTheDocument();
   });

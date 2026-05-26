@@ -2,14 +2,17 @@ import React from 'react';
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Bullseye, Spinner,
   EmptyState, EmptyStateBody, Label,
   DescriptionList, DescriptionListGroup, DescriptionListTerm, DescriptionListDescription,
   Card, CardTitle, CardBody,
 } from '@patternfly/react-core';
 import type { ApplicationResource } from '../../types';
 
-export const EventsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
+export const EventsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const app = obj as ApplicationResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
+  if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
   const conditions = app.status?.conditions ?? [];
   const opState = app.status?.operationState;
 

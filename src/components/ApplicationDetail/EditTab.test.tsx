@@ -44,14 +44,14 @@ describe('EditTab', () => {
   beforeEach(() => mockK8sPatch.mockReset());
 
   it('renders form fields with current values', () => {
-    render(<EditTab app={mockApp} />);
+    render(<EditTab obj={mockApp} />);
     expect(screen.getByDisplayValue('https://github.com/org/repo')).toBeInTheDocument();
     expect(screen.getByDisplayValue('manifests')).toBeInTheDocument();
     expect(screen.getAllByDisplayValue('default').length).toBeGreaterThanOrEqual(1);
   });
 
   it('shows confirmation modal before saving', () => {
-    render(<EditTab app={mockApp} />);
+    render(<EditTab obj={mockApp} />);
     // Make form dirty first
     fireEvent.change(screen.getByDisplayValue('manifests'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Save'));
@@ -60,7 +60,7 @@ describe('EditTab', () => {
 
   it('calls k8sPatch with correct source path on confirm', async () => {
     mockK8sPatch.mockResolvedValue({});
-    render(<EditTab app={mockApp} />);
+    render(<EditTab obj={mockApp} />);
     fireEvent.change(screen.getByDisplayValue('manifests'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Save'));
     fireEvent.click(screen.getAllByText('Save')[1]); // modal save button
@@ -75,7 +75,7 @@ describe('EditTab', () => {
 
   it('uses /spec/sources/0 path for multi-source apps', async () => {
     mockK8sPatch.mockResolvedValue({});
-    render(<EditTab app={multiSourceApp as unknown as typeof mockApp} />);
+    render(<EditTab obj={multiSourceApp as unknown as typeof mockApp} />);
     expect(screen.getByText('Multi-source application')).toBeInTheDocument();
     fireEvent.change(screen.getByDisplayValue('base'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Save'));
@@ -91,7 +91,7 @@ describe('EditTab', () => {
 
   it('shows error on save failure with dismiss', async () => {
     mockK8sPatch.mockRejectedValue(new Error('forbidden'));
-    render(<EditTab app={mockApp} />);
+    render(<EditTab obj={mockApp} />);
     fireEvent.change(screen.getByDisplayValue('manifests'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Save'));
     fireEvent.click(screen.getAllByText('Save')[1]);
@@ -99,7 +99,7 @@ describe('EditTab', () => {
   });
 
   it('disables save when required fields are empty', () => {
-    render(<EditTab app={{
+    render(<EditTab obj={{
       ...mockApp,
       spec: { ...mockApp.spec, source: { repoURL: '', path: '', targetRevision: '' } },
     }} />);

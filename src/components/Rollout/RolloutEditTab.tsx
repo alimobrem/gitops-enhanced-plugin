@@ -3,6 +3,7 @@ import { useState, useMemo, useEffect, type FC } from 'react';
 import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
+  Bullseye, Spinner,
   Form, FormSection, FormGroup, TextInput, ActionGroup, Button, Alert,
   AlertActionCloseButton, NumberInput, Checkbox, Label, Tooltip,
   HelperText, HelperTextItem, FormHelperText, Select, SelectOption, SelectList, MenuToggle,
@@ -16,19 +17,20 @@ import { safePatch, type PatchOp } from '../../utils/patch';
 const SURGE_PATTERN = /^\d+%?$/;
 const DURATION_PATTERN = /^\d+[smh]$/;
 
-export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) => {
+export const RolloutEditTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const rollout = obj as RolloutResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const container = rollout.spec?.template?.spec?.containers?.[0];
-  const canary = rollout.spec?.strategy?.canary;
-  const blueGreen = rollout.spec?.strategy?.blueGreen;
+  const container = rollout?.spec?.template?.spec?.containers?.[0];
+  const canary = rollout?.spec?.strategy?.canary;
+  const blueGreen = rollout?.spec?.strategy?.blueGreen;
   const isCanary = !!canary;
   const isBlueGreen = !!blueGreen;
 
   const init = useMemo(() => ({
-    replicas: rollout.spec?.replicas ?? 1,
-    revisionHistoryLimit: String(rollout.spec?.revisionHistoryLimit ?? 10),
-    minReadySeconds: String(rollout.spec?.minReadySeconds ?? 0),
-    progressDeadlineSeconds: String(rollout.spec?.progressDeadlineSeconds ?? 600),
+    replicas: rollout?.spec?.replicas ?? 1,
+    revisionHistoryLimit: String(rollout?.spec?.revisionHistoryLimit ?? 10),
+    minReadySeconds: String(rollout?.spec?.minReadySeconds ?? 0),
+    progressDeadlineSeconds: String(rollout?.spec?.progressDeadlineSeconds ?? 600),
     image: container?.image ?? '',
     containerPort: String(container?.ports?.[0]?.containerPort ?? 80),
     maxSurge: String(canary?.maxSurge ?? '25%'),
@@ -43,7 +45,7 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
     scaleDownDelaySeconds: String(blueGreen?.scaleDownDelaySeconds ?? 30),
     previewReplicaCount: blueGreen?.previewReplicaCount ?? 0,
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }), [rollout.metadata.uid]);
+  }), [rollout?.metadata?.uid]);
 
   const [replicas, setReplicas] = useState(init.replicas);
   const [revisionHistoryLimit, setRevisionHistoryLimit] = useState(init.revisionHistoryLimit);
@@ -77,17 +79,6 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
     return () => clearTimeout(timer);
   }, [success]);
 
-  const imageValid = image.trim().length > 0;
-  const surgeValid = !isCanary || SURGE_PATTERN.test(maxSurge);
-  const unavailableValid = !isCanary || SURGE_PATTERN.test(maxUnavailable);
-  const stepsValid = !isCanary || steps.every((s) => {
-    if ('pause' in s && typeof s.pause === 'object') {
-      return DURATION_PATTERN.test((s.pause as Record<string, string>).duration ?? '');
-    }
-    return true;
-  });
-  const formValid = imageValid && surgeValid && unavailableValid && stepsValid;
-
   const stepsKey = useMemo(() => JSON.stringify(steps), [steps]);
   const initStepsKey = useMemo(() => JSON.stringify(init.steps), [init.steps]);
 
@@ -108,6 +99,19 @@ export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) =>
     maxSurge, maxUnavailable, stableService, canaryService, stepsKey, initStepsKey,
     activeService, previewService, autoPromotionEnabled, autoPromotionSeconds,
     scaleDownDelaySeconds, previewReplicaCount, init, isCanary, isBlueGreen]);
+
+  if (!rollout?.metadata) return <Bullseye><Spinner /></Bullseye>;
+
+  const imageValid = image.trim().length > 0;
+  const surgeValid = !isCanary || SURGE_PATTERN.test(maxSurge);
+  const unavailableValid = !isCanary || SURGE_PATTERN.test(maxUnavailable);
+  const stepsValid = !isCanary || steps.every((s) => {
+    if ('pause' in s && typeof s.pause === 'object') {
+      return DURATION_PATTERN.test((s.pause as Record<string, string>).duration ?? '');
+    }
+    return true;
+  });
+  const formValid = imageValid && surgeValid && unavailableValid && stepsValid;
 
   const clearFeedback = () => { setError(''); setSuccess(false); };
 

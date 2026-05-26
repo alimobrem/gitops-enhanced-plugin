@@ -1,19 +1,22 @@
 import React from 'react';
 import { useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
-import { EmptyState, EmptyStateBody, Button, Alert } from '@patternfly/react-core';
+import { Bullseye, Spinner, EmptyState, EmptyStateBody, Button, Alert } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { useApplicationActions } from '../../hooks/useApplicationActions';
 import type { ApplicationResource } from '../../types';
 
-export const HistoryTab: FC<{ app: ApplicationResource }> = ({ app }) => {
+export const HistoryTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const app = obj as ApplicationResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const { sync } = useApplicationActions(app);
-  const history = app.status?.history ?? [];
+  const { sync } = useApplicationActions(app ?? null);
+  const history = app?.status?.history ?? [];
   const [rollbackTarget, setRollbackTarget] = useState<{ id: number; revision: string } | null>(null);
   const [rolling, setRolling] = useState(false);
   const [rollbackError, setRollbackError] = useState('');
+
+  if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
 
   const handleRollback = async () => {
     if (!rollbackTarget) return;

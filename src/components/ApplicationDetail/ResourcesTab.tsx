@@ -3,6 +3,7 @@ import { useState, useMemo, type FC } from 'react';
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
+  Bullseye, Spinner,
   EmptyState, EmptyStateBody, Button, Alert, AlertActionCloseButton,
   Toolbar, ToolbarContent, ToolbarItem,
   Select, SelectOption, SelectList, MenuToggle, Label,
@@ -23,10 +24,11 @@ interface ManagedResource {
   health?: { status: string };
 }
 
-export const ResourcesTab: FC<{ app: ApplicationResource }> = ({ app }) => {
+export const ResourcesTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const app = obj as ApplicationResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const { sync } = useApplicationActions(app);
-  const resources = useMemo(() => app.status?.resources ?? [], [app.status?.resources]);
+  const { sync } = useApplicationActions(app ?? null);
+  const resources = useMemo(() => app?.status?.resources ?? [], [app?.status?.resources]);
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [syncing, setSyncing] = useState(false);
   const [syncError, setSyncError] = useState('');
@@ -40,6 +42,8 @@ export const ResourcesTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const filtered = useMemo(() =>
     kindFilter ? resources.filter((r) => r.kind === kindFilter) : resources,
   [resources, kindFilter]);
+
+  if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
 
   const toggleSelect = (r: ManagedResource) => {
     const key = resourceKey(r);

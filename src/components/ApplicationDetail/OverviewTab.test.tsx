@@ -23,20 +23,20 @@ const mockApp = {
 
 describe('OverviewTab', () => {
   it('renders source info', () => {
-    render(<OverviewTab app={mockApp} />);
+    render(<OverviewTab obj={mockApp} />);
     expect(screen.getByText('https://github.com/org/repo')).toBeInTheDocument();
     expect(screen.getByText('manifests')).toBeInTheDocument();
     expect(screen.getByText('v1.0')).toBeInTheDocument();
   });
 
   it('renders destination info', () => {
-    render(<OverviewTab app={mockApp} />);
+    render(<OverviewTab obj={mockApp} />);
     expect(screen.getByText('prod')).toBeInTheDocument();
     expect(screen.getByText('my-project')).toBeInTheDocument();
   });
 
   it('renders revision short hash', () => {
-    render(<OverviewTab app={mockApp} />);
+    render(<OverviewTab obj={mockApp} />);
     expect(screen.getByText('abc1234')).toBeInTheDocument();
   });
 });

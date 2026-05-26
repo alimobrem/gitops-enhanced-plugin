@@ -24,7 +24,7 @@ const baseApp = {
 
 describe('HistoryTab', () => {
   it('shows empty state when no history', () => {
-    render(<HistoryTab app={{ ...baseApp, status: { sync: { status: 'Synced' }, health: { status: 'Healthy' }, history: [] } }} />);
+    render(<HistoryTab obj={{ ...baseApp, status: { sync: { status: 'Synced' }, health: { status: 'Healthy' }, history: [] } }} />);
     expect(screen.getByText('No deployment history available.')).toBeInTheDocument();
   });
 
@@ -40,7 +40,7 @@ describe('HistoryTab', () => {
         ],
       },
     };
-    render(<HistoryTab app={app} />);
+    render(<HistoryTab obj={app} />);
     expect(screen.getByText('abc1234')).toBeInTheDocument();
     expect(screen.getByText('def4567')).toBeInTheDocument();
     expect(screen.getByText('Rollback')).toBeInTheDocument();

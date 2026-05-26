@@ -30,11 +30,11 @@ const mockProject: AppProjectResource = {
 
 describe('AppProjectEditTab', () => {
   it('renders without crashing', () => {
-    render(<AppProjectEditTab project={mockProject} />);
+    render(<AppProjectEditTab obj={mockProject} />);
   });
 
   it('renders form fields', () => {
-    render(<AppProjectEditTab project={mockProject} />);
+    render(<AppProjectEditTab obj={mockProject} />);
     expect(screen.getByText('Basics')).toBeInTheDocument();
     expect(screen.getByText('Source Repos')).toBeInTheDocument();
     expect(screen.getByText('Destinations')).toBeInTheDocument();

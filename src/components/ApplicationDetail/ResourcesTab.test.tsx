@@ -25,7 +25,7 @@ const baseApp = {
 
 describe('ResourcesTab', () => {
   it('shows empty state when no resources', () => {
-    render(<ResourcesTab app={{ ...baseApp, status: { sync: { status: 'Synced' }, health: { status: 'Healthy' }, resources: [] } }} />);
+    render(<ResourcesTab obj={{ ...baseApp, status: { sync: { status: 'Synced' }, health: { status: 'Healthy' }, resources: [] } }} />);
     expect(screen.getByText('No managed resources found.')).toBeInTheDocument();
   });
 
@@ -41,7 +41,7 @@ describe('ResourcesTab', () => {
         ],
       },
     };
-    render(<ResourcesTab app={app} />);
+    render(<ResourcesTab obj={app} />);
     expect(screen.getByText('my-svc')).toBeInTheDocument();
     expect(screen.getByText('my-deploy')).toBeInTheDocument();
     expect(screen.getByText('Service')).toBeInTheDocument();

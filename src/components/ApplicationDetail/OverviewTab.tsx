@@ -1,6 +1,8 @@
 import React from 'react';
 import type { FC } from 'react';
 import {
+  Bullseye,
+  Spinner,
   DescriptionList,
   DescriptionListGroup,
   DescriptionListTerm,
@@ -17,8 +19,10 @@ import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import type { ApplicationResource } from '../../types';
 import { getApplicationSource } from '../../utils/application';
 
-export const OverviewTab: FC<{ app: ApplicationResource }> = ({ app }) => {
+export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const app = obj as ApplicationResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
+  if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
   const source = getApplicationSource(app);
 
   return (
@@ -115,3 +119,5 @@ export const OverviewTab: FC<{ app: ApplicationResource }> = ({ app }) => {
     </Grid>
   );
 };
+
+export default OverviewTab;

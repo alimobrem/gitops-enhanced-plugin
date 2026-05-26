@@ -3,6 +3,7 @@ import { useState, type FC } from 'react';
 import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
+  Bullseye, Spinner,
   Form, FormGroup, TextInput, Checkbox, ActionGroup, Button, Alert,
   Card, CardTitle, CardBody, Grid, GridItem,
   HelperText, HelperTextItem, FormHelperText,
@@ -13,9 +14,10 @@ import type { AppSetResource } from '../../types';
 import { safePatch, safeRemove } from '../../utils/patch';
 
 
-export const ApplicationSetEditTab: FC<{ appset: AppSetResource }> = ({ appset }) => {
+export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const appset = obj as AppSetResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const tpl = appset.spec.template?.spec;
+  const tpl = appset?.spec?.template?.spec;
   const src = tpl?.source;
 
   const init = {
@@ -40,6 +42,8 @@ export const ApplicationSetEditTab: FC<{ appset: AppSetResource }> = ({ appset }
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  if (!appset?.metadata) return <Bullseye><Spinner /></Bullseye>;
 
   const repoURLValid = repoURL.trim().length > 0;
   const formValid = repoURLValid;
@@ -116,3 +120,5 @@ export const ApplicationSetEditTab: FC<{ appset: AppSetResource }> = ({ appset }
     </>
   );
 };
+
+export default ApplicationSetEditTab;

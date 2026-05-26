@@ -35,11 +35,11 @@ const mockAppSet: AppSetResource = {
 
 describe('ApplicationSetEditTab', () => {
   it('renders without crashing', () => {
-    render(<ApplicationSetEditTab appset={mockAppSet} />);
+    render(<ApplicationSetEditTab obj={mockAppSet} />);
   });
 
   it('renders form fields', () => {
-    render(<ApplicationSetEditTab appset={mockAppSet} />);
+    render(<ApplicationSetEditTab obj={mockAppSet} />);
     expect(screen.getByText('Template')).toBeInTheDocument();
     expect(screen.getByText('Repository URL')).toBeInTheDocument();
     expect(screen.getByText('Sync Policy')).toBeInTheDocument();

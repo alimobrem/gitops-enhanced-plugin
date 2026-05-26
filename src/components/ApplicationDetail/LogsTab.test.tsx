@@ -63,12 +63,12 @@ describe('LogsTab', () => {
   });
 
   it('finds pods via ownerReference chain', () => {
-    render(<LogsTab app={mockApp} />);
+    render(<LogsTab obj={mockApp} />);
     expect(screen.getByText('pod-1')).toBeInTheDocument();
   });
 
   it('calls consoleFetch on mount with streaming URL', async () => {
-    render(<LogsTab app={mockApp} />);
+    render(<LogsTab obj={mockApp} />);
     await waitFor(() => expect(mockConsoleFetch).toHaveBeenCalled());
     const url = mockConsoleFetch.mock.calls[0][0] as string;
     expect(url).toContain('/api/kubernetes/api/v1/namespaces/default/pods/pod-1/log');
@@ -77,7 +77,7 @@ describe('LogsTab', () => {
   });
 
   it('streams logs via consoleFetch with follow', async () => {
-    render(<LogsTab app={mockApp} />);
+    render(<LogsTab obj={mockApp} />);
     await waitFor(() => expect(mockConsoleFetch).toHaveBeenCalled());
     const url = mockConsoleFetch.mock.calls[0][0] as string;
     expect(url).toContain('follow=true');
@@ -86,12 +86,12 @@ describe('LogsTab', () => {
 
   it('shows error message when fetch fails', async () => {
     mockConsoleFetch.mockRejectedValue(new Error('403 Forbidden'));
-    render(<LogsTab app={mockApp} />);
+    render(<LogsTab obj={mockApp} />);
     await waitFor(() => expect(screen.getByText(/Error fetching logs: 403 Forbidden/)).toBeInTheDocument());
   });
 
   it('renders refresh button', () => {
-    render(<LogsTab app={mockApp} />);
+    render(<LogsTab obj={mockApp} />);
     expect(screen.getByText('Refresh')).toBeInTheDocument();
   });
 });

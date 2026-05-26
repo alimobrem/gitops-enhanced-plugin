@@ -49,7 +49,7 @@ describe('RolloutEditTab', () => {
   beforeEach(() => mockK8sPatch.mockReset().mockResolvedValue({}));
 
   it('renders basics fields', () => {
-    render(<RolloutEditTab rollout={canaryRollout} />);
+    render(<RolloutEditTab obj={canaryRollout} />);
     expect(screen.getByDisplayValue('3')).toBeInTheDocument();
     expect(screen.getByDisplayValue('nginx:latest')).toBeInTheDocument();
     expect(screen.getByText('Revision History Limit')).toBeInTheDocument();
@@ -57,7 +57,7 @@ describe('RolloutEditTab', () => {
   });
 
   it('shows canary fields for canary strategy', () => {
-    render(<RolloutEditTab rollout={canaryRollout} />);
+    render(<RolloutEditTab obj={canaryRollout} />);
     expect(screen.getByText('Max Surge')).toBeInTheDocument();
     expect(screen.getByText('Max Unavailable')).toBeInTheDocument();
     expect(screen.getByText('Stable Service')).toBeInTheDocument();
@@ -66,13 +66,13 @@ describe('RolloutEditTab', () => {
   });
 
   it('does not show blueGreen fields for canary strategy', () => {
-    render(<RolloutEditTab rollout={canaryRollout} />);
+    render(<RolloutEditTab obj={canaryRollout} />);
     expect(screen.queryByText('Active Service')).not.toBeInTheDocument();
     expect(screen.queryByText('Preview Service')).not.toBeInTheDocument();
   });
 
   it('shows blueGreen fields for blueGreen strategy', () => {
-    render(<RolloutEditTab rollout={blueGreenRollout} />);
+    render(<RolloutEditTab obj={blueGreenRollout} />);
     expect(screen.getByText('Active Service')).toBeInTheDocument();
     expect(screen.getByText('Preview Service')).toBeInTheDocument();
     expect(screen.getByText('Auto Promotion')).toBeInTheDocument();
@@ -81,31 +81,31 @@ describe('RolloutEditTab', () => {
   });
 
   it('does not show canary fields for blueGreen strategy', () => {
-    render(<RolloutEditTab rollout={blueGreenRollout} />);
+    render(<RolloutEditTab obj={blueGreenRollout} />);
     expect(screen.queryByText('Max Surge')).not.toBeInTheDocument();
     expect(screen.queryByText('Canary Steps')).not.toBeInTheDocument();
   });
 
   it('Save is disabled when form is clean', () => {
-    render(<RolloutEditTab rollout={canaryRollout} />);
+    render(<RolloutEditTab obj={canaryRollout} />);
     expect(screen.getByText('Save').closest('button')).toBeDisabled();
   });
 
   it('Save enables when image changes', () => {
-    render(<RolloutEditTab rollout={canaryRollout} />);
+    render(<RolloutEditTab obj={canaryRollout} />);
     fireEvent.change(screen.getByDisplayValue('nginx:latest'), { target: { value: 'nginx:1.25' } });
     expect(screen.getByText('Save').closest('button')).not.toBeDisabled();
   });
 
   it('Revert resets form', () => {
-    render(<RolloutEditTab rollout={canaryRollout} />);
+    render(<RolloutEditTab obj={canaryRollout} />);
     fireEvent.change(screen.getByDisplayValue('nginx:latest'), { target: { value: 'changed' } });
     fireEvent.click(screen.getByText('Revert'));
     expect(screen.getByDisplayValue('nginx:latest')).toBeInTheDocument();
   });
 
   it('calls k8sPatch on save confirm', async () => {
-    render(<RolloutEditTab rollout={canaryRollout} />);
+    render(<RolloutEditTab obj={canaryRollout} />);
     fireEvent.change(screen.getByDisplayValue('nginx:latest'), { target: { value: 'nginx:1.25' } });
     fireEvent.click(screen.getByText('Save'));
     fireEvent.click(screen.getAllByText('Save')[1]);
@@ -113,7 +113,7 @@ describe('RolloutEditTab', () => {
   });
 
   it('patch includes strategy fields', async () => {
-    render(<RolloutEditTab rollout={canaryRollout} />);
+    render(<RolloutEditTab obj={canaryRollout} />);
     fireEvent.change(screen.getByDisplayValue('25%'), { target: { value: '50%' } });
     fireEvent.click(screen.getByText('Save'));
     fireEvent.click(screen.getAllByText('Save')[1]);

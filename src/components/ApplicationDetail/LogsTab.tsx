@@ -7,6 +7,8 @@ import {
 } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
+  Bullseye,
+  Spinner,
   EmptyState,
   EmptyStateBody,
   Select,
@@ -35,9 +37,10 @@ interface ReplicaSetResource {
   metadata: { name: string; namespace: string; ownerReferences?: OwnerRef[] };
 }
 
-export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
+export const LogsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const app = obj as ApplicationResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const destNs = app.spec?.destination.namespace ?? 'default';
+  const destNs = app?.spec?.destination?.namespace ?? 'default';
 
   const [pods, , _podsError] = useK8sWatchResource<PodResource[]>({
     groupVersionKind: { group: '', version: 'v1', kind: 'Pod' },
@@ -59,7 +62,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const abortRef = useRef<AbortController | null>(null);
 
   const appPods = useMemo(() => {
-    const resources = app.status?.resources ?? [];
+    const resources = app?.status?.resources ?? [];
     const managedNames = new Set<string>();
     const workloadKinds = new Set(['Deployment', 'StatefulSet', 'DaemonSet', 'Job', 'CronJob', 'ReplicaSet']);
 
@@ -88,7 +91,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
       }
       return false;
     });
-  }, [app.status?.resources, pods, replicaSets]);
+  }, [app?.status?.resources, pods, replicaSets]);
 
   const podNames = useMemo(() => appPods.map((p) => p.metadata.name).join(','), [appPods]);
 
@@ -143,6 +146,8 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
     return () => abortRef.current?.abort();
   }, [selectedPod, selectedContainer, destNs]);
   /* eslint-enable react-hooks/exhaustive-deps */
+
+  if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
 
   if (appPods.length === 0) {
     return (

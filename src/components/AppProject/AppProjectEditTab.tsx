@@ -3,6 +3,7 @@ import { useState, type FC } from 'react';
 import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
+  Bullseye, Spinner,
   Form, FormGroup, TextInput, Checkbox, ActionGroup, Button, Alert,
   Card, CardTitle, CardBody, Grid, GridItem,
 } from '@patternfly/react-core';
@@ -13,15 +14,16 @@ import type { AppProjectResource } from '../../types';
 import { safePatch } from '../../utils/patch';
 
 
-export const AppProjectEditTab: FC<{ project: AppProjectResource }> = ({ project }) => {
+export const AppProjectEditTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
+  const project = obj as AppProjectResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
 
   const init = {
-    description: project.spec?.description ?? '',
-    allRepos: project.spec?.sourceRepos?.includes('*') ?? false,
-    repos: project.spec?.sourceRepos?.filter((r) => r !== '*') ?? [''],
-    allDests: project.spec?.destinations?.some((d) => d.server === '*' && d.namespace === '*') ?? false,
-    dests: project.spec?.destinations?.filter((d) => !(d.server === '*' && d.namespace === '*')) ?? [{ server: '', namespace: '' }],
+    description: project?.spec?.description ?? '',
+    allRepos: project?.spec?.sourceRepos?.includes('*') ?? false,
+    repos: project?.spec?.sourceRepos?.filter((r) => r !== '*') ?? [''],
+    allDests: project?.spec?.destinations?.some((d) => d.server === '*' && d.namespace === '*') ?? false,
+    dests: project?.spec?.destinations?.filter((d) => !(d.server === '*' && d.namespace === '*')) ?? [{ server: '', namespace: '' }],
   };
 
   const [description, setDescription] = useState(init.description);
@@ -33,6 +35,8 @@ export const AppProjectEditTab: FC<{ project: AppProjectResource }> = ({ project
   const [error, setError] = useState('');
   const [success, setSuccess] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
+
+  if (!project?.metadata) return <Bullseye><Spinner /></Bullseye>;
 
   const isDirty = description !== init.description || allRepos !== init.allRepos ||
     JSON.stringify(repos) !== JSON.stringify(init.repos) || allDests !== init.allDests ||
@@ -117,3 +121,5 @@ export const AppProjectEditTab: FC<{ project: AppProjectResource }> = ({ project
     </>
   );
 };
+
+export default AppProjectEditTab;
