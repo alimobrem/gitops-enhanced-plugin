@@ -51,8 +51,8 @@ export const RolloutDetailPage: FC<DetailPageProps> = (props) => {
   };
 
   const isPaused = rollout.status?.phase === 'Paused';
-  const strategyType = rollout.spec.strategy?.canary ? 'Canary' : rollout.spec.strategy?.blueGreen ? 'Blue-Green' : 'Unknown';
-  const container = rollout.spec.template?.spec?.containers?.[0];
+  const strategyType = rollout.spec?.strategy?.canary ? 'Canary' : rollout.spec?.strategy?.blueGreen ? 'Blue-Green' : 'Unknown';
+  const container = rollout.spec?.template?.spec?.containers?.[0];
 
   return (
     <React.Fragment>

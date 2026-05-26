@@ -482,10 +482,10 @@ export const GitOpsDashboardPage: FC = () => {
                           <Td>
                             <ResourceLink groupVersionKind={ApplicationGroupVersionKind} name={app.metadata.name} namespace={app.metadata.namespace} />
                           </Td>
-                          <Td>{app.spec.project}</Td>
+                          <Td>{app.spec?.project}</Td>
                           <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
                           <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
-                          <Td>{app.spec.destination.namespace ?? '-'}</Td>
+                          <Td>{app.spec?.destination?.namespace ?? '-'}</Td>
                           <Td>{app.status?.reconciledAt ? timeAgo(app.status.reconciledAt) : '-'}</Td>
                         </Tr>
                       ))}

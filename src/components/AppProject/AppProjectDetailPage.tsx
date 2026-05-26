@@ -40,10 +40,10 @@ export const AppProjectDetailPage: FC<DetailPageProps> = (props) => {
   if (error) return <PageSection><Alert variant="danger" isInline title={t('Error')}>{(error as Error).message}</Alert></PageSection>;
   if (!loaded || !project) return <PageSection><Bullseye><Spinner /></Bullseye></PageSection>;
 
-  const repos = project.spec.sourceRepos ?? [];
-  const dests = project.spec.destinations ?? [];
-  const roles = project.spec.roles ?? [];
-  const windows = project.spec.syncWindows ?? [];
+  const repos = project.spec?.sourceRepos ?? [];
+  const dests = project.spec?.destinations ?? [];
+  const roles = project.spec?.roles ?? [];
+  const windows = project.spec?.syncWindows ?? [];
 
   return (
     <React.Fragment>

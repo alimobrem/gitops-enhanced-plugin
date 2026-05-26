@@ -18,17 +18,17 @@ const DURATION_PATTERN = /^\d+[smh]$/;
 
 export const RolloutEditTab: FC<{ rollout: RolloutResource }> = ({ rollout }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const container = rollout.spec.template?.spec?.containers?.[0];
-  const canary = rollout.spec.strategy?.canary;
-  const blueGreen = rollout.spec.strategy?.blueGreen;
+  const container = rollout.spec?.template?.spec?.containers?.[0];
+  const canary = rollout.spec?.strategy?.canary;
+  const blueGreen = rollout.spec?.strategy?.blueGreen;
   const isCanary = !!canary;
   const isBlueGreen = !!blueGreen;
 
   const init = useMemo(() => ({
-    replicas: rollout.spec.replicas ?? 1,
-    revisionHistoryLimit: String(rollout.spec.revisionHistoryLimit ?? 10),
-    minReadySeconds: String(rollout.spec.minReadySeconds ?? 0),
-    progressDeadlineSeconds: String(rollout.spec.progressDeadlineSeconds ?? 600),
+    replicas: rollout.spec?.replicas ?? 1,
+    revisionHistoryLimit: String(rollout.spec?.revisionHistoryLimit ?? 10),
+    minReadySeconds: String(rollout.spec?.minReadySeconds ?? 0),
+    progressDeadlineSeconds: String(rollout.spec?.progressDeadlineSeconds ?? 600),
     image: container?.image ?? '',
     containerPort: String(container?.ports?.[0]?.containerPort ?? 80),
     maxSurge: String(canary?.maxSurge ?? '25%'),

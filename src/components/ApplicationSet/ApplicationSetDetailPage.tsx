@@ -122,9 +122,9 @@ export const ApplicationSetDetailPage: FC<DetailPageProps> = (props) => {
                       <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
                       <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
                       <Td>
-                        {app.spec.destination.namespace
-                          ? <a href={`/k8s/cluster/namespaces/${app.spec.destination.namespace}`}>{app.spec.destination.name ?? app.spec.destination.server ?? ''} / {app.spec.destination.namespace}</a>
-                          : `${app.spec.destination.name ?? app.spec.destination.server ?? ''}`}
+                        {app.spec?.destination?.namespace
+                          ? <a href={`/k8s/cluster/namespaces/${app.spec?.destination?.namespace}`}>{app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''} / {app.spec?.destination?.namespace}</a>
+                          : `${app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''}`}
                       </Td>
                     </Tr>
                   ))}

@@ -50,6 +50,7 @@ jest.mock('react-router-dom', () => ({
   useHistory: () => ({ push: jest.fn(), goBack: jest.fn() }),
 }));
 
+jest.mock('../shared/YamlTab', () => ({ YamlTab: () => <div>YAML</div> }));
 jest.mock('react-i18next', () => ({
   useTranslation: () => ({ t: (s: string) => s }),
 }));

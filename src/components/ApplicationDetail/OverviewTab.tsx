@@ -91,21 +91,21 @@ export const OverviewTab: FC<{ app: ApplicationResource }> = ({ app }) => {
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
                 <DescriptionListDescription>
-                  {app.spec.destination.name ??
-                    app.spec.destination.server ??
+                  {app.spec?.destination.name ??
+                    app.spec?.destination.server ??
                     '-'}
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Namespace')}</DescriptionListTerm>
                 <DescriptionListDescription>
-                  {app.spec.destination.namespace ?? '-'}
+                  {app.spec?.destination.namespace ?? '-'}
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Project')}</DescriptionListTerm>
                 <DescriptionListDescription>
-                  {app.spec.project}
+                  {app.spec?.project}
                 </DescriptionListDescription>
               </DescriptionListGroup>
             </DescriptionList>

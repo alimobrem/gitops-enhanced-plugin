@@ -74,14 +74,14 @@ export const NamespaceGitOpsTab: FC<NamespaceGitOpsTabProps> = ({ obj }) => {
                   namespace={app.metadata.namespace}
                 />
               </Td>
-              <Td>{app.spec.project}</Td>
+              <Td>{app.spec?.project}</Td>
               <Td>
                 <SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} />
               </Td>
               <Td>
                 <HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} />
               </Td>
-              <Td>{app.spec.source?.repoURL ? <a href={app.spec.source.repoURL} target="_blank" rel="noopener noreferrer">{app.spec.source.repoURL}</a> : '-'}</Td>
+              <Td>{app.spec?.source?.repoURL ? <a href={app.spec?.source.repoURL} target="_blank" rel="noopener noreferrer">{app.spec?.source.repoURL}</a> : '-'}</Td>
             </Tr>
           ))}
         </Tbody>

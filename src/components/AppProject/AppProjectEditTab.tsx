@@ -17,11 +17,11 @@ export const AppProjectEditTab: FC<{ project: AppProjectResource }> = ({ project
   const { t } = useTranslation('plugin__gitops-enhanced');
 
   const init = {
-    description: project.spec.description ?? '',
-    allRepos: project.spec.sourceRepos?.includes('*') ?? false,
-    repos: project.spec.sourceRepos?.filter((r) => r !== '*') ?? [''],
-    allDests: project.spec.destinations?.some((d) => d.server === '*' && d.namespace === '*') ?? false,
-    dests: project.spec.destinations?.filter((d) => !(d.server === '*' && d.namespace === '*')) ?? [{ server: '', namespace: '' }],
+    description: project.spec?.description ?? '',
+    allRepos: project.spec?.sourceRepos?.includes('*') ?? false,
+    repos: project.spec?.sourceRepos?.filter((r) => r !== '*') ?? [''],
+    allDests: project.spec?.destinations?.some((d) => d.server === '*' && d.namespace === '*') ?? false,
+    dests: project.spec?.destinations?.filter((d) => !(d.server === '*' && d.namespace === '*')) ?? [{ server: '', namespace: '' }],
   };
 
   const [description, setDescription] = useState(init.description);

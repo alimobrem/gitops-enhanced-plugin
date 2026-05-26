@@ -69,15 +69,15 @@ export const AppProjectListPage: FC = () => {
                     />
                   </Td>
                   <Td>
-                    {proj.spec.sourceRepos?.length
-                      ? proj.spec.sourceRepos.includes('*')
+                    {proj.spec?.sourceRepos?.length
+                      ? proj.spec?.sourceRepos.includes('*')
                         ? <Label isCompact>All</Label>
-                        : `${proj.spec.sourceRepos.length} repos`
+                        : `${proj.spec?.sourceRepos.length} repos`
                       : '-'}
                   </Td>
-                  <Td>{proj.spec.destinations?.length ?? 0} destinations</Td>
-                  <Td>{proj.spec.roles?.length ?? 0} roles</Td>
-                  <Td>{proj.spec.syncWindows?.length ?? 0} windows</Td>
+                  <Td>{proj.spec?.destinations?.length ?? 0} destinations</Td>
+                  <Td>{proj.spec?.roles?.length ?? 0} roles</Td>
+                  <Td>{proj.spec?.syncWindows?.length ?? 0} windows</Td>
                 </Tr>
               ))}
             </Tbody>

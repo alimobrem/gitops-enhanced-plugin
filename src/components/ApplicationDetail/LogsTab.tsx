@@ -37,7 +37,7 @@ interface ReplicaSetResource {
 
 export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const destNs = app.spec.destination.namespace ?? 'default';
+  const destNs = app.spec?.destination.namespace ?? 'default';
 
   const [pods, , _podsError] = useK8sWatchResource<PodResource[]>({
     groupVersionKind: { group: '', version: 'v1', kind: 'Pod' },
@@ -130,7 +130,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   useEffect(() => {
     if (appPods.length > 0 && !selectedPod) {
       const pod = appPods[0].metadata.name;
-      const container = appPods[0].spec.containers[0]?.name ?? '';
+      const container = appPods[0].spec?.containers[0]?.name ?? '';
       setSelectedPod(pod);
       setSelectedContainer(container);
       doFetchLogs(pod, container);
@@ -153,7 +153,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
   }
 
   const currentPod = appPods.find((p) => p.metadata.name === selectedPod);
-  const containers = currentPod?.spec.containers ?? [];
+  const containers = currentPod?.spec?.containers ?? [];
 
   return (
     <PageSection>
@@ -165,7 +165,7 @@ export const LogsTab: FC<{ app: ApplicationResource }> = ({ app }) => {
             onSelect={(_e, val) => {
               setSelectedPod(val as string);
               const pod = appPods.find((p) => p.metadata.name === val);
-              setSelectedContainer(pod?.spec.containers[0]?.name ?? '');
+              setSelectedContainer(pod?.spec?.containers[0]?.name ?? '');
               setPodSelectOpen(false);
             }}
             toggle={(toggleRef) => (

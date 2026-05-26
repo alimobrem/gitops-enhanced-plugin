@@ -56,7 +56,7 @@ export const ApplicationListPage: FC = () => {
   const [projectOpen, setProjectOpen] = useState(false);
 
   const projects = useMemo(() => {
-    const set = new Set(applications.map((a) => a.spec.project));
+    const set = new Set(applications.map((a) => a.spec?.project));
     return [...set].sort();
   }, [applications]);
 
@@ -65,7 +65,7 @@ export const ApplicationListPage: FC = () => {
       if (nameFilter && !app.metadata.name.toLowerCase().includes(nameFilter.toLowerCase())) return false;
       if (syncFilter && (app.status?.sync?.status ?? 'Unknown') !== syncFilter) return false;
       if (healthFilter && (app.status?.health?.status ?? 'Unknown') !== healthFilter) return false;
-      if (projectFilter && app.spec.project !== projectFilter) return false;
+      if (projectFilter && app.spec?.project !== projectFilter) return false;
       return true;
     });
   }, [applications, nameFilter, syncFilter, healthFilter, projectFilter]);
@@ -74,11 +74,11 @@ export const ApplicationListPage: FC = () => {
 
   const sortGetters = useMemo(() => [
     (app: ApplicationResource) => app.metadata.name,
-    (app: ApplicationResource) => app.spec.project,
+    (app: ApplicationResource) => app.spec?.project,
     (app: ApplicationResource) => app.status?.sync?.status ?? 'Unknown',
     (app: ApplicationResource) => app.status?.health?.status ?? 'Unknown',
     (app: ApplicationResource) => getApplicationSource(app)?.repoURL ?? '',
-    (app: ApplicationResource) => `${app.spec.destination.server ?? ''} / ${app.spec.destination.namespace ?? ''}`,
+    (app: ApplicationResource) => `${app.spec?.destination?.server ?? ''} / ${app.spec?.destination?.namespace ?? ''}`,
   ], []);
   const { sortedItems, getSortParams } = useSortableData(filtered, sortGetters);
   const { paginatedItems, page, perPage, totalItems, setPage, setPerPage } = usePagination(sortedItems);
@@ -222,14 +222,14 @@ export const ApplicationListPage: FC = () => {
                           namespace={app.metadata.namespace}
                         />
                       </Td>
-                      <Td>{app.spec.project}</Td>
+                      <Td>{app.spec?.project}</Td>
                       <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
                       <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
                       <Td>{getApplicationSource(app)?.repoURL ? <a href={getApplicationSource(app)!.repoURL} target="_blank" rel="noopener noreferrer">{getApplicationSource(app)!.repoURL}</a> : '-'}</Td>
                       <Td>
-                        {app.spec.destination.namespace
-                          ? <a href={`/k8s/cluster/namespaces/${app.spec.destination.namespace}`}>{app.spec.destination.name ?? app.spec.destination.server ?? ''} / {app.spec.destination.namespace}</a>
-                          : `${app.spec.destination.name ?? app.spec.destination.server ?? ''}`}
+                        {app.spec?.destination?.namespace
+                          ? <a href={`/k8s/cluster/namespaces/${app.spec?.destination?.namespace}`}>{app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''} / {app.spec?.destination?.namespace}</a>
+                          : `${app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''}`}
                       </Td>
                       <Td isActionCell><RowActions app={app} /></Td>
                     </Tr>

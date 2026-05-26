@@ -50,7 +50,7 @@ export const RepositoryListPage: FC = () => {
 
   const appRepos = new Map<string, { url: string; appCount: number; type: string }>();
   for (const app of apps ?? []) {
-    const sources = app.spec.sources ?? (app.spec.source ? [app.spec.source] : []);
+    const sources = app.spec?.sources ?? (app.spec?.source ? [app.spec?.source] : []);
     for (const src of sources) {
       const existing = appRepos.get(src.repoURL);
       const type = src.chart ? 'helm' : 'git';
