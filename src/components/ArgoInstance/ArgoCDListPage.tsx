@@ -23,7 +23,6 @@ import {
   PageSection,
 } from '@patternfly/react-core';
 import {
-  ExternalLinkAltIcon,
   EllipsisVIcon,
   SearchIcon,
 } from '@patternfly/react-icons';
@@ -507,7 +506,7 @@ export const ArgoCDListPage: FC = () => {
                                 <DescriptionListTerm>{t('URL')}</DescriptionListTerm>
                                 <DescriptionListDescription>
                                   <a href={argoUrl} target="_blank" rel="noopener noreferrer">
-                                    {inst.status?.host} <ExternalLinkAltIcon />
+                                    {inst.status?.host}
                                   </a>
                                 </DescriptionListDescription>
                               </DescriptionListGroup>
