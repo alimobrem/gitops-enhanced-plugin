@@ -8,13 +8,25 @@ const mockInstances = [
   },
 ];
 
+const mockPromData = (val: string) => ({
+  data: { result: [{ value: [0, val] }] },
+});
+
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   useK8sWatchResource: (resource: { groupVersionKind?: { kind?: string } }) => {
     if (resource.groupVersionKind?.kind === 'Application') return [[], true, null];
     if (resource.groupVersionKind?.kind === 'Pod') return [[], true, null];
     return [mockInstances, true, null];
   },
-  usePrometheusPoll: () => [undefined, false, null],
+  usePrometheusPoll: ({ query }: { query: string }) => {
+    if (query.includes('phase="Succeeded"')) return [mockPromData('42'), true, null];
+    if (query.includes('phase=~"Error|Failed"')) return [mockPromData('3'), true, null];
+    if (query.includes('cluster_connection_status') && query.startsWith('sum(')) return [mockPromData('2'), true, null];
+    if (query.includes('cluster_connection_status') && query.startsWith('count(')) return [mockPromData('2'), true, null];
+    if (query.includes('repo_pending_request')) return [mockPromData('0'), true, null];
+    if (query.includes('git_fetch_fail')) return [mockPromData('1'), true, null];
+    return [undefined, false, null];
+  },
   PrometheusEndpoint: { QUERY: 'api/v1/query' },
   k8sDelete: jest.fn().mockResolvedValue({}),
 }));
@@ -44,5 +56,34 @@ describe('ArgoCDListPage', () => {
   it('renders filter input', () => {
     render(<ArgoCDListPage />);
     expect(screen.getByPlaceholderText('Filter instances...')).toBeInTheDocument();
+  });
+
+  it('renders successful syncs metric', () => {
+    render(<ArgoCDListPage />);
+    expect(screen.getByText('Successful Syncs')).toBeInTheDocument();
+    expect(screen.getByText('42')).toBeInTheDocument();
+  });
+
+  it('renders failed syncs metric', () => {
+    render(<ArgoCDListPage />);
+    expect(screen.getByText('Failed Syncs (24h)')).toBeInTheDocument();
+    expect(screen.getByText('3')).toBeInTheDocument();
+  });
+
+  it('renders cluster connectivity metric', () => {
+    render(<ArgoCDListPage />);
+    expect(screen.getByText('Cluster Connectivity')).toBeInTheDocument();
+    expect(screen.getByText('2/2')).toBeInTheDocument();
+  });
+
+  it('renders repo pending requests metric', () => {
+    render(<ArgoCDListPage />);
+    expect(screen.getByText('Repo Pending Requests')).toBeInTheDocument();
+  });
+
+  it('renders git fetch failures metric', () => {
+    render(<ArgoCDListPage />);
+    expect(screen.getByText('Git Fetch Failures (24h)')).toBeInTheDocument();
+    expect(screen.getByText('1')).toBeInTheDocument();
   });
 });

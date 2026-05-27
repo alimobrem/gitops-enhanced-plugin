@@ -371,5 +371,6 @@
   "Version": "Version",
   "Available": "Available",
   "Pending": "Pending",
-  "Failed": "Failed"
+  "Failed": "Failed",
+  "Git Fetch Failures (24h)": "Git Fetch Failures (24h)"
 }

@@ -195,20 +195,64 @@ const InstanceCardActions: FC<{
   );
 };
 
-const SyncMetric: FC<{ namespace: string }> = ({ namespace }) => {
-  const { t } = useTranslation('plugin__gitops-enhanced');
-  const [resp, loaded] = usePrometheusPoll({
-    endpoint: PrometheusEndpoint.QUERY,
-    query: `sum(argocd_app_sync_total{namespace="${namespace}",phase="Succeeded"})`,
-  });
+const useMetric = (query: string): string | null => {
+  const [resp, loaded] = usePrometheusPoll({ endpoint: PrometheusEndpoint.QUERY, query });
+  if (!loaded) return null;
+  const val = resp?.data?.result?.[0]?.value?.[1];
+  return val ?? null;
+};
 
-  const value = resp?.data?.result?.[0]?.value?.[1];
-  if (!loaded || !value) return null;
+const InstanceMetrics: FC<{ namespace: string }> = ({ namespace }) => {
+  const { t } = useTranslation('plugin__gitops-enhanced');
+  const successfulSyncs = useMetric(`sum(argocd_app_sync_total{namespace="${namespace}",phase="Succeeded"})`);
+  const failedSyncs = useMetric(`sum(increase(argocd_app_sync_total{namespace="${namespace}",phase=~"Error|Failed"}[24h]))`);
+  const clusterConn = useMetric(`sum(argocd_cluster_connection_status{namespace="${namespace}"})`);
+  const clusterTotal = useMetric(`count(argocd_cluster_connection_status{namespace="${namespace}"})`);
+  const repoPending = useMetric(`sum(argocd_repo_pending_request_total{namespace="${namespace}"})`);
+  const gitFetchFails = useMetric(`sum(increase(argocd_git_fetch_fail_total{namespace="${namespace}"}[24h]))`);
+
+  const hasAny = successfulSyncs || failedSyncs || clusterConn || repoPending || gitFetchFails;
+  if (!hasAny) return null;
+
+  const failedCount = failedSyncs ? Math.round(parseFloat(failedSyncs)) : 0;
+  const gitFailCount = gitFetchFails ? Math.round(parseFloat(gitFetchFails)) : 0;
+  const connectedClusters = clusterConn ? Math.round(parseFloat(clusterConn)) : 0;
+  const totalClusters = clusterTotal ? Math.round(parseFloat(clusterTotal)) : 0;
+  const pendingRepos = repoPending ? Math.round(parseFloat(repoPending)) : 0;
+
   return (
-    <DescriptionListGroup>
-      <DescriptionListTerm>{t('Successful Syncs')}</DescriptionListTerm>
-      <DescriptionListDescription>{value}</DescriptionListDescription>
-    </DescriptionListGroup>
+    <>
+      {successfulSyncs && (
+        <DescriptionListGroup>
+          <DescriptionListTerm>{t('Successful Syncs')}</DescriptionListTerm>
+          <DescriptionListDescription><Label isCompact color="green">{successfulSyncs}</Label></DescriptionListDescription>
+        </DescriptionListGroup>
+      )}
+      {failedSyncs && (
+        <DescriptionListGroup>
+          <DescriptionListTerm>{t('Failed Syncs (24h)')}</DescriptionListTerm>
+          <DescriptionListDescription><Label isCompact color={failedCount > 0 ? 'red' : 'green'}>{failedCount}</Label></DescriptionListDescription>
+        </DescriptionListGroup>
+      )}
+      {clusterConn && (
+        <DescriptionListGroup>
+          <DescriptionListTerm>{t('Cluster Connectivity')}</DescriptionListTerm>
+          <DescriptionListDescription><Label isCompact color={connectedClusters === totalClusters ? 'green' : 'red'}>{connectedClusters}/{totalClusters}</Label></DescriptionListDescription>
+        </DescriptionListGroup>
+      )}
+      {repoPending !== null && (
+        <DescriptionListGroup>
+          <DescriptionListTerm>{t('Repo Pending Requests')}</DescriptionListTerm>
+          <DescriptionListDescription><Label isCompact color={pendingRepos > 5 ? 'gold' : 'green'}>{pendingRepos}</Label></DescriptionListDescription>
+        </DescriptionListGroup>
+      )}
+      {gitFetchFails && (
+        <DescriptionListGroup>
+          <DescriptionListTerm>{t('Git Fetch Failures (24h)')}</DescriptionListTerm>
+          <DescriptionListDescription><Label isCompact color={gitFailCount > 0 ? 'red' : 'green'}>{gitFailCount}</Label></DescriptionListDescription>
+        </DescriptionListGroup>
+      )}
+    </>
   );
 };
 
@@ -480,7 +524,7 @@ export const ArgoCDListPage: FC = () => {
                                 <DescriptionListDescription>{timeAgo(created)}</DescriptionListDescription>
                               </DescriptionListGroup>
                             )}
-                            <SyncMetric namespace={ns} />
+                            <InstanceMetrics namespace={ns} />
                           </DescriptionList>
                         </CardBody>
                         <CardFooter>
