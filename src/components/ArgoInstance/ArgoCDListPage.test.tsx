@@ -1,31 +1,44 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
+const mockInstances = [
+  {
+    metadata: { name: 'openshift-gitops', namespace: 'openshift-gitops', uid: '1' },
+    status: { phase: 'Available', host: 'argocd.example.com', server: 'Running', repo: 'Running', redis: 'Running', applicationController: 'Running' },
+  },
+];
+
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
-  useK8sWatchResource: () => [[], true, null],
-  DocumentTitle: ({ children }: { children: string }) => <title>{children}</title>,
-  ListPageHeader: ({ title, children }: { title: string; children?: React.ReactNode }) => <div><h1>{title}</h1>{children}</div>,
-  ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
-  k8sPatch: jest.fn(),
-  k8sCreate: jest.fn(),
-  k8sDelete: jest.fn(),
+  useK8sWatchResource: (resource: { groupVersionKind?: { kind?: string } }) => {
+    if (resource.groupVersionKind?.kind === 'Application') return [[], true, null];
+    return [mockInstances, true, null];
+  },
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
-jest.mock('react-router', () => ({ useParams: () => ({ name: 'test', ns: 'default' }) }));
-jest.mock('react-router-dom', () => ({ useHistory: () => ({ push: jest.fn() }) }));
-jest.mock('../../hooks/useArgoCDInstances', () => ({
-  useCurrentInstance: () => ({ instance: { name: 'test', namespace: 'default' }, instances: [], setInstance: jest.fn() }),
-}));
 
 import { ArgoCDListPage } from './ArgoCDListPage';
 
 describe('ArgoCDListPage', () => {
-  it('renders without crashing', () => {
+  it('renders instance name', () => {
     render(<ArgoCDListPage />);
+    expect(screen.getAllByText('openshift-gitops').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders the page title', () => {
+  it('renders phase label', () => {
     render(<ArgoCDListPage />);
-    expect(screen.getByRole('heading', { name: 'ArgoCD Instances' })).toBeInTheDocument();
+    expect(screen.getByText('Available')).toBeInTheDocument();
+  });
+
+  it('renders Open in Argo CD link', () => {
+    render(<ArgoCDListPage />);
+    expect(screen.getByText('Open in Argo CD')).toBeInTheDocument();
+  });
+
+  it('renders component status labels', () => {
+    render(<ArgoCDListPage />);
+    expect(screen.getByText('server')).toBeInTheDocument();
+    expect(screen.getByText('repo')).toBeInTheDocument();
+    expect(screen.getByText('redis')).toBeInTheDocument();
+    expect(screen.getByText('controller')).toBeInTheDocument();
   });
 });

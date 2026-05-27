@@ -345,6 +345,8 @@
   "Zoom in": "Zoom in",
   "Zoom out": "Zoom out",
   "Fit to screen": "Fit to screen",
+  "No ArgoCD instances found.": "No ArgoCD instances found.",
+  "Components": "Components",
   "Application": "Application",
   "{{count}} policies": "{{count}} policies",
   "Stable": "Stable",
