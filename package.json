@@ -17,8 +17,8 @@
     "test:e2e:headed": "npx playwright test --headed"
   },
   "devDependencies": {
-    "@openshift-console/dynamic-plugin-sdk": "^1.6.0",
-    "@openshift-console/dynamic-plugin-sdk-webpack": "^1.3.0",
+    "@openshift-console/dynamic-plugin-sdk": "^4.21.0",
+    "@openshift-console/dynamic-plugin-sdk-webpack": "^4.21.0",
     "@patternfly/react-core": "^6.4.3",
     "@patternfly/react-icons": "^6.4.0",
     "@patternfly/react-table": "^6.4.3",
@@ -103,6 +103,7 @@
     }
   },
   "dependencies": {
+    "@patternfly/react-log-viewer": "^6.4.0",
     "js-yaml": "^4.1.1"
   }
 }
