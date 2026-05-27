@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEffect, useMemo, type FC } from 'react';
+import { useEffect, useMemo, useState, useCallback, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Bullseye,
@@ -7,34 +7,96 @@ import {
   EmptyState,
   EmptyStateBody,
   PageSection,
+  Drawer,
+  DrawerContent,
+  DrawerContentBody,
 } from '@patternfly/react-core';
 import {
   Visualization,
   VisualizationProvider,
   VisualizationSurface,
   GRAPH_LAYOUT_END_EVENT,
+  SELECTION_EVENT,
   ModelKind,
   GraphComponent,
   DefaultNode,
   DefaultEdge,
   DefaultGroup,
+  NodeStatus,
   withPanZoom,
+  withSelection,
   useVisualizationController,
   DagreLayout,
   TOP_TO_BOTTOM,
 } from '@patternfly/react-topology';
-import type { Model, ComponentFactory, Graph, Layout, LayoutFactory } from '@patternfly/react-topology';
+import type {
+  Model,
+  ComponentFactory,
+  Graph,
+  Layout,
+  LayoutFactory,
+  SelectionEventListener,
+} from '@patternfly/react-topology';
 import './ResourceTreeTab.css';
-import type { ApplicationResource } from '../../types';
+import { ResourceDrawer } from './ResourceDrawer';
+import type { ApplicationResource, SyncStatusCode } from '../../types';
+
+interface ManagedResource {
+  group?: string;
+  version: string;
+  kind: string;
+  namespace?: string;
+  name: string;
+  status: SyncStatusCode;
+  health?: { status: string };
+}
+
+const KIND_ABBR: Record<string, string> = {
+  Service: 'svc',
+  Deployment: 'deploy',
+  ReplicaSet: 'rs',
+  Pod: 'pod',
+  ConfigMap: 'cm',
+  Secret: 'sec',
+  Ingress: 'ing',
+  StatefulSet: 'sts',
+  DaemonSet: 'ds',
+  Job: 'job',
+  CronJob: 'cj',
+  PersistentVolumeClaim: 'pvc',
+  ServiceAccount: 'sa',
+  NetworkPolicy: 'netpol',
+  HorizontalPodAutoscaler: 'hpa',
+  Application: 'app',
+};
+
+function kindBadge(kind: string): string {
+  return KIND_ABBR[kind] ?? kind.toLowerCase().slice(0, 4);
+}
+
+function healthToNodeStatus(health?: string): NodeStatus {
+  switch (health) {
+    case 'Healthy':
+      return NodeStatus.success;
+    case 'Degraded':
+      return NodeStatus.danger;
+    case 'Progressing':
+      return NodeStatus.info;
+    default:
+      return NodeStatus.default;
+  }
+}
 
 const LAYOUT_ID = 'DagreLayout';
+
+const CustomNode = withSelection()(DefaultNode);
 
 const componentFactory: ComponentFactory = (kind, _type) => {
   switch (kind) {
     case ModelKind.graph:
       return withPanZoom()(GraphComponent);
     case ModelKind.node:
-      return DefaultNode;
+      return CustomNode;
     case ModelKind.edge:
       return DefaultEdge;
     default:
@@ -53,8 +115,14 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   const controller = useVisualizationController();
   const { t } = useTranslation('plugin__gitops-enhanced');
 
-  const resources = useMemo(() => app.status?.resources ?? [], [app.status?.resources]);
+  const resources: ManagedResource[] = useMemo(
+    () => (app.status?.resources ?? []) as ManagedResource[],
+    [app.status?.resources],
+  );
 
+  const [drawerResource, setDrawerResource] = useState<ManagedResource | null>(null);
+
+  // Build and apply the topology model
   useEffect(() => {
     const nodes = [
       {
@@ -67,6 +135,8 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
           kind: 'Application',
           sync: app.status?.sync?.status,
           health: app.status?.health?.status,
+          badge: kindBadge('Application'),
+          nodeStatus: healthToNodeStatus(app.status?.health?.status),
         },
       },
       ...resources.map((r) => ({
@@ -79,6 +149,8 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
           kind: r.kind,
           sync: r.status,
           health: r.health?.status,
+          badge: kindBadge(r.kind),
+          nodeStatus: healthToNodeStatus(r.health?.status),
         },
       })),
     ];
@@ -103,6 +175,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     controller.fromModel(model, false);
   }, [controller, app, resources, t]);
 
+  // Fit graph after layout completes
   useEffect(() => {
     const onLayoutEnd = () => {
       controller.getGraph()?.fit(40);
@@ -113,6 +186,32 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     };
   }, [controller]);
 
+  // Handle node selection
+  const handleSelection: SelectionEventListener = useCallback(
+    (ids: string[]) => {
+      if (ids.length === 0) {
+        setDrawerResource(null);
+        return;
+      }
+      const nodeId = ids[0];
+      if (nodeId === 'app') return;
+      const res = resources.find(
+        (r) => `${r.kind}/${r.namespace ?? ''}/${r.name}` === nodeId,
+      );
+      if (res) {
+        setDrawerResource(res);
+      }
+    },
+    [resources],
+  );
+
+  useEffect(() => {
+    controller.addEventListener(SELECTION_EVENT, handleSelection);
+    return () => {
+      controller.removeEventListener(SELECTION_EVENT, handleSelection);
+    };
+  }, [controller, handleSelection]);
+
   if (resources.length === 0) {
     return (
       <EmptyState>
@@ -121,10 +220,20 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     );
   }
 
+  const drawerPanel = drawerResource ? (
+    <ResourceDrawer resource={drawerResource} onClose={() => setDrawerResource(null)} />
+  ) : undefined;
+
   return (
-    <div className="gitops-resource-tree">
-      <VisualizationSurface />
-    </div>
+    <Drawer isExpanded={!!drawerResource} onExpand={() => undefined}>
+      <DrawerContent panelContent={drawerPanel}>
+        <DrawerContentBody>
+          <div className="gitops-resource-tree">
+            <VisualizationSurface />
+          </div>
+        </DrawerContentBody>
+      </DrawerContent>
+    </Drawer>
   );
 };
 
