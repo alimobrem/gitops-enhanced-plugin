@@ -96,7 +96,7 @@ export const GitOpsDashboardPage: FC = () => {
   const [csvs, , _csvsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: { group: 'operators.coreos.com', version: 'v1alpha1', kind: 'ClusterServiceVersion' },
     isList: true,
-    ...(ns ? { namespace: ns } : {}),
+    namespace: ns ?? 'openshift-gitops',
   });
 
   const csvKey = useMemo(() => (csvs ?? []).map((c) => (c.metadata as Record<string, string>)?.name).join(','), [csvs]);
