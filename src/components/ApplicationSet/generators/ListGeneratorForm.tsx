@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Button, TextInput, Tooltip,
 } from '@patternfly/react-core';
-import { TrashIcon, PlusCircleIcon } from '@patternfly/react-icons';
+import { TrashIcon, PlusCircleIcon, TimesCircleIcon } from '@patternfly/react-icons';
 import type { ListGenerator } from '../../../types';
 
 interface ListGeneratorFormProps {
@@ -40,6 +40,15 @@ export const ListGeneratorForm: FC<ListGeneratorFormProps> = ({ generator, onCha
     onChange({ list: { elements: updated.length > 0 ? updated : [{ [newKey]: '' }] } });
   };
 
+  const removeColumn = (key: string) => {
+    const updated = elements.map((el) => {
+      const copy = { ...el };
+      delete copy[key];
+      return copy;
+    });
+    onChange({ list: { elements: updated } });
+  };
+
   return (
     <div>
       {elements.length > 0 && (
@@ -47,7 +56,16 @@ export const ListGeneratorForm: FC<ListGeneratorFormProps> = ({ generator, onCha
           <thead>
             <tr>
               {columns.map((col) => (
-                <th key={col}>{col}</th>
+                <th key={col}>
+                  {col}
+                  {columns.length > 1 && (
+                    <Tooltip content={t('Remove column')}>
+                      <Button variant="plain" aria-label={t('Remove column')} onClick={() => removeColumn(col)} className="pf-v6-u-ml-xs" isInline>
+                        <TimesCircleIcon />
+                      </Button>
+                    </Tooltip>
+                  )}
+                </th>
               ))}
               <th />
             </tr>
