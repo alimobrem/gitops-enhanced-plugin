@@ -558,6 +558,21 @@ export const GitOpsDashboardPage: FC = () => {
                         <DescriptionListTerm>{t('AppProjects')}</DescriptionListTerm>
                         <DescriptionListDescription><Label isCompact>{projects?.length ?? 0}</Label></DescriptionListDescription>
                       </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Console Plugin')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                            <FlexItem><Label isCompact color="blue">v0.1.0</Label></FlexItem>
+                            <FlexItem><span className="gitops-dashboard__version-text">SDK 4.21</span></FlexItem>
+                          </Flex>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Extensions')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          <span className="gitops-dashboard__version-text">20 tabs · 2 actions · 6 pages · 4 flags</span>
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
                     </DescriptionList>
                   </GridItem>
                 </Grid>

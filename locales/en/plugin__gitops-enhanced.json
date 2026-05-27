@@ -266,6 +266,8 @@
   "Manual sync — changes require manual sync to deploy": "Manual sync — changes require manual sync to deploy",
   "Sync OK": "Sync OK",
   "All Instances": "All Instances",
+  "Console Plugin": "Console Plugin",
+  "Extensions": "Extensions",
   "Last Sync": "Last Sync",
   "Error updating sync policy": "Error updating sync policy",
   "Pods": "Pods",

@@ -8,8 +8,6 @@ describe('bundled dependency safety', () => {
     const deps = { ...pkg.dependencies, ...pkg.devDependencies };
 
     const consoleSharededByConsole = [
-      '@patternfly/react-topology',
-      '@patternfly/react-log-viewer',
       '@patternfly/react-charts',
       '@patternfly/react-catalog-view-extension',
     ];
