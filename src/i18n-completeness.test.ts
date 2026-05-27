@@ -45,7 +45,7 @@ describe('i18n completeness', () => {
     }
 
     if (missing.length > 0) {
-      fail(`Missing i18n keys:\n${missing.map((m) => `  ${m.file}: "${m.key}"`).join('\n')}`);
+      throw new Error(`Missing i18n keys:\n${missing.map((m) => `  ${m.file}: "${m.key}"`).join('\n')}`);
     }
   });
 });

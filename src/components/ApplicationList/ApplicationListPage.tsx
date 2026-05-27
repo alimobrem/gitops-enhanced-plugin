@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, useMemo, type FC } from 'react';
+import { useState, useMemo, useCallback, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import {
   DocumentTitle,
@@ -10,30 +10,27 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   PageSection,
-  Bullseye,
-  Spinner,
-  EmptyState,
-  EmptyStateBody,
   Alert,
   AlertActionCloseButton,
-  Toolbar,
-  ToolbarContent,
-  ToolbarItem,
-  ToolbarFilter,
-  Select,
-  SelectOption,
-  SelectList,
-  MenuToggle,
-  TextInput,
   Badge,
   Button,
+  Pagination,
 } from '@patternfly/react-core';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+import {
+  DataView,
+  DataViewState,
+  DataViewTable,
+  DataViewToolbar,
+  DataViewFilters,
+  DataViewTextFilter,
+  DataViewCheckboxFilter,
+  useDataViewSelection,
+  useDataViewFilters,
+  useDataViewPagination,
+  useDataViewSort,
+} from '@patternfly/react-data-view';
 import { useApplications } from '../../hooks/useApplications';
 import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
-import { usePagination } from '../../hooks/usePagination';
-import { useSortableData } from '../../hooks/useSortableData';
-import { TablePagination } from '../shared/TablePagination';
 import { InstanceProvider } from '../shared/InstanceProvider';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
@@ -47,22 +44,42 @@ import type { ApplicationResource, SyncStatusCode, HealthStatusCode } from '../.
 const SYNC_OPTIONS: SyncStatusCode[] = ['Synced', 'OutOfSync', 'Unknown'];
 const HEALTH_OPTIONS: HealthStatusCode[] = ['Healthy', 'Degraded', 'Progressing', 'Suspended', 'Missing', 'Unknown'];
 
+const COLUMN_KEYS = ['name', 'project', 'sync', 'health', 'repo', 'destination'] as const;
+
+interface FilterValues {
+  name: string;
+  sync: string[];
+  health: string[];
+  project: string[];
+}
+
+const INITIAL_FILTERS: FilterValues = {
+  name: '',
+  sync: [],
+  health: [],
+  project: [],
+};
+
 export const ApplicationListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance } = useCurrentInstance();
   const [applications, loaded, error] = useApplications(watchNamespace(instance));
 
-  const [nameFilter, setNameFilter] = useState('');
-  const [syncFilter, setSyncFilter] = useState<string>('');
-  const [healthFilter, setHealthFilter] = useState<string>('');
-  const [projectFilter, setProjectFilter] = useState<string>('');
-  const [syncOpen, setSyncOpen] = useState(false);
-  const [healthOpen, setHealthOpen] = useState(false);
-  const [projectOpen, setProjectOpen] = useState(false);
-  const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
   const [bulkError, setBulkError] = useState('');
   const [bulkConfirmAction, setBulkConfirmAction] = useState<'sync' | 'refresh' | null>(null);
+
+  const { filters, onSetFilters, clearAllFilters } = useDataViewFilters<FilterValues>({
+    initialFilters: INITIAL_FILTERS,
+  });
+
+  const { sortBy, direction, onSort } = useDataViewSort({
+    initialSort: { sortBy: COLUMN_KEYS[0], direction: 'asc' },
+  });
+
+  const selection = useDataViewSelection<string>({
+    matchOption: (a, b) => a === b,
+  });
 
   const projects = useMemo(() => {
     const set = new Set(applications.map((a) => a.spec?.project));
@@ -71,37 +88,53 @@ export const ApplicationListPage: FC = () => {
 
   const filtered = useMemo(() => {
     return applications.filter((app) => {
-      if (nameFilter && !app.metadata.name.toLowerCase().includes(nameFilter.toLowerCase())) return false;
-      if (syncFilter && (app.status?.sync?.status ?? 'Unknown') !== syncFilter) return false;
-      if (healthFilter && (app.status?.health?.status ?? 'Unknown') !== healthFilter) return false;
-      if (projectFilter && app.spec?.project !== projectFilter) return false;
+      if (filters.name && !app.metadata.name.toLowerCase().includes(filters.name.toLowerCase())) return false;
+      if (filters.sync.length > 0 && !filters.sync.includes(app.status?.sync?.status ?? 'Unknown')) return false;
+      if (filters.health.length > 0 && !filters.health.includes(app.status?.health?.status ?? 'Unknown')) return false;
+      if (filters.project.length > 0 && !filters.project.includes(app.spec?.project ?? '')) return false;
       return true;
     });
-  }, [applications, nameFilter, syncFilter, healthFilter, projectFilter]);
+  }, [applications, filters]);
 
-  const activeFilterCount = [syncFilter, healthFilter, projectFilter, nameFilter].filter(Boolean).length;
+  const activeFilterCount = [
+    filters.name,
+    ...filters.sync,
+    ...filters.health,
+    ...filters.project,
+  ].filter(Boolean).length;
 
-  const toggleSelect = (uid: string) => {
-    setSelected((prev) => {
-      const next = new Set(prev);
-      if (next.has(uid)) next.delete(uid); else next.add(uid);
-      return next;
+  const sortedItems = useMemo(() => {
+    if (!sortBy) return filtered;
+    const getVal = (app: ApplicationResource): string => {
+      switch (sortBy) {
+        case 'name': return app.metadata.name;
+        case 'project': return app.spec?.project ?? '';
+        case 'sync': return app.status?.sync?.status ?? 'Unknown';
+        case 'health': return app.status?.health?.status ?? 'Unknown';
+        case 'repo': return getApplicationSource(app)?.repoURL ?? '';
+        case 'destination': return `${app.spec?.destination?.server ?? ''} / ${app.spec?.destination?.namespace ?? ''}`;
+        default: return '';
+      }
+    };
+    return [...filtered].sort((a, b) => {
+      const cmp = getVal(a).localeCompare(getVal(b));
+      return direction === 'asc' ? cmp : -cmp;
     });
-  };
+  }, [filtered, sortBy, direction]);
 
-  const toggleAllFiltered = () => {
-    if (selected.size === filtered.length && filtered.length > 0) {
-      setSelected(new Set());
-    } else {
-      setSelected(new Set(filtered.map((a) => a.metadata.uid)));
-    }
-  };
+  const pagination = useDataViewPagination({ perPage: 20 });
+  const { page, perPage, onSetPage, onPerPageSelect } = pagination;
 
-  const bulkSyncSelected = async () => {
+  const paginatedItems = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return sortedItems.slice(start, start + perPage);
+  }, [sortedItems, page, perPage]);
+
+  const bulkSyncSelected = useCallback(async () => {
     setBulkRunning(true);
     setBulkError('');
     try {
-      const selectedApps = applications.filter((a) => selected.has(a.metadata.uid));
+      const selectedApps = applications.filter((a) => selection.isSelected(a.metadata.uid));
       await Promise.all(selectedApps.map((app) =>
         k8sPatch({
           model: ApplicationModel,
@@ -113,19 +146,19 @@ export const ApplicationListPage: FC = () => {
           }],
         }),
       ));
-      setSelected(new Set());
+      selection.setSelected([]);
     } catch (e) {
       setBulkError((e as Error).message);
     } finally {
       setBulkRunning(false);
     }
-  };
+  }, [applications, selection]);
 
-  const bulkRefreshSelected = async () => {
+  const bulkRefreshSelected = useCallback(async () => {
     setBulkRunning(true);
     setBulkError('');
     try {
-      const selectedApps = applications.filter((a) => selected.has(a.metadata.uid));
+      const selectedApps = applications.filter((a) => selection.isSelected(a.metadata.uid));
       await Promise.all(selectedApps.map((app) =>
         k8sPatch({
           model: ApplicationModel,
@@ -137,24 +170,100 @@ export const ApplicationListPage: FC = () => {
           }],
         }),
       ));
-      setSelected(new Set());
+      selection.setSelected([]);
     } catch (e) {
       setBulkError((e as Error).message);
     } finally {
       setBulkRunning(false);
     }
-  };
+  }, [applications, selection]);
 
-  const sortGetters = useMemo(() => [
-    (app: ApplicationResource) => app.metadata.name,
-    (app: ApplicationResource) => app.spec?.project,
-    (app: ApplicationResource) => app.status?.sync?.status ?? 'Unknown',
-    (app: ApplicationResource) => app.status?.health?.status ?? 'Unknown',
-    (app: ApplicationResource) => getApplicationSource(app)?.repoURL ?? '',
-    (app: ApplicationResource) => `${app.spec?.destination?.server ?? ''} / ${app.spec?.destination?.namespace ?? ''}`,
-  ], []);
-  const { sortedItems, getSortParams } = useSortableData(filtered, sortGetters);
-  const { paginatedItems, page, perPage, totalItems, setPage, setPerPage } = usePagination(sortedItems);
+  const makeSortProps = (key: string) => ({
+    sort: {
+      sortBy: { index: COLUMN_KEYS.indexOf(key as typeof COLUMN_KEYS[number]), direction: sortBy === key ? direction : undefined },
+      onSort: (_e: unknown, _idx: number, dir: 'asc' | 'desc') => onSort(undefined as unknown as React.MouseEvent, key, dir),
+      columnIndex: COLUMN_KEYS.indexOf(key as typeof COLUMN_KEYS[number]),
+    },
+  });
+
+  const columns = [
+    { cell: t('Name'), props: makeSortProps('name') },
+    { cell: t('Project'), props: makeSortProps('project') },
+    { cell: t('Sync Status'), props: makeSortProps('sync') },
+    { cell: t('Health'), props: makeSortProps('health') },
+    { cell: t('Repository'), props: makeSortProps('repo') },
+    { cell: t('Destination'), props: makeSortProps('destination') },
+    { cell: '' },
+  ];
+
+  const rows = paginatedItems.map((app: ApplicationResource) => ({
+    id: app.metadata.uid,
+    row: [
+      <ResourceLink
+        key="name"
+        groupVersionKind={ApplicationGroupVersionKind}
+        name={app.metadata.name}
+        namespace={app.metadata.namespace}
+      />,
+      app.spec?.project ?? '-',
+      <SyncStatusIcon key="sync" status={app.status?.sync?.status ?? 'Unknown'} />,
+      <HealthStatusIcon key="health" status={app.status?.health?.status ?? 'Unknown'} />,
+      getApplicationSource(app)?.repoURL
+        ? <a key="repo" href={getApplicationSource(app)!.repoURL} target="_blank" rel="noopener noreferrer">{getApplicationSource(app)!.repoURL} <ExternalLinkAltIcon /></a>
+        : '-',
+      app.spec?.destination?.namespace
+        ? <a key="dest" href={`/k8s/cluster/namespaces/${app.spec?.destination?.namespace}`}>{app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''} / {app.spec?.destination?.namespace}</a>
+        : `${app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''}`,
+      <RowActions key="actions" app={app} />,
+    ],
+  }));
+
+  const syncFilterOptions = SYNC_OPTIONS.map((s) => ({
+    label: `${s} (${applications.filter((a) => (a.status?.sync?.status ?? 'Unknown') === s).length})`,
+    value: s,
+  }));
+
+  const healthFilterOptions = HEALTH_OPTIONS.map((h) => ({
+    label: `${h} (${applications.filter((a) => (a.status?.health?.status ?? 'Unknown') === h).length})`,
+    value: h,
+  }));
+
+  const projectFilterOptions = projects.map((p) => ({
+    label: `${p} (${applications.filter((a) => a.spec?.project === p).length})`,
+    value: p ?? '',
+  }));
+
+  const bulkActions = selection.selected.length > 0 ? (
+    <>
+      <Button variant="primary" onClick={() => setBulkConfirmAction('sync')}
+        isDisabled={bulkRunning} isLoading={bulkRunning}
+      >
+        {t('Sync Selected')} ({selection.selected.length})
+      </Button>
+      <Button variant="secondary" onClick={() => setBulkConfirmAction('refresh')}
+        isDisabled={bulkRunning} isLoading={bulkRunning}
+        className="pf-v6-u-ml-sm"
+      >
+        {t('Refresh Selected')} ({selection.selected.length})
+      </Button>
+    </>
+  ) : undefined;
+
+  const paginationNode = sortedItems.length > 20 ? (
+    <Pagination
+      itemCount={sortedItems.length}
+      perPage={perPage}
+      page={page}
+      onSetPage={onSetPage}
+      onPerPageSelect={onPerPageSelect}
+      perPageOptions={[
+        { title: '10', value: 10 },
+        { title: '20', value: 20 },
+        { title: '50', value: 50 },
+        { title: '100', value: 100 },
+      ]}
+    />
+  ) : undefined;
 
   return (
     <React.Fragment>
@@ -174,171 +283,84 @@ export const ApplicationListPage: FC = () => {
             className="pf-v6-u-mb-md"
           >{bulkError}</Alert>
         )}
-        {!loaded && !error && (
-          <Bullseye><Spinner /></Bullseye>
-        )}
-        {loaded && (
-          <React.Fragment>
-            <Toolbar clearAllFilters={() => { setNameFilter(''); setSyncFilter(''); setHealthFilter(''); setProjectFilter(''); }}>
-              <ToolbarContent>
-                <ToolbarItem>
-                  <TextInput
-                    type="search"
-                    placeholder={t('Filter by name...')}
-                    value={nameFilter}
-                    onChange={(_e, val) => setNameFilter(val)}
-                   
-                  />
-                </ToolbarItem>
-                <ToolbarItem>
-                  <ToolbarFilter
-                    chips={syncFilter ? [syncFilter] : []}
-                    deleteChip={() => setSyncFilter('')}
-                    categoryName={t('Sync Status')}
-                  >
-                    <Select
-                      isOpen={syncOpen}
-                      onOpenChange={setSyncOpen}
-                      onSelect={(_e, val) => { setSyncFilter(val === syncFilter ? '' : val as string); setSyncOpen(false); }}
-                      toggle={(ref) => (
-                        <MenuToggle ref={ref} onClick={() => setSyncOpen(!syncOpen)}>
-                          {syncFilter || t('Sync Status')}
-                        </MenuToggle>
-                      )}
-                      selected={syncFilter}
-                    >
-                      <SelectList>
-                        {SYNC_OPTIONS.map((s) => <SelectOption key={s} value={s}>{s} ({applications.filter((a) => (a.status?.sync?.status ?? 'Unknown') === s).length})</SelectOption>)}
-                      </SelectList>
-                    </Select>
-                  </ToolbarFilter>
-                </ToolbarItem>
-                <ToolbarItem>
-                  <ToolbarFilter
-                    chips={healthFilter ? [healthFilter] : []}
-                    deleteChip={() => setHealthFilter('')}
-                    categoryName={t('Health')}
-                  >
-                    <Select
-                      isOpen={healthOpen}
-                      onOpenChange={setHealthOpen}
-                      onSelect={(_e, val) => { setHealthFilter(val === healthFilter ? '' : val as string); setHealthOpen(false); }}
-                      toggle={(ref) => (
-                        <MenuToggle ref={ref} onClick={() => setHealthOpen(!healthOpen)}>
-                          {healthFilter || t('Health')}
-                        </MenuToggle>
-                      )}
-                      selected={healthFilter}
-                    >
-                      <SelectList>
-                        {HEALTH_OPTIONS.map((h) => <SelectOption key={h} value={h}>{h} ({applications.filter((a) => (a.status?.health?.status ?? 'Unknown') === h).length})</SelectOption>)}
-                      </SelectList>
-                    </Select>
-                  </ToolbarFilter>
-                </ToolbarItem>
-                {projects.length > 1 && (
-                  <ToolbarItem>
-                    <ToolbarFilter
-                      chips={projectFilter ? [projectFilter] : []}
-                      deleteChip={() => setProjectFilter('')}
-                      categoryName={t('Project')}
-                    >
-                      <Select
-                        isOpen={projectOpen}
-                        onOpenChange={setProjectOpen}
-                        onSelect={(_e, val) => { setProjectFilter(val === projectFilter ? '' : val as string); setProjectOpen(false); }}
-                        toggle={(ref) => (
-                          <MenuToggle ref={ref} onClick={() => setProjectOpen(!projectOpen)}>
-                            {projectFilter || t('Project')}
-                          </MenuToggle>
-                        )}
-                        selected={projectFilter}
-                      >
-                        <SelectList>
-                          {projects.map((p) => <SelectOption key={p} value={p}>{p} ({applications.filter((a) => a.spec?.project === p).length})</SelectOption>)}
-                        </SelectList>
-                      </Select>
-                    </ToolbarFilter>
-                  </ToolbarItem>
-                )}
-                {activeFilterCount > 0 && (
-                  <ToolbarItem>
-                    <Badge isRead>{filtered.length} / {applications.length}</Badge>
-                  </ToolbarItem>
-                )}
-                {selected.size > 0 && (
-                  <>
-                    <ToolbarItem>
-                      <Button variant="primary" onClick={() => setBulkConfirmAction('sync')}
-                        isDisabled={bulkRunning} isLoading={bulkRunning}
-                      >
-                        {t('Sync Selected')} ({selected.size})
-                      </Button>
-                    </ToolbarItem>
-                    <ToolbarItem>
-                      <Button variant="secondary" onClick={() => setBulkConfirmAction('refresh')}
-                        isDisabled={bulkRunning} isLoading={bulkRunning}
-                      >
-                        {t('Refresh Selected')} ({selected.size})
-                      </Button>
-                    </ToolbarItem>
-                  </>
-                )}
-              </ToolbarContent>
-            </Toolbar>
 
-            {filtered.length === 0 ? (
-              <EmptyState>
-                <EmptyStateBody>
-                  {activeFilterCount > 0
-                    ? t('No applications match the current filters.')
-                    : t('No Argo CD applications found.')}
-                </EmptyStateBody>
-              </EmptyState>
-            ) : (
-              <>
-              <Table aria-label={t('Applications')}>
-                <Thead>
-                  <Tr>
-                    <Th select={{ onSelect: toggleAllFiltered, isSelected: selected.size === filtered.length && filtered.length > 0 }} />
-                    <Th {...getSortParams(0)}>{t('Name')}</Th>
-                    <Th {...getSortParams(1)}>{t('Project')}</Th>
-                    <Th {...getSortParams(2)}>{t('Sync Status')}</Th>
-                    <Th {...getSortParams(3)}>{t('Health')}</Th>
-                    <Th {...getSortParams(4)}>{t('Repository')}</Th>
-                    <Th {...getSortParams(5)}>{t('Destination')}</Th>
-                    <Th></Th>
-                  </Tr>
-                </Thead>
-                <Tbody>
-                  {paginatedItems.map((app: ApplicationResource) => (
-                    <Tr key={app.metadata.uid}>
-                      <Td select={{ rowIndex: 0, onSelect: () => toggleSelect(app.metadata.uid), isSelected: selected.has(app.metadata.uid) }} />
-                      <Td>
-                        <ResourceLink
-                          groupVersionKind={ApplicationGroupVersionKind}
-                          name={app.metadata.name}
-                          namespace={app.metadata.namespace}
-                        />
-                      </Td>
-                      <Td>{app.spec?.project}</Td>
-                      <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
-                      <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
-                      <Td>{getApplicationSource(app)?.repoURL ? <a href={getApplicationSource(app)!.repoURL} target="_blank" rel="noopener noreferrer">{getApplicationSource(app)!.repoURL} <ExternalLinkAltIcon /></a> : '-'}</Td>
-                      <Td>
-                        {app.spec?.destination?.namespace
-                          ? <a href={`/k8s/cluster/namespaces/${app.spec?.destination?.namespace}`}>{app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''} / {app.spec?.destination?.namespace}</a>
-                          : `${app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''}`}
-                      </Td>
-                      <Td isActionCell><RowActions app={app} /></Td>
-                    </Tr>
-                  ))}
-                </Tbody>
-              </Table>
-              <TablePagination page={page} perPage={perPage} totalItems={totalItems} onSetPage={setPage} onPerPageSelect={setPerPage} />
-              </>
+        <DataView
+          selection={{
+            onSelect: selection.onSelect,
+            isSelected: selection.isSelected,
+          }}
+          activeState={
+            !loaded && !error ? DataViewState.loading
+            : loaded && filtered.length === 0 ? DataViewState.empty
+            : undefined
+          }
+        >
+          <DataViewToolbar
+            clearAllFilters={clearAllFilters}
+            actions={bulkActions}
+            pagination={paginationNode}
+          >
+            <DataViewFilters
+              onChange={(_key, newVals) => onSetFilters(newVals)}
+              values={filters}
+            >
+              <DataViewTextFilter
+                filterId="name"
+                title={t('Name')}
+                placeholder={t('Filter by name...')}
+                value={filters.name}
+                onChange={(_e, value) => onSetFilters({ name: value })}
+              />
+              <DataViewCheckboxFilter
+                filterId="sync"
+                title={t('Sync Status')}
+                value={filters.sync}
+                options={syncFilterOptions}
+                onChange={(_e, values) => onSetFilters({ sync: values ?? [] })}
+              />
+              <DataViewCheckboxFilter
+                filterId="health"
+                title={t('Health')}
+                value={filters.health}
+                options={healthFilterOptions}
+                onChange={(_e, values) => onSetFilters({ health: values ?? [] })}
+              />
+              {projects.length > 1 && (
+                <DataViewCheckboxFilter
+                  filterId="project"
+                  title={t('Project')}
+                  value={filters.project}
+                  options={projectFilterOptions}
+                  onChange={(_e, values) => onSetFilters({ project: values ?? [] })}
+                />
+              )}
+            </DataViewFilters>
+            {activeFilterCount > 0 && (
+              <Badge isRead>{filtered.length} / {applications.length}</Badge>
             )}
-          </React.Fragment>
+          </DataViewToolbar>
+          <DataViewTable
+            aria-label={t('Applications')}
+            columns={columns}
+            rows={rows}
+          />
+        </DataView>
+
+        {loaded && paginationNode && filtered.length > 0 && (
+          <Pagination
+            itemCount={sortedItems.length}
+            perPage={perPage}
+            page={page}
+            onSetPage={onSetPage}
+            onPerPageSelect={onPerPageSelect}
+            variant="bottom"
+            perPageOptions={[
+              { title: '10', value: 10 },
+              { title: '20', value: 20 },
+              { title: '50', value: 50 },
+              { title: '100', value: 100 },
+            ]}
+          />
         )}
       </PageSection>
       <ConfirmModal
@@ -349,8 +371,8 @@ export const ApplicationListPage: FC = () => {
         confirmLabel={bulkConfirmAction === 'sync' ? t('Sync') : t('Refresh')}
       >
         {bulkConfirmAction === 'sync'
-          ? t('Are you sure you want to sync {{count}} selected applications?', { count: selected.size })
-          : t('Are you sure you want to refresh {{count}} selected applications?', { count: selected.size })}
+          ? t('Are you sure you want to sync {{count}} selected applications?', { count: selection.selected.length })
+          : t('Are you sure you want to refresh {{count}} selected applications?', { count: selection.selected.length })}
       </ConfirmModal>
     </React.Fragment>
   );

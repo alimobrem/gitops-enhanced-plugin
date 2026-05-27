@@ -2,11 +2,17 @@ import type { Config } from 'jest';
 
 const config: Config = {
   testEnvironment: 'jsdom',
-  transform: { '^.+\\.(ts|tsx)$': ['@swc/jest'] },
+  transform: {
+    '^.+\\.(ts|tsx)$': ['@swc/jest'],
+    '^.+\\.js$': ['@swc/jest'],
+  },
   moduleNameMapper: {
     '\\.(css|scss)$': '<rootDir>/__mocks__/styleMock.ts',
   },
   setupFilesAfterEnv: ['<rootDir>/setup-tests.ts'],
+  transformIgnorePatterns: [
+    'node_modules/(?!(@patternfly/react-data-view|@patternfly/react-tokens)/)',
+  ],
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   collectCoverageFrom: [
     'src/**/*.{ts,tsx}',

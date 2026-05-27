@@ -104,6 +104,7 @@
     }
   },
   "dependencies": {
+    "@patternfly/react-data-view": "^6.5.0",
     "@patternfly/react-log-viewer": "^6.4.0",
     "@patternfly/react-topology": "^6.5.0",
     "js-yaml": "^4.1.1"

@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import {
   useK8sWatchResource,
@@ -10,17 +10,18 @@ import {
 import { useTranslation } from 'react-i18next';
 import {
   PageSection,
-  Bullseye,
-  Spinner,
-  EmptyState,
-  EmptyStateBody,
   Alert,
   Button,
+  Pagination,
 } from '@patternfly/react-core';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+import {
+  DataView,
+  DataViewState,
+  DataViewTable,
+  DataViewToolbar,
+  useDataViewPagination,
+} from '@patternfly/react-data-view';
 import { CreateResourceButton } from '../shared/CreateResourceButton';
-import { TablePagination } from '../shared/TablePagination';
-import { usePagination } from '../../hooks/usePagination';
 
 interface ColumnDef {
   title: string;
@@ -68,8 +69,49 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
     isList: true,
   });
 
-  const items = resources ?? [];
-  const { paginatedItems, page, perPage, totalItems, setPage, setPerPage } = usePagination(items);
+  const items = useMemo(() => resources ?? [], [resources]);
+  const pagination = useDataViewPagination({ perPage: 20 });
+  const { page, perPage, onSetPage, onPerPageSelect } = pagination;
+
+  const paginatedItems = useMemo(() => {
+    const start = (page - 1) * perPage;
+    return items.slice(start, start + perPage);
+  }, [items, page, perPage]);
+
+  const columnTitles = columns.map((col) => t(col.title));
+
+  const rows = useMemo(() => paginatedItems.map((res) => {
+    const meta = res.metadata as { name: string; namespace?: string; uid: string } | undefined;
+    return {
+      id: meta?.uid ?? '',
+      row: columns.map((col, i) =>
+        i === 0
+          ? <ResourceLink
+              key={col.field}
+              groupVersionKind={groupVersionKind}
+              name={meta?.name ?? ''}
+              namespace={meta?.namespace}
+            />
+          : getFieldValue(res, col.field),
+      ),
+    };
+  }), [paginatedItems, columns, groupVersionKind, getFieldValue]);
+
+  const paginationNode = items.length > 20 ? (
+    <Pagination
+      itemCount={items.length}
+      perPage={perPage}
+      page={page}
+      onSetPage={onSetPage}
+      onPerPageSelect={onPerPageSelect}
+      perPageOptions={[
+        { title: '10', value: 10 },
+        { title: '20', value: 20 },
+        { title: '50', value: 50 },
+        { title: '100', value: 100 },
+      ]}
+    />
+  ) : undefined;
 
   return (
     <React.Fragment>
@@ -86,53 +128,39 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
             {(error as Error).message}
           </Alert>
         )}
-        {!loaded && !error && (
-          <Bullseye>
-            <Spinner />
-          </Bullseye>
-        )}
-        {loaded && items.length === 0 && !error && (
-          <EmptyState>
-            <EmptyStateBody>
-              {t('No {{kind}} resources found.', { kind: groupVersionKind.kind })}
-            </EmptyStateBody>
-          </EmptyState>
-        )}
-        {loaded && items.length > 0 && (
-          <>
-          <Table aria-label={t(title)}>
-            <Thead>
-              <Tr>
-                {columns.map((col) => (
-                  <Th key={col.field}>{t(col.title)}</Th>
-                ))}
-              </Tr>
-            </Thead>
-            <Tbody>
-              {paginatedItems.map((res) => {
-                const meta = res.metadata as { name: string; namespace?: string; uid: string };
-                return (
-                  <Tr key={meta.uid}>
-                    {columns.map((col, i) => (
-                      <Td key={col.field}>
-                        {i === 0 ? (
-                          <ResourceLink
-                            groupVersionKind={groupVersionKind}
-                            name={meta.name}
-                            namespace={meta.namespace}
-                          />
-                        ) : (
-                          getFieldValue(res, col.field)
-                        )}
-                      </Td>
-                    ))}
-                  </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
-          <TablePagination page={page} perPage={perPage} totalItems={totalItems} onSetPage={setPage} onPerPageSelect={setPerPage} />
-          </>
+
+        <DataView
+          activeState={
+            !loaded && !error ? DataViewState.loading
+            : loaded && items.length === 0 && !error ? DataViewState.empty
+            : undefined
+          }
+        >
+          {paginationNode && (
+            <DataViewToolbar pagination={paginationNode} />
+          )}
+          <DataViewTable
+            aria-label={t(title)}
+            columns={columnTitles}
+            rows={rows}
+          />
+        </DataView>
+
+        {loaded && paginationNode && items.length > 0 && (
+          <Pagination
+            itemCount={items.length}
+            perPage={perPage}
+            page={page}
+            onSetPage={onSetPage}
+            onPerPageSelect={onPerPageSelect}
+            variant="bottom"
+            perPageOptions={[
+              { title: '10', value: 10 },
+              { title: '20', value: 20 },
+              { title: '50', value: 50 },
+              { title: '100', value: 100 },
+            ]}
+          />
         )}
       </PageSection>
     </React.Fragment>

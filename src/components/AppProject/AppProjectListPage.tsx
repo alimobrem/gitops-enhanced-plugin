@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, type FC } from 'react';
+import { useState, useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import {
   useK8sWatchResource,
@@ -12,10 +12,6 @@ import { useTranslation } from 'react-i18next';
 import {
   PageSection,
   Alert,
-  Bullseye,
-  Spinner,
-  EmptyState,
-  EmptyStateBody,
   Label,
   Button,
   Dropdown,
@@ -24,7 +20,11 @@ import {
   MenuToggle,
 } from '@patternfly/react-core';
 import { EllipsisVIcon } from '@patternfly/react-icons';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+import {
+  DataView,
+  DataViewState,
+  DataViewTable,
+} from '@patternfly/react-data-view';
 import { AppProjectModel, AppProjectGroupVersionKind } from '../../models';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import type { AppProjectResource } from '../../types';
@@ -93,7 +93,30 @@ export const AppProjectListPage: FC = () => {
     namespace: watchNamespace(instance),
   });
 
-  const items = projects ?? [];
+  const items = useMemo(() => projects ?? [], [projects]);
+
+  const columns = [t('Name'), t('Source Repos'), t('Destinations'), t('Roles'), t('Sync Windows'), ''];
+
+  const rows = useMemo(() => items.map((proj) => ({
+    id: proj.metadata.uid,
+    row: [
+      <ResourceLink
+        key="name"
+        groupVersionKind={AppProjectGroupVersionKind}
+        name={proj.metadata.name}
+        namespace={proj.metadata.namespace}
+      />,
+      proj.spec?.sourceRepos?.length
+        ? proj.spec?.sourceRepos.includes('*')
+          ? <Label key="repos" isCompact>{t('All')}</Label>
+          : t('{{count}} repos', { count: proj.spec?.sourceRepos.length })
+        : '-',
+      t('{{count}} destinations', { count: proj.spec?.destinations?.length ?? 0 }),
+      t('{{count}} roles', { count: proj.spec?.roles?.length ?? 0 }),
+      t('{{count}} windows', { count: proj.spec?.syncWindows?.length ?? 0 }),
+      <AppProjectRowActions key="actions" project={proj} />,
+    ],
+  })), [items, t]);
 
   return (
     <React.Fragment>
@@ -103,50 +126,20 @@ export const AppProjectListPage: FC = () => {
       </ListPageHeader>
       <PageSection>
         {watchError && <Alert variant="danger" isInline title={t('Error loading resources')} className="pf-v6-u-mb-md">{(watchError as Error).message}</Alert>}
-        {!loaded && !watchError && <Bullseye><Spinner /></Bullseye>}
-        {loaded && items.length === 0 && (
-          <EmptyState><EmptyStateBody>{t('No AppProjects found.')}</EmptyStateBody></EmptyState>
-        )}
-        {loaded && items.length > 0 && (
-          <Table aria-label={t('AppProjects')}>
-            <Thead>
-              <Tr>
-                <Th>{t('Name')}</Th>
-                <Th>{t('Source Repos')}</Th>
-                <Th>{t('Destinations')}</Th>
-                <Th>{t('Roles')}</Th>
-                <Th>{t('Sync Windows')}</Th>
-                <Th aria-label={t('Actions')} />
-              </Tr>
-            </Thead>
-            <Tbody>
-              {items.map((proj) => (
-                <Tr key={proj.metadata.uid}>
-                  <Td>
-                    <ResourceLink
-                      groupVersionKind={AppProjectGroupVersionKind}
-                      name={proj.metadata.name}
-                      namespace={proj.metadata.namespace}
-                    />
-                  </Td>
-                  <Td>
-                    {proj.spec?.sourceRepos?.length
-                      ? proj.spec?.sourceRepos.includes('*')
-                        ? <Label isCompact>All</Label>
-                        : `${proj.spec?.sourceRepos.length} repos`
-                      : '-'}
-                  </Td>
-                  <Td>{proj.spec?.destinations?.length ?? 0} destinations</Td>
-                  <Td>{proj.spec?.roles?.length ?? 0} roles</Td>
-                  <Td>{proj.spec?.syncWindows?.length ?? 0} windows</Td>
-                  <Td isActionCell>
-                    <AppProjectRowActions project={proj} />
-                  </Td>
-                </Tr>
-              ))}
-            </Tbody>
-          </Table>
-        )}
+
+        <DataView
+          activeState={
+            !loaded && !watchError ? DataViewState.loading
+            : loaded && items.length === 0 ? DataViewState.empty
+            : undefined
+          }
+        >
+          <DataViewTable
+            aria-label={t('AppProjects')}
+            columns={columns}
+            rows={rows}
+          />
+        </DataView>
       </PageSection>
     </React.Fragment>
   );

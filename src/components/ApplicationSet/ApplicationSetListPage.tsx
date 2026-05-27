@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, type FC } from 'react';
+import { useState, useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import {
   useK8sWatchResource,
@@ -12,10 +12,6 @@ import { useTranslation } from 'react-i18next';
 import {
   PageSection,
   Alert,
-  Bullseye,
-  Spinner,
-  EmptyState,
-  EmptyStateBody,
   Label,
   Button,
   Dropdown,
@@ -24,7 +20,11 @@ import {
   MenuToggle,
 } from '@patternfly/react-core';
 import { EllipsisVIcon } from '@patternfly/react-icons';
-import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+import {
+  DataView,
+  DataViewState,
+  DataViewTable,
+} from '@patternfly/react-data-view';
 import { ApplicationSetModel, ApplicationSetGroupVersionKind } from '../../models';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import type { AppSetResource } from '../../types';
@@ -93,12 +93,36 @@ export const ApplicationSetListPage: FC = () => {
     namespace: watchNamespace(instance),
   });
 
-  const items = appsets ?? [];
+  const items = useMemo(() => appsets ?? [], [appsets]);
 
   const getGeneratorTypes = (generators?: Array<Record<string, unknown>>) => {
     if (!generators?.length) return '-';
     return generators.map((g) => Object.keys(g)[0]).join(', ');
   };
+
+  const columns = [t('Name'), t('Namespace'), t('Generators'), t('Template'), t('Status'), ''];
+
+  const rows = useMemo(() => items.map((as) => {
+    const healthy = as.status?.conditions?.every((c) => c.status === 'True');
+    return {
+      id: as.metadata.uid,
+      row: [
+        <ResourceLink
+          key="name"
+          groupVersionKind={ApplicationSetGroupVersionKind}
+          name={as.metadata.name}
+          namespace={as.metadata.namespace}
+        />,
+        as.metadata.namespace,
+        getGeneratorTypes(as.spec.generators),
+        as.spec.template?.metadata?.name ?? '-',
+        <Label key="status" isCompact color={healthy === false ? 'red' : healthy ? 'green' : 'grey'}>
+          {healthy === false ? t('Error') : healthy ? t('Healthy') : t('Unknown')}
+        </Label>,
+        <AppSetRowActions key="actions" appset={as} />,
+      ],
+    };
+  }), [items, t]);
 
   return (
     <React.Fragment>
@@ -108,51 +132,20 @@ export const ApplicationSetListPage: FC = () => {
       </ListPageHeader>
       <PageSection>
         {watchError && <Alert variant="danger" isInline title={t('Error loading resources')} className="pf-v6-u-mb-md">{(watchError as Error).message}</Alert>}
-        {!loaded && !watchError && <Bullseye><Spinner /></Bullseye>}
-        {loaded && items.length === 0 && (
-          <EmptyState><EmptyStateBody>{t('No ApplicationSets found.')}</EmptyStateBody></EmptyState>
-        )}
-        {loaded && items.length > 0 && (
-          <Table aria-label={t('ApplicationSets')}>
-            <Thead>
-              <Tr>
-                <Th>{t('Name')}</Th>
-                <Th>{t('Namespace')}</Th>
-                <Th>{t('Generators')}</Th>
-                <Th>{t('Template')}</Th>
-                <Th>{t('Status')}</Th>
-                <Th aria-label={t('Actions')} />
-              </Tr>
-            </Thead>
-            <Tbody>
-              {items.map((as) => {
-                const healthy = as.status?.conditions?.every((c) => c.status === 'True');
-                return (
-                  <Tr key={as.metadata.uid}>
-                    <Td>
-                      <ResourceLink
-                        groupVersionKind={ApplicationSetGroupVersionKind}
-                        name={as.metadata.name}
-                        namespace={as.metadata.namespace}
-                      />
-                    </Td>
-                    <Td>{as.metadata.namespace}</Td>
-                    <Td>{getGeneratorTypes(as.spec.generators)}</Td>
-                    <Td>{as.spec.template?.metadata?.name ?? '-'}</Td>
-                    <Td>
-                      <Label isCompact color={healthy === false ? 'red' : healthy ? 'green' : 'grey'}>
-                        {healthy === false ? t('Error') : healthy ? t('Healthy') : t('Unknown')}
-                      </Label>
-                    </Td>
-                    <Td isActionCell>
-                      <AppSetRowActions appset={as} />
-                    </Td>
-                  </Tr>
-                );
-              })}
-            </Tbody>
-          </Table>
-        )}
+
+        <DataView
+          activeState={
+            !loaded && !watchError ? DataViewState.loading
+            : loaded && items.length === 0 ? DataViewState.empty
+            : undefined
+          }
+        >
+          <DataViewTable
+            aria-label={t('ApplicationSets')}
+            columns={columns}
+            rows={rows}
+          />
+        </DataView>
       </PageSection>
     </React.Fragment>
   );
