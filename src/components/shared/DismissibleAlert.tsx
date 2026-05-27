@@ -1,6 +1,6 @@
 import React from 'react';
 import { useState, type FC } from 'react';
-import { Alert, type AlertProps } from '@patternfly/react-core';
+import { Alert, AlertActionCloseButton, type AlertProps } from '@patternfly/react-core';
 
 interface DismissibleAlertProps {
   variant: AlertProps['variant'];
@@ -16,7 +16,7 @@ export const DismissibleAlert: FC<DismissibleAlertProps> = ({ variant, title, ch
       variant={variant}
       isInline
       title={title}
-      actionClose={<button onClick={() => setDismissed(true)} aria-label="Close">x</button>}
+      actionClose={<AlertActionCloseButton onClose={() => setDismissed(true)} />}
       className="pf-v6-u-mb-md"
     >
       {children}

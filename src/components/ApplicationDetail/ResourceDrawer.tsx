@@ -23,6 +23,7 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
+import { timeAgo } from '../../utils/time';
 import type { SyncStatusCode } from '../../types';
 import * as yaml from 'js-yaml';
 
@@ -51,17 +52,6 @@ interface K8sEvent {
 
 function pluralize(kind: string): string {
   return kind.toLowerCase() + 's';
-}
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 const SummaryPanel: FC<{ resource: ManagedResource }> = ({ resource }) => {
@@ -187,7 +177,7 @@ const ManifestPanel: FC<{ resource: ManagedResource }> = ({ resource }) => {
   if (error) return <Alert variant="danger" isInline title={t('Error loading manifest')}>{error}</Alert>;
 
   return (
-    <pre className="pf-v6-u-font-family-monospace pf-v6-u-font-size-sm" style={{ whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+    <pre className="pf-v6-u-font-family-monospace pf-v6-u-font-size-sm pf-v6-u-text-break-word pf-v6-u-text-wrap">
       {manifest}
     </pre>
   );

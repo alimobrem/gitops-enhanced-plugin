@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState, useMemo, type FC } from 'react';
+import { Link } from 'react-router-dom';
 import {
   DocumentTitle,
   ListPageHeader,
@@ -34,9 +35,11 @@ import { usePagination } from '../../hooks/usePagination';
 import { useSortableData } from '../../hooks/useSortableData';
 import { TablePagination } from '../shared/TablePagination';
 import { InstanceProvider } from '../shared/InstanceProvider';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { RowActions } from './RowActions';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { ApplicationModel, ApplicationGroupVersionKind } from '../../models';
 import { getApplicationSource } from '../../utils/application';
 import type { ApplicationResource, SyncStatusCode, HealthStatusCode } from '../../types';
@@ -59,6 +62,7 @@ export const ApplicationListPage: FC = () => {
   const [selected, setSelected] = useState<Set<string>>(new Set());
   const [bulkRunning, setBulkRunning] = useState(false);
   const [bulkError, setBulkError] = useState('');
+  const [bulkConfirmAction, setBulkConfirmAction] = useState<'sync' | 'refresh' | null>(null);
 
   const projects = useMemo(() => {
     const set = new Set(applications.map((a) => a.spec?.project));
@@ -156,7 +160,7 @@ export const ApplicationListPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('Applications')}</DocumentTitle>
       <ListPageHeader title={t('Applications')}>
-        <Button variant="primary" component="a" href="/gitops/create">{t('Create Application')}</Button>
+        <Link to="/gitops/create"><Button variant="primary">{t('Create Application')}</Button></Link>
       </ListPageHeader>
       <PageSection>
         {error && (
@@ -265,14 +269,14 @@ export const ApplicationListPage: FC = () => {
                 {selected.size > 0 && (
                   <>
                     <ToolbarItem>
-                      <Button variant="primary" onClick={bulkSyncSelected}
+                      <Button variant="primary" onClick={() => setBulkConfirmAction('sync')}
                         isDisabled={bulkRunning} isLoading={bulkRunning}
                       >
                         {t('Sync Selected')} ({selected.size})
                       </Button>
                     </ToolbarItem>
                     <ToolbarItem>
-                      <Button variant="secondary" onClick={bulkRefreshSelected}
+                      <Button variant="secondary" onClick={() => setBulkConfirmAction('refresh')}
                         isDisabled={bulkRunning} isLoading={bulkRunning}
                       >
                         {t('Refresh Selected')} ({selected.size})
@@ -320,7 +324,7 @@ export const ApplicationListPage: FC = () => {
                       <Td>{app.spec?.project}</Td>
                       <Td><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></Td>
                       <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
-                      <Td>{getApplicationSource(app)?.repoURL ? <a href={getApplicationSource(app)!.repoURL} target="_blank" rel="noopener noreferrer">{getApplicationSource(app)!.repoURL}</a> : '-'}</Td>
+                      <Td>{getApplicationSource(app)?.repoURL ? <a href={getApplicationSource(app)!.repoURL} target="_blank" rel="noopener noreferrer">{getApplicationSource(app)!.repoURL} <ExternalLinkAltIcon /></a> : '-'}</Td>
                       <Td>
                         {app.spec?.destination?.namespace
                           ? <a href={`/k8s/cluster/namespaces/${app.spec?.destination?.namespace}`}>{app.spec?.destination?.name ?? app.spec?.destination?.server ?? ''} / {app.spec?.destination?.namespace}</a>
@@ -337,6 +341,17 @@ export const ApplicationListPage: FC = () => {
           </React.Fragment>
         )}
       </PageSection>
+      <ConfirmModal
+        title={bulkConfirmAction === 'sync' ? t('Confirm Bulk Sync') : t('Confirm Bulk Refresh')}
+        isOpen={!!bulkConfirmAction}
+        onConfirm={() => { bulkConfirmAction === 'sync' ? bulkSyncSelected() : bulkRefreshSelected(); setBulkConfirmAction(null); }}
+        onCancel={() => setBulkConfirmAction(null)}
+        confirmLabel={bulkConfirmAction === 'sync' ? t('Sync') : t('Refresh')}
+      >
+        {bulkConfirmAction === 'sync'
+          ? t('Are you sure you want to sync {{count}} selected applications?', { count: selected.size })
+          : t('Are you sure you want to refresh {{count}} selected applications?', { count: selected.size })}
+      </ConfirmModal>
     </React.Fragment>
   );
 };

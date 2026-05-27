@@ -4,8 +4,7 @@ import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
   Bullseye, Spinner,
-  Form, FormGroup, TextInput, Checkbox, ActionGroup, Button, Alert,
-  Card, CardTitle, CardBody, Grid, GridItem,
+  Form, FormGroup, FormSection, TextInput, Checkbox, ActionGroup, Button, Alert, AlertActionCloseButton,
   HelperText, HelperTextItem, FormHelperText,
 } from '@patternfly/react-core';
 import { ConfirmModal } from '../shared/ConfirmModal';
@@ -95,69 +94,48 @@ export const EditTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
 
   return (
     <>
-      {error && <Alert variant="danger" isInline title={t('Error saving')} actionClose={<Button variant="plain" onClick={clearFeedback}>x</Button>} className="pf-v6-u-mb-md">{error}</Alert>}
-      {success && <Alert variant="success" isInline title={t('Application updated successfully')} actionClose={<Button variant="plain" onClick={clearFeedback}>x</Button>} className="pf-v6-u-mb-md" />}
+      {error && <Alert variant="danger" isInline title={t('Error saving')} actionClose={<AlertActionCloseButton onClose={clearFeedback} />} className="pf-v6-u-mb-md">{error}</Alert>}
+      {success && <Alert variant="success" isInline title={t('Application updated successfully')} actionClose={<AlertActionCloseButton onClose={clearFeedback} />} className="pf-v6-u-mb-md" />}
       {multiSource && <Alert variant="info" isInline title={t('Multi-source application')} className="pf-v6-u-mb-md">{t('Only the first source is editable here. Use YAML for full control.')}</Alert>}
 
-      <Grid hasGutter>
-        <GridItem span={6}>
-          <Card>
-            <CardTitle>{t('Source')}</CardTitle>
-            <CardBody>
-              <Form>
-                <FormGroup label={t('Repository URL')} isRequired fieldId="edit-repo">
-                  <TextInput id="edit-repo" isRequired validated={repoURLValid ? 'default' : 'error'} value={repoURL} onChange={(_e, v) => { setRepoURL(v); clearFeedback(); }} />
-                  {validationHelper(repoURLValid, t('Repository URL is required'))}
-                </FormGroup>
-                <FormGroup label={t('Path')} isRequired fieldId="edit-path">
-                  <TextInput id="edit-path" isRequired validated={pathValid ? 'default' : 'error'} value={path} onChange={(_e, v) => { setPath(v); clearFeedback(); }} />
-                  {validationHelper(pathValid, t('Path is required'))}
-                </FormGroup>
-                <FormGroup label={t('Target Revision')} fieldId="edit-revision">
-                  <TextInput id="edit-revision" value={targetRevision} onChange={(_e, v) => { setTargetRevision(v); clearFeedback(); }} />
-                </FormGroup>
-              </Form>
-            </CardBody>
-          </Card>
-        </GridItem>
-        <GridItem span={6}>
-          <Card>
-            <CardTitle>{t('Destination')}</CardTitle>
-            <CardBody>
-              <Form>
-                <FormGroup label={t('Cluster')} fieldId="edit-server">
-                  <TextInput id="edit-server" value={destServer} onChange={(_e, v) => { setDestServer(v); clearFeedback(); }} />
-                </FormGroup>
-                <FormGroup label={t('Namespace')} isRequired fieldId="edit-namespace">
-                  <TextInput id="edit-namespace" isRequired validated={namespaceValid ? 'default' : 'error'} value={destNamespace} onChange={(_e, v) => { setDestNamespace(v); clearFeedback(); }} />
-                  {validationHelper(namespaceValid, t('Namespace is required'))}
-                </FormGroup>
-                <FormGroup label={t('Project')} fieldId="edit-project">
-                  <TextInput id="edit-project" value={project} onChange={(_e, v) => { setProject(v); clearFeedback(); }} />
-                </FormGroup>
-              </Form>
-            </CardBody>
-          </Card>
-        </GridItem>
-        <GridItem span={12}>
-          <Card>
-            <CardTitle>{t('Sync Policy')}</CardTitle>
-            <CardBody>
-              <Form>
-                <FormGroup fieldId="edit-autosync">
-                  <Checkbox id="edit-autosync" label={t('Enable auto-sync')} isChecked={autoSync} onChange={(_e, v) => setAutoSync(v)} />
-                </FormGroup>
-                {autoSync && (
-                  <>
-                    <FormGroup fieldId="edit-prune"><Checkbox id="edit-prune" label={t('Prune resources')} isChecked={prune} onChange={(_e, v) => setPrune(v)} /></FormGroup>
-                    <FormGroup fieldId="edit-selfheal"><Checkbox id="edit-selfheal" label={t('Self-heal')} isChecked={selfHeal} onChange={(_e, v) => setSelfHeal(v)} /></FormGroup>
-                  </>
-                )}
-              </Form>
-            </CardBody>
-          </Card>
-        </GridItem>
-      </Grid>
+      <Form isWidthLimited>
+        <FormSection title={t('Source')}>
+          <FormGroup label={t('Repository URL')} isRequired fieldId="edit-repo">
+            <TextInput id="edit-repo" isRequired validated={repoURLValid ? 'default' : 'error'} value={repoURL} onChange={(_e, v) => { setRepoURL(v); clearFeedback(); }} />
+            {validationHelper(repoURLValid, t('Repository URL is required'))}
+          </FormGroup>
+          <FormGroup label={t('Path')} isRequired fieldId="edit-path">
+            <TextInput id="edit-path" isRequired validated={pathValid ? 'default' : 'error'} value={path} onChange={(_e, v) => { setPath(v); clearFeedback(); }} />
+            {validationHelper(pathValid, t('Path is required'))}
+          </FormGroup>
+          <FormGroup label={t('Target Revision')} fieldId="edit-revision">
+            <TextInput id="edit-revision" value={targetRevision} onChange={(_e, v) => { setTargetRevision(v); clearFeedback(); }} />
+          </FormGroup>
+        </FormSection>
+        <FormSection title={t('Destination')}>
+          <FormGroup label={t('Cluster')} fieldId="edit-server">
+            <TextInput id="edit-server" value={destServer} onChange={(_e, v) => { setDestServer(v); clearFeedback(); }} />
+          </FormGroup>
+          <FormGroup label={t('Namespace')} isRequired fieldId="edit-namespace">
+            <TextInput id="edit-namespace" isRequired validated={namespaceValid ? 'default' : 'error'} value={destNamespace} onChange={(_e, v) => { setDestNamespace(v); clearFeedback(); }} />
+            {validationHelper(namespaceValid, t('Namespace is required'))}
+          </FormGroup>
+          <FormGroup label={t('Project')} fieldId="edit-project">
+            <TextInput id="edit-project" value={project} onChange={(_e, v) => { setProject(v); clearFeedback(); }} />
+          </FormGroup>
+        </FormSection>
+        <FormSection title={t('Sync Policy')}>
+          <FormGroup fieldId="edit-autosync">
+            <Checkbox id="edit-autosync" label={t('Enable auto-sync')} isChecked={autoSync} onChange={(_e, v) => setAutoSync(v)} />
+          </FormGroup>
+          {autoSync && (
+            <>
+              <FormGroup fieldId="edit-prune"><Checkbox id="edit-prune" label={t('Prune resources')} isChecked={prune} onChange={(_e, v) => setPrune(v)} /></FormGroup>
+              <FormGroup fieldId="edit-selfheal"><Checkbox id="edit-selfheal" label={t('Self-heal')} isChecked={selfHeal} onChange={(_e, v) => setSelfHeal(v)} /></FormGroup>
+            </>
+          )}
+        </FormSection>
+      </Form>
 
       <ActionGroup className="pf-v6-u-mt-md">
         <Button variant="primary" onClick={() => setShowConfirm(true)} isDisabled={saving || !formValid || !isDirty}>{t('Save')}</Button>

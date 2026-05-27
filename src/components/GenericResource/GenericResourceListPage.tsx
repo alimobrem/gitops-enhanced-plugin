@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FC } from 'react';
+import { Link } from 'react-router-dom';
 import {
   useK8sWatchResource,
   DocumentTitle,
@@ -75,7 +76,7 @@ export const GenericResourceListPage: FC<GenericResourceListPageProps> = ({
       <DocumentTitle>{t(title)}</DocumentTitle>
       <ListPageHeader title={t(title)}>
         {createHref
-          ? <Button variant="primary" component="a" href={createHref}>{createLabel ?? t('Create {{kind}}', { kind: groupVersionKind.kind })}</Button>
+          ? <Link to={createHref}><Button variant="primary">{createLabel ?? t('Create {{kind}}', { kind: groupVersionKind.kind })}</Button></Link>
           : <CreateResourceButton group={groupVersionKind.group} version={groupVersionKind.version} kind={groupVersionKind.kind} />
         }
       </ListPageHeader>

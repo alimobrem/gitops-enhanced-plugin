@@ -4,19 +4,10 @@ import { useTranslation } from 'react-i18next';
 import { Bullseye, Spinner, EmptyState, EmptyStateBody, Button, Alert, Tooltip } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ConfirmModal } from '../shared/ConfirmModal';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { useApplicationActions } from '../../hooks/useApplicationActions';
+import { timeAgo } from '../../utils/time';
 import type { ApplicationResource } from '../../types';
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
-}
 
 function formatDuration(startStr?: string, endStr?: string): string {
   if (!startStr || !endStr) return '-';
@@ -76,7 +67,7 @@ export const HistoryTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
                 </Tooltip>
               </Td>
               <Td>{formatDuration(entry.deployStartedAt, entry.deployedAt)}</Td>
-              <Td>{entry.source?.repoURL ? <a href={entry.source.repoURL} target="_blank" rel="noopener noreferrer">{entry.source.repoURL}</a> : '-'}</Td>
+              <Td>{entry.source?.repoURL ? <a href={entry.source.repoURL} target="_blank" rel="noopener noreferrer">{entry.source.repoURL} <ExternalLinkAltIcon /></a> : '-'}</Td>
               <Td>{idx > 0 && <Button variant="secondary" size="sm" onClick={() => setRollbackTarget({ id: entry.id, revision: entry.revision })}>{t('Rollback')}</Button>}</Td>
             </Tr>
           ))}

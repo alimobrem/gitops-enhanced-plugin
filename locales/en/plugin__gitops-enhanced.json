@@ -329,5 +329,9 @@
   "Mode": "Mode",
   "Values": "Values",
   "Add Value": "Add Value",
-  "Revert": "Revert"
+  "Revert": "Revert",
+  "Confirm Bulk Sync": "Confirm Bulk Sync",
+  "Confirm Bulk Refresh": "Confirm Bulk Refresh",
+  "Are you sure you want to sync {{count}} selected applications?": "Are you sure you want to sync {{count}} selected applications?",
+  "Are you sure you want to refresh {{count}} selected applications?": "Are you sure you want to refresh {{count}} selected applications?"
 }

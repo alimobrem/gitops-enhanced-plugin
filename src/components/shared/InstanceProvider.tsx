@@ -3,6 +3,7 @@ import { useState, useEffect, type FC, type PropsWithChildren } from 'react';
 import {
   InstanceContext,
   useArgoCDInstances,
+  ALL_INSTANCES,
   type ArgoCDInstance,
 } from '../../hooks/useArgoCDInstances';
 
@@ -16,7 +17,7 @@ export const InstanceProvider: FC<PropsWithChildren> = ({ children }) => {
       const stored = localStorage.getItem(STORAGE_KEY);
       if (stored) return JSON.parse(stored);
     } catch (e) { console.warn('Failed to parse stored GitOps instance:', e); }
-    return { name: 'openshift-gitops', namespace: 'openshift-gitops' };
+    return ALL_INSTANCES;
   });
 
   useEffect(() => {

@@ -9,6 +9,7 @@ import {
   Bullseye,
   Spinner,
 } from '@patternfly/react-core';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
@@ -81,7 +82,7 @@ export const NamespaceGitOpsTab: FC<NamespaceGitOpsTabProps> = ({ obj }) => {
               <Td>
                 <HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} />
               </Td>
-              <Td>{app.spec?.source?.repoURL ? <a href={app.spec?.source.repoURL} target="_blank" rel="noopener noreferrer">{app.spec?.source.repoURL}</a> : '-'}</Td>
+              <Td>{app.spec?.source?.repoURL ? <a href={app.spec?.source.repoURL} target="_blank" rel="noopener noreferrer">{app.spec?.source.repoURL} <ExternalLinkAltIcon /></a> : '-'}</Td>
             </Tr>
           ))}
         </Tbody>

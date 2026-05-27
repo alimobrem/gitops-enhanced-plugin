@@ -1,5 +1,6 @@
 import React from 'react';
 import type { FC } from 'react';
+import { Link } from 'react-router-dom';
 import {
   useK8sWatchResource,
   DocumentTitle,
@@ -39,7 +40,7 @@ export const AppProjectListPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('AppProjects')}</DocumentTitle>
       <ListPageHeader title={t('AppProjects')}>
-        <Button variant="primary" component="a" href="/gitops/create-project">{t('Create AppProject')}</Button>
+        <Link to="/gitops/create-project"><Button variant="primary">{t('Create AppProject')}</Button></Link>
       </ListPageHeader>
       <PageSection>
         {watchError && <Alert variant="danger" isInline title={t('Error loading resources')} className="pf-v6-u-mb-md">{(watchError as Error).message}</Alert>}

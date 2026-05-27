@@ -27,6 +27,7 @@ import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ApplicationModel } from '../../models';
 import { safePatch } from '../../utils/patch';
+import { timeAgo } from '../../utils/time';
 import type { ApplicationResource } from '../../types';
 import { getApplicationSource } from '../../utils/application';
 
@@ -37,17 +38,6 @@ function buildCommitUrl(repoURL: string, revision: string): string | null {
     return `${cleaned}/commit/${revision}`;
   }
   return null;
-}
-
-function timeAgo(dateStr: string): string {
-  const diff = Date.now() - new Date(dateStr).getTime();
-  const mins = Math.floor(diff / 60000);
-  if (mins < 1) return 'just now';
-  if (mins < 60) return `${mins}m ago`;
-  const hours = Math.floor(mins / 60);
-  if (hours < 24) return `${hours}h ago`;
-  const days = Math.floor(hours / 24);
-  return `${days}d ago`;
 }
 
 export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {

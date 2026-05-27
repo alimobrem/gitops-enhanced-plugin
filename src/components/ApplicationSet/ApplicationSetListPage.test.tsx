@@ -11,6 +11,7 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string, o?: Record<string, string>) => o ? Object.entries(o).reduce((a, [k, v]) => a.replace(`{{${k}}}`, v), s) : s }) }));
+jest.mock('react-router-dom', () => ({ Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a> }));
 jest.mock('../shared/InstanceProvider', () => ({ InstanceProvider: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
 jest.mock('../../hooks/useArgoCDInstances', () => ({
   useCurrentInstance: () => ({ instance: { name: 't', namespace: 'openshift-gitops' }, instances: [], setInstance: jest.fn() }),

@@ -15,6 +15,7 @@ jest.mock('react-router-dom', () => ({ useHistory: () => ({ push: jest.fn() }) }
 jest.mock('../../hooks/useArgoCDInstances', () => ({
   useCurrentInstance: () => ({ instance: { name: 'test', namespace: 'default' }, instances: [], setInstance: jest.fn() }),
   useArgoCDInstances: () => [[{ name: 'test', namespace: 'default' }], true],
+  ALL_INSTANCES: { name: '*', namespace: '*' },
   InstanceContext: React.createContext({
     instance: { name: 'test', namespace: 'default' },
     instances: [],

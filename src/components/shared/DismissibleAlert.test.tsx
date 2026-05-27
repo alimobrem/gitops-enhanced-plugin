@@ -28,7 +28,7 @@ describe('DismissibleAlert', () => {
   it('dismisses when close button is clicked', () => {
     render(<DismissibleAlert variant="info" title="Dismiss Me">body</DismissibleAlert>);
     expect(screen.getByText('Dismiss Me')).toBeInTheDocument();
-    fireEvent.click(screen.getByLabelText('Close'));
+    fireEvent.click(screen.getByLabelText(/^Close/));
     expect(screen.queryByText('Dismiss Me')).not.toBeInTheDocument();
   });
 });

@@ -12,7 +12,7 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
 jest.mock('react-router', () => ({ useParams: () => ({ name: 'test', ns: 'default' }) }));
-jest.mock('react-router-dom', () => ({ useHistory: () => ({ push: jest.fn() }) }));
+jest.mock('react-router-dom', () => ({ useHistory: () => ({ push: jest.fn() }), Link: ({ children, to }: { children: React.ReactNode; to: string }) => <a href={to}>{children}</a> }));
 jest.mock('../../hooks/useArgoCDInstances', () => ({
   useCurrentInstance: () => ({ instance: { name: 'test', namespace: 'default' }, instances: [], setInstance: jest.fn() }),
 }));

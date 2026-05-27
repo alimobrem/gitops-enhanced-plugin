@@ -10,6 +10,7 @@ import {
   Spinner,
   Label,
 } from '@patternfly/react-core';
+import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationGroupVersionKind } from '../../models';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
@@ -106,7 +107,7 @@ export const RepositoryListPage: FC = () => {
             <Tbody>
               {allRepos.map((r) => (
                 <Tr key={r.url}>
-                  <Td><a href={r.url} target="_blank" rel="noopener noreferrer">{r.url}</a></Td>
+                  <Td><a href={r.url} target="_blank" rel="noopener noreferrer">{r.url} <ExternalLinkAltIcon /></a></Td>
                   <Td><Label isCompact>{r.type}</Label></Td>
                   <Td>{r.name}</Td>
                   <Td>{r.appCount}</Td>
