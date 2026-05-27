@@ -159,8 +159,10 @@ export const RolloutVisualization: FC<{ rollout: RolloutResource }> = ({ rollout
   void rsError;
   void arError;
 
+  if (!rollout?.metadata) return null;
+
   return (
-    <>
+    <div>
       {/* Section 1: Phase Banner */}
       <Alert
         variant={phaseAlertVariant(phase)}
@@ -287,7 +289,7 @@ export const RolloutVisualization: FC<{ rollout: RolloutResource }> = ({ rollout
           </CardBody>
         </Card>
       )}
-    </>
+    </div>
   );
 };
 

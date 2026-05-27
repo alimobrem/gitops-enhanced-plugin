@@ -1,5 +1,5 @@
 import React from 'react';
-import { useEffect, useMemo, useState, useCallback, type FC } from 'react';
+import { useEffect, useMemo, useState, useCallback, useRef, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Bullseye,
@@ -43,6 +43,9 @@ import type {
   LayoutFactory,
   SelectionEventListener,
 } from '@patternfly/react-topology';
+import '@patternfly/react-topology/dist/esm/css/topology-components.css';
+import '@patternfly/react-topology/dist/esm/css/topology-controlbar.css';
+import '@patternfly/react-topology/dist/esm/css/topology-view.css';
 import './ResourceTreeTab.css';
 import { ResourceDrawer } from './ResourceDrawer';
 import type { ApplicationResource, SyncStatusCode } from '../../types';
@@ -259,17 +262,20 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
 export const ResourceTreeTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const app = obj as ApplicationResource | undefined;
 
+  const controllerRef = useRef<Visualization | null>(null);
+  if (!controllerRef.current) {
+    controllerRef.current = new Visualization();
+    controllerRef.current.registerComponentFactory(componentFactory);
+    controllerRef.current.registerLayoutFactory(layoutFactory);
+  }
+
   if (!app?.metadata) {
     return <Bullseye><Spinner /></Bullseye>;
   }
 
-  const controller = new Visualization();
-  controller.registerComponentFactory(componentFactory);
-  controller.registerLayoutFactory(layoutFactory);
-
   return (
     <PageSection>
-      <VisualizationProvider controller={controller}>
+      <VisualizationProvider controller={controllerRef.current}>
         <ResourceTreeContent app={app} />
       </VisualizationProvider>
     </PageSection>
