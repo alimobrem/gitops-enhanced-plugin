@@ -342,6 +342,9 @@
   "Are you sure you want to refresh {{count}} selected applications?": "Are you sure you want to refresh {{count}} selected applications?",
   "Wrap": "Wrap",
   "Resource Tree": "Resource Tree",
+  "Zoom in": "Zoom in",
+  "Zoom out": "Zoom out",
+  "Fit to screen": "Fit to screen",
   "Application": "Application",
   "{{count}} policies": "{{count}} policies"
 }

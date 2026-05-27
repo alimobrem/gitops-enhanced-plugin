@@ -10,7 +10,13 @@ import {
   Drawer,
   DrawerContent,
   DrawerContentBody,
+  Toolbar,
+  ToolbarContent,
+  ToolbarItem,
+  Button,
+  Label,
 } from '@patternfly/react-core';
+import { SearchPlusIcon, SearchMinusIcon, ExpandArrowsAltIcon } from '@patternfly/react-icons';
 import {
   Visualization,
   VisualizationProvider,
@@ -76,14 +82,11 @@ function kindBadge(kind: string): string {
 
 function healthToNodeStatus(health?: string): NodeStatus {
   switch (health) {
-    case 'Healthy':
-      return NodeStatus.success;
-    case 'Degraded':
-      return NodeStatus.danger;
-    case 'Progressing':
-      return NodeStatus.info;
-    default:
-      return NodeStatus.default;
+    case 'Healthy': return NodeStatus.success;
+    case 'Degraded': return NodeStatus.danger;
+    case 'Progressing': return NodeStatus.info;
+    case 'Suspended': return NodeStatus.warning;
+    default: return NodeStatus.default;
   }
 }
 
@@ -108,8 +111,8 @@ const componentFactory: ComponentFactory = (kind, _type) => {
   }
 };
 
-const layoutFactory: LayoutFactory = (type: string, graph: Graph): Layout =>
-  new DagreLayout(graph, { rankdir: TOP_TO_BOTTOM, nodesep: 40, ranksep: 60 });
+const layoutFactory: LayoutFactory = (_type: string, graph: Graph): Layout =>
+  new DagreLayout(graph, { rankdir: TOP_TO_BOTTOM, nodesep: 60, ranksep: 80 });
 
 interface ResourceTreeContentProps {
   app: ApplicationResource;
@@ -126,36 +129,33 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
 
   const [drawerResource, setDrawerResource] = useState<ManagedResource | null>(null);
 
-  // Build and apply the topology model
   useEffect(() => {
+    const appName = app.metadata?.name ?? t('Application');
     const nodes = [
       {
         id: 'app',
         type: 'node',
-        label: app.metadata?.name ?? t('Application'),
-        width: 120,
-        height: 40,
+        label: appName,
+        width: 160,
+        height: 50,
         data: {
-          kind: 'Application',
-          sync: app.status?.sync?.status,
-          health: app.status?.health?.status,
           badge: kindBadge('Application'),
-          nodeStatus: healthToNodeStatus(app.status?.health?.status),
+          badgeColor: '#0066cc',
+          isRoot: true,
         },
+        status: healthToNodeStatus(app.status?.health?.status),
       },
       ...resources.map((r) => ({
         id: resourceNodeId(r),
         type: 'node',
         label: r.name,
-        width: 120,
-        height: 40,
+        width: 160,
+        height: 50,
         data: {
-          kind: r.kind,
-          sync: r.status,
-          health: r.health?.status,
           badge: kindBadge(r.kind),
-          nodeStatus: healthToNodeStatus(r.health?.status),
+          badgeColor: r.health?.status === 'Healthy' ? '#3e8635' : r.health?.status === 'Degraded' ? '#c9190b' : '#6a6e73',
         },
+        status: healthToNodeStatus(r.health?.status),
       })),
     ];
 
@@ -179,65 +179,80 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     controller.fromModel(model, false);
   }, [controller, app, resources, t]);
 
-  // Fit graph after layout completes
   useEffect(() => {
     const onLayoutEnd = () => {
-      controller.getGraph()?.fit(40);
+      controller.getGraph()?.fit(50);
     };
     controller.addEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
-    return () => {
-      controller.removeEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
-    };
+    return () => controller.removeEventListener(GRAPH_LAYOUT_END_EVENT, onLayoutEnd);
   }, [controller]);
 
-  // Handle node selection
   const handleSelection: SelectionEventListener = useCallback(
     (ids: string[]) => {
-      if (ids.length === 0) {
-        setDrawerResource(null);
-        return;
-      }
+      if (ids.length === 0) { setDrawerResource(null); return; }
       const nodeId = ids[0];
       if (nodeId === 'app') return;
-      const res = resources.find(
-        (r) => resourceNodeId(r) === nodeId,
-      );
-      if (res) {
-        setDrawerResource(res);
-      }
+      const res = resources.find((r) => resourceNodeId(r) === nodeId);
+      if (res) setDrawerResource(res);
     },
     [resources],
   );
 
   useEffect(() => {
     controller.addEventListener(SELECTION_EVENT, handleSelection);
-    return () => {
-      controller.removeEventListener(SELECTION_EVENT, handleSelection);
-    };
+    return () => controller.removeEventListener(SELECTION_EVENT, handleSelection);
   }, [controller, handleSelection]);
 
+  const handleFitToScreen = () => controller.getGraph()?.fit(50);
+  const handleZoomIn = () => controller.getGraph()?.scaleBy(1.2);
+  const handleZoomOut = () => controller.getGraph()?.scaleBy(0.8);
+
   if (resources.length === 0) {
-    return (
-      <EmptyState>
-        <EmptyStateBody>{t('No managed resources found.')}</EmptyStateBody>
-      </EmptyState>
-    );
+    return <EmptyState><EmptyStateBody>{t('No managed resources found.')}</EmptyStateBody></EmptyState>;
   }
+
+  const syncedCount = resources.filter((r) => r.status === 'Synced').length;
+  const healthyCount = resources.filter((r) => r.health?.status === 'Healthy').length;
 
   const drawerPanel = drawerResource ? (
     <ResourceDrawer resource={drawerResource} onClose={() => setDrawerResource(null)} />
   ) : undefined;
 
   return (
-    <Drawer isExpanded={!!drawerResource} onExpand={() => undefined}>
-      <DrawerContent panelContent={drawerPanel}>
-        <DrawerContentBody>
-          <div className="gitops-resource-tree">
-            <VisualizationSurface />
-          </div>
-        </DrawerContentBody>
-      </DrawerContent>
-    </Drawer>
+    <>
+      <Toolbar className="pf-v6-u-mb-sm">
+        <ToolbarContent>
+          <ToolbarItem>
+            <Label isCompact color="blue">{resources.length} {t('resources')}</Label>
+          </ToolbarItem>
+          <ToolbarItem>
+            <Label isCompact color={syncedCount === resources.length ? 'green' : 'gold'}>{syncedCount}/{resources.length} {t('Synced')}</Label>
+          </ToolbarItem>
+          <ToolbarItem>
+            <Label isCompact color={healthyCount === resources.length ? 'green' : 'gold'}>{healthyCount}/{resources.length} {t('Healthy')}</Label>
+          </ToolbarItem>
+          <ToolbarItem variant="separator" />
+          <ToolbarItem>
+            <Button variant="plain" aria-label={t('Zoom in')} onClick={handleZoomIn}><SearchPlusIcon /></Button>
+          </ToolbarItem>
+          <ToolbarItem>
+            <Button variant="plain" aria-label={t('Zoom out')} onClick={handleZoomOut}><SearchMinusIcon /></Button>
+          </ToolbarItem>
+          <ToolbarItem>
+            <Button variant="plain" aria-label={t('Fit to screen')} onClick={handleFitToScreen}><ExpandArrowsAltIcon /></Button>
+          </ToolbarItem>
+        </ToolbarContent>
+      </Toolbar>
+      <Drawer isExpanded={!!drawerResource}>
+        <DrawerContent panelContent={drawerPanel}>
+          <DrawerContentBody>
+            <div className="gitops-resource-tree">
+              <VisualizationSurface />
+            </div>
+          </DrawerContentBody>
+        </DrawerContent>
+      </Drawer>
+    </>
   );
 };
 
@@ -245,11 +260,7 @@ export const ResourceTreeTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) 
   const app = obj as ApplicationResource | undefined;
 
   if (!app?.metadata) {
-    return (
-      <Bullseye>
-        <Spinner />
-      </Bullseye>
-    );
+    return <Bullseye><Spinner /></Bullseye>;
   }
 
   const controller = new Visualization();
