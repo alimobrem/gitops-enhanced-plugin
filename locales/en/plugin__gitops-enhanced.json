@@ -357,5 +357,19 @@
   "Analysis Result": "Analysis Result",
   "ready": "ready",
   "Completed": "Completed",
-  "In Progress": "In Progress"
+  "In Progress": "In Progress",
+  "Filter instances...": "Filter instances...",
+  "Sort by": "Sort by",
+  "App Count": "App Count",
+  "View YAML": "View YAML",
+  "No instances match filters.": "No instances match filters.",
+  "Clear filters": "Clear filters",
+  "Resource Requests": "Resource Requests",
+  "CPU": "CPU",
+  "Memory": "Memory",
+  "Successful Syncs": "Successful Syncs",
+  "Version": "Version",
+  "Available": "Available",
+  "Pending": "Pending",
+  "Failed": "Failed"
 }
