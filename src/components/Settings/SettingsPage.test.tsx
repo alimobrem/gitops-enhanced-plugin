@@ -10,6 +10,7 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string, o?: Record<string, string>) => o ? Object.entries(o).reduce((a, [k, v]) => a.replace(`{{${k}}}`, v), s) : s }) }));
 jest.mock('../../hooks/useArgoCDInstances', () => ({
   useCurrentInstance: () => ({ instance: { name: 't', namespace: 'openshift-gitops' }, instances: [], setInstance: jest.fn() }),
+  watchNamespace: (inst: { namespace: string }) => inst.namespace === '*' ? undefined : inst.namespace,
   InstanceContext: { Provider: ({ children }: { children: React.ReactNode }) => <>{children}</> },
 }));
 jest.mock('../shared/InstanceProvider', () => ({ InstanceProvider: ({ children }: { children: React.ReactNode }) => <>{children}</> }));

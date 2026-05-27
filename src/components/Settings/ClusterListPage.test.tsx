@@ -14,6 +14,7 @@ jest.mock('react-router', () => ({ useParams: () => ({ name: 'test', ns: 'defaul
 jest.mock('react-router-dom', () => ({ useHistory: () => ({ push: jest.fn() }) }));
 jest.mock('../../hooks/useArgoCDInstances', () => ({
   useCurrentInstance: () => ({ instance: { name: 'test', namespace: 'default' }, instances: [], setInstance: jest.fn() }),
+  watchNamespace: (inst: { namespace: string }) => inst.namespace === '*' ? undefined : inst.namespace,
 }));
 
 import { ClusterListPage } from './ClusterListPage';
