@@ -21,7 +21,7 @@ import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AppProjectGroupVersionKind } from '../../models';
 import type { AppProjectResource } from '../../types';
 import { InstanceProvider } from '../shared/InstanceProvider';
-import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
+import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
 
 
 export const AppProjectListPage: FC = () => {
@@ -30,7 +30,7 @@ export const AppProjectListPage: FC = () => {
   const [projects, loaded, watchError] = useK8sWatchResource<AppProjectResource[]>({
     groupVersionKind: AppProjectGroupVersionKind,
     isList: true,
-    namespace: instance.namespace,
+    namespace: watchNamespace(instance),
   });
 
   const items = projects ?? [];

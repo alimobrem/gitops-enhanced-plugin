@@ -21,6 +21,7 @@ export const InstanceProvider: FC<PropsWithChildren> = ({ children }) => {
 
   useEffect(() => {
     if (!loaded || instances.length === 0) return;
+    if (instance.name === '*' && instance.namespace === '*') return;
     const stillExists = instances.some(
       (i) => i.namespace === instance.namespace && i.name === instance.name,
     );

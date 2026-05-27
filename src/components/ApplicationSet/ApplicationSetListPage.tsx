@@ -21,7 +21,7 @@ import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationSetGroupVersionKind } from '../../models';
 import type { AppSetResource } from '../../types';
 import { InstanceProvider } from '../shared/InstanceProvider';
-import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
+import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
 
 
 export const ApplicationSetListPage: FC = () => {
@@ -30,7 +30,7 @@ export const ApplicationSetListPage: FC = () => {
   const [appsets, loaded, watchError] = useK8sWatchResource<AppSetResource[]>({
     groupVersionKind: ApplicationSetGroupVersionKind,
     isList: true,
-    namespace: instance.namespace,
+    namespace: watchNamespace(instance),
   });
 
   const items = appsets ?? [];

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState, type FC } from 'react';
+import { useTranslation } from 'react-i18next';
 import {
   Select,
   SelectOption,
@@ -8,13 +9,17 @@ import {
   Flex,
   FlexItem,
   Label,
+  Divider,
 } from '@patternfly/react-core';
 import { ServerIcon } from '@patternfly/react-icons';
-import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
+import { useCurrentInstance, ALL_INSTANCES, isAllInstances } from '../../hooks/useArgoCDInstances';
 
 export const InstancePicker: FC = () => {
+  const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance, instances, setInstance } = useCurrentInstance();
   const [isOpen, setIsOpen] = useState(false);
+
+  const displayName = isAllInstances(instance) ? t('All Instances') : `${instance.namespace}/${instance.name}`;
 
   if (instances.length <= 1) {
     return (
@@ -32,21 +37,27 @@ export const InstancePicker: FC = () => {
       isOpen={isOpen}
       onOpenChange={setIsOpen}
       onSelect={(_e, val) => {
-        const selected = instances.find((i) => `${i.namespace}/${i.name}` === val);
-        if (selected) setInstance(selected);
+        if (val === '*/*') {
+          setInstance(ALL_INSTANCES);
+        } else {
+          const selected = instances.find((i) => `${i.namespace}/${i.name}` === val);
+          if (selected) setInstance(selected);
+        }
         setIsOpen(false);
       }}
       toggle={(ref) => (
         <MenuToggle ref={ref} onClick={() => setIsOpen(!isOpen)}>
           <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
             <FlexItem><ServerIcon /></FlexItem>
-            <FlexItem>{instance.namespace}/{instance.name}</FlexItem>
+            <FlexItem>{displayName}</FlexItem>
           </Flex>
         </MenuToggle>
       )}
-      selected={`${instance.namespace}/${instance.name}`}
+      selected={isAllInstances(instance) ? '*/*' : `${instance.namespace}/${instance.name}`}
     >
       <SelectList>
+        <SelectOption value="*/*">{t('All Instances')}</SelectOption>
+        <Divider />
         {instances.map((inst) => (
           <SelectOption key={`${inst.namespace}/${inst.name}`} value={`${inst.namespace}/${inst.name}`}>
             {inst.namespace}/{inst.name}

@@ -29,7 +29,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { useApplications } from '../../hooks/useApplications';
-import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
+import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
 import { usePagination } from '../../hooks/usePagination';
 import { useSortableData } from '../../hooks/useSortableData';
 import { TablePagination } from '../shared/TablePagination';
@@ -47,7 +47,7 @@ const HEALTH_OPTIONS: HealthStatusCode[] = ['Healthy', 'Degraded', 'Progressing'
 export const ApplicationListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance } = useCurrentInstance();
-  const [applications, loaded, error] = useApplications(instance.namespace);
+  const [applications, loaded, error] = useApplications(watchNamespace(instance));
 
   const [nameFilter, setNameFilter] = useState('');
   const [syncFilter, setSyncFilter] = useState<string>('');

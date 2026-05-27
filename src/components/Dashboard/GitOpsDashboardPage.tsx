@@ -49,7 +49,7 @@ import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { InstancePicker } from '../shared/InstancePicker';
 import { InstanceProvider } from '../shared/InstanceProvider';
-import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
+import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
 import type { ApplicationResource } from '../../types';
 import './GitOpsDashboardPage.css';
 
@@ -74,20 +74,21 @@ export const GitOpsDashboardPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const { instance } = useCurrentInstance();
 
+  const ns = watchNamespace(instance);
   const [apps, appsLoaded, appsError] = useK8sWatchResource<ApplicationResource[]>({
     groupVersionKind: ApplicationGroupVersionKind,
     isList: true,
-    namespace: instance.namespace,
+    ...(ns ? { namespace: ns } : {}),
   });
   const [appsets, , appsetsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: ApplicationSetGroupVersionKind,
     isList: true,
-    namespace: instance.namespace,
+    ...(ns ? { namespace: ns } : {}),
   });
   const [projects, , projectsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: AppProjectGroupVersionKind,
     isList: true,
-    namespace: instance.namespace,
+    ...(ns ? { namespace: ns } : {}),
   });
   const [instances, , instancesError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: ArgoCDGroupVersionKind,

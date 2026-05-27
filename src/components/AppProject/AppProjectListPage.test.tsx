@@ -15,6 +15,7 @@ jest.mock('../shared/InstanceProvider', () => ({ InstanceProvider: ({ children }
 jest.mock('../../hooks/useArgoCDInstances', () => ({
   useCurrentInstance: () => ({ instance: { name: 't', namespace: 'openshift-gitops' }, instances: [], setInstance: jest.fn() }),
   useArgoCDInstances: () => [[], true],
+  watchNamespace: (inst: { namespace: string }) => inst.namespace,
   InstanceContext: { Provider: ({ children }: { children: React.ReactNode }) => <>{children}</> },
 }));
 

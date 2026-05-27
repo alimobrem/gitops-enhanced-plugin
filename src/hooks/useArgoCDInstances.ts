@@ -31,10 +31,23 @@ export interface InstanceContextValue {
   setInstance: (instance: ArgoCDInstance) => void;
 }
 
+export const ALL_INSTANCES: ArgoCDInstance = {
+  name: '*',
+  namespace: '*',
+};
+
 const DEFAULT_INSTANCE: ArgoCDInstance = {
   name: 'openshift-gitops',
   namespace: 'openshift-gitops',
 };
+
+export function isAllInstances(inst: ArgoCDInstance): boolean {
+  return inst.name === '*' && inst.namespace === '*';
+}
+
+export function watchNamespace(inst: ArgoCDInstance): string | undefined {
+  return isAllInstances(inst) ? undefined : inst.namespace;
+}
 
 export const InstanceContext = createContext<InstanceContextValue>({
   instance: DEFAULT_INSTANCE,
