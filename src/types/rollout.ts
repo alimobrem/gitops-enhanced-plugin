@@ -47,5 +47,11 @@ export interface RolloutResource {
     updatedReplicas?: number;
     readyReplicas?: number;
     availableReplicas?: number;
+    currentPodHash?: string;
+    stableRS?: string;
+    canary?: Record<string, unknown>;
+    blueGreen?: { activeSelector?: string; previewSelector?: string };
+    conditions?: Array<{ type: string; status: string; message: string; reason?: string }>;
+    selector?: string;
   };
 }

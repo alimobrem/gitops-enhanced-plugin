@@ -346,5 +346,14 @@
   "Zoom out": "Zoom out",
   "Fit to screen": "Fit to screen",
   "Application": "Application",
-  "{{count}} policies": "{{count}} policies"
+  "{{count}} policies": "{{count}} policies",
+  "Stable": "Stable",
+  "Preview": "Preview",
+  "Active": "Active",
+  "Traffic Split": "Traffic Split",
+  "Step {{n}} of {{total}}": "Step {{n}} of {{total}}",
+  "Analysis Result": "Analysis Result",
+  "ready": "ready",
+  "Completed": "Completed",
+  "In Progress": "In Progress"
 }

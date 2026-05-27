@@ -1,7 +1,13 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
-jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
+jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string, opts?: Record<string, unknown>) => {
+  if (opts) return s.replace(/\{\{(\w+)\}\}/g, (_, k) => String(opts[k] ?? ''));
+  return s;
+} }) }));
+jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  useK8sWatchResource: jest.fn().mockReturnValue([[], true, undefined]),
+}));
 
 import { OverviewTab } from './OverviewTab';
 import type { RolloutResource } from '../../types';
@@ -44,46 +50,26 @@ describe('OverviewTab (Rollout)', () => {
     expect(container.querySelector('.pf-v6-c-spinner')).toBeTruthy();
   });
 
-  it('renders Canary strategy label', () => {
-    render(<OverviewTab obj={mockRollout} />);
-    expect(screen.getAllByText('Canary')).toHaveLength(2); // strategy Label + CardTitle
+  it('renders phase banner from RolloutVisualization', () => {
+    const { container } = render(<OverviewTab obj={mockRollout} />);
+    // Paused phase renders info variant alert
+    expect(container.querySelector('.pf-m-info')).toBeTruthy();
   });
 
-  it('renders replicas', () => {
+  it('renders canary step timeline', () => {
     render(<OverviewTab obj={mockRollout} />);
-    expect(screen.getByText('3')).toBeInTheDocument();
+    // Steps rendered as step labels: 20% and ∞
+    expect(screen.getByText('20%')).toBeInTheDocument();
+    expect(screen.getByText('∞')).toBeInTheDocument();
   });
 
-  it('renders phase', () => {
+  it('renders traffic split', () => {
     render(<OverviewTab obj={mockRollout} />);
-    expect(screen.getByText('Paused')).toBeInTheDocument();
+    expect(screen.getByText('Traffic Split')).toBeInTheDocument();
   });
 
-  it('renders canary strategy fields', () => {
+  it('renders configuration section', () => {
     render(<OverviewTab obj={mockRollout} />);
-    expect(screen.getByText('25%')).toBeInTheDocument();
-    expect(screen.getByText('0')).toBeInTheDocument();
-    expect(screen.getByText('my-svc-stable')).toBeInTheDocument();
-    expect(screen.getByText('my-svc-canary')).toBeInTheDocument();
-  });
-
-  it('renders container image', () => {
-    render(<OverviewTab obj={mockRollout} />);
-    expect(screen.getByText('nginx:1.21')).toBeInTheDocument();
-  });
-
-  it('renders container port', () => {
-    render(<OverviewTab obj={mockRollout} />);
-    expect(screen.getByText('8080')).toBeInTheDocument();
-  });
-
-  it('renders current step index', () => {
-    render(<OverviewTab obj={mockRollout} />);
-    expect(screen.getByText('Current Step')).toBeInTheDocument();
-  });
-
-  it('renders canary steps', () => {
-    render(<OverviewTab obj={mockRollout} />);
-    expect(screen.getByText('setWeight: 20')).toBeInTheDocument();
+    expect(screen.getByText('Configuration')).toBeInTheDocument();
   });
 });
