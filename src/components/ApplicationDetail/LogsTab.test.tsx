@@ -39,6 +39,9 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   k8sDelete: jest.fn(),
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
+jest.mock('@patternfly/react-log-viewer', () => ({
+  LogViewer: (props: Record<string, unknown>) => <div data-testid="log-viewer">{String(props.data ?? '')}</div>,
+}));
 
 import { LogsTab } from './LogsTab';
 
@@ -93,5 +96,15 @@ describe('LogsTab', () => {
   it('renders refresh button', () => {
     render(<LogsTab obj={mockApp} />);
     expect(screen.getByText('Refresh')).toBeInTheDocument();
+  });
+
+  it('renders wrap toggle button', () => {
+    render(<LogsTab obj={mockApp} />);
+    expect(screen.getByText('Wrap')).toBeInTheDocument();
+  });
+
+  it('renders LogViewer component', () => {
+    render(<LogsTab obj={mockApp} />);
+    expect(screen.getByTestId('log-viewer')).toBeInTheDocument();
   });
 });

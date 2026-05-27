@@ -82,6 +82,7 @@
       "ApplicationLogsTab": "./components/ApplicationDetail/LogsTab",
       "ApplicationEventsTab": "./components/ApplicationDetail/EventsTab",
       "ApplicationHistoryTab": "./components/ApplicationDetail/HistoryTab",
+      "ApplicationResourceTreeTab": "./components/ApplicationDetail/ResourceTreeTab",
       "ApplicationConfigTab": "./components/ApplicationDetail/EditTab",
       "AppSetOverviewTab": "./components/ApplicationSet/OverviewTab",
       "AppSetChildAppsTab": "./components/ApplicationSet/ChildAppsTab",

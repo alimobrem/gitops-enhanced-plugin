@@ -335,5 +335,8 @@
   "Confirm Bulk Sync": "Confirm Bulk Sync",
   "Confirm Bulk Refresh": "Confirm Bulk Refresh",
   "Are you sure you want to sync {{count}} selected applications?": "Are you sure you want to sync {{count}} selected applications?",
-  "Are you sure you want to refresh {{count}} selected applications?": "Are you sure you want to refresh {{count}} selected applications?"
+  "Are you sure you want to refresh {{count}} selected applications?": "Are you sure you want to refresh {{count}} selected applications?",
+  "Wrap": "Wrap",
+  "Resource Tree": "Resource Tree",
+  "Application": "Application"
 }

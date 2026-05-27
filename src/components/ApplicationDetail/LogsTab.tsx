@@ -20,7 +20,7 @@ import {
   Flex,
   FlexItem,
 } from '@patternfly/react-core';
-import './LogsTab.css';
+import { LogViewer } from '@patternfly/react-log-viewer';
 import type { ApplicationResource } from '../../types';
 
 interface OwnerRef {
@@ -57,6 +57,7 @@ export const LogsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const [selectedPod, setSelectedPod] = useState<string>('');
   const [selectedContainer, setSelectedContainer] = useState<string>('');
   const [logs, setLogs] = useState<string>('');
+  const [wrapText, setWrapText] = useState(false);
   const [podSelectOpen, setPodSelectOpen] = useState(false);
   const [containerSelectOpen, setContainerSelectOpen] = useState(false);
   const abortRef = useRef<AbortController | null>(null);
@@ -215,10 +216,19 @@ export const LogsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
             {t('Refresh')}
           </Button>
         </FlexItem>
+        <FlexItem>
+          <Button variant={wrapText ? 'primary' : 'secondary'} onClick={() => setWrapText((prev) => !prev)}>
+            {t('Wrap')}
+          </Button>
+        </FlexItem>
       </Flex>
-      <pre className="gitops-log-viewer" ref={(el) => { if (el) el.scrollTop = el.scrollHeight; }}>
-        {logs || t('Loading logs...')}
-      </pre>
+      <LogViewer
+        data={logs || t('Loading logs...')}
+        isTextWrapped={wrapText}
+        hasLineNumbers
+        height={500}
+        theme="dark"
+      />
     </PageSection>
   );
 };
