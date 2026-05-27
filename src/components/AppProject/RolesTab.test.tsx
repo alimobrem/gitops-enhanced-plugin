@@ -1,7 +1,14 @@
 import React from 'react';
 import { render, screen } from '@testing-library/react';
 
-jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
+jest.mock('react-i18next', () => ({
+  useTranslation: () => ({
+    t: (s: string, opts?: Record<string, unknown>) => {
+      if (!opts) return s;
+      return Object.entries(opts).reduce((acc, [k, v]) => acc.replace(`{{${k}}}`, String(v)), s);
+    },
+  }),
+}));
 
 import { RolesTab } from './RolesTab';
 import type { AppProjectResource } from '../../types';

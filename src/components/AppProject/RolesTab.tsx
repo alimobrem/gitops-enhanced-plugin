@@ -26,7 +26,7 @@ export const RolesTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
         <Tr key={i}>
           <Td>{r.name}</Td>
           <Td>{r.groups?.join(', ') ?? '-'}</Td>
-          <Td>{r.policies?.length ?? 0} policies</Td>
+          <Td>{t('{{count}} policies', { count: r.policies?.length ?? 0 })}</Td>
         </Tr>
       ))}</Tbody>
     </Table>

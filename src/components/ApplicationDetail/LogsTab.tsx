@@ -48,7 +48,7 @@ export const LogsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
     isList: true,
   });
 
-  const [replicaSets] = useK8sWatchResource<ReplicaSetResource[]>({
+  const [replicaSets, , _rsError] = useK8sWatchResource<ReplicaSetResource[]>({
     groupVersionKind: { group: 'apps', version: 'v1', kind: 'ReplicaSet' },
     namespace: destNs,
     isList: true,

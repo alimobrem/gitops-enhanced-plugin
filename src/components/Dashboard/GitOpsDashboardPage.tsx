@@ -85,25 +85,25 @@ export const GitOpsDashboardPage: FC = () => {
     isList: true,
   });
 
-  const [rollouts] = useK8sWatchResource<Array<Record<string, unknown>>>({
+  const [rollouts, , _rolloutsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: RolloutGroupVersionKind,
     isList: true,
   });
-  const [rolloutManagers] = useK8sWatchResource<Array<Record<string, unknown>>>({
+  const [rolloutManagers, , _rmError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: RolloutManagerGroupVersionKind,
     isList: true,
   });
-  const [csvs] = useK8sWatchResource<Array<Record<string, unknown>>>({
+  const [csvs, , _csvsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: { group: 'operators.coreos.com', version: 'v1alpha1', kind: 'ClusterServiceVersion' },
     isList: true,
-    namespace: 'openshift-gitops',
+    ...(ns ? { namespace: ns } : {}),
   });
 
   const csvKey = useMemo(() => (csvs ?? []).map((c) => (c.metadata as Record<string, string>)?.name).join(','), [csvs]);
   const gitopsOperator = useMemo(() => {
     const csv = (csvs ?? []).find((c) => {
       const name = (c.metadata as Record<string, string>)?.name ?? '';
-      return name.startsWith('openshift-gitops-operator');
+      return name.startsWith('openshift-gitops-operator') || name.startsWith('gitops-operator');
     });
     if (!csv) return null;
     const meta = csv.metadata as Record<string, string>;

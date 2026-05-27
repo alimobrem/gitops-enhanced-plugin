@@ -342,5 +342,6 @@
   "Are you sure you want to refresh {{count}} selected applications?": "Are you sure you want to refresh {{count}} selected applications?",
   "Wrap": "Wrap",
   "Resource Tree": "Resource Tree",
-  "Application": "Application"
+  "Application": "Application",
+  "{{count}} policies": "{{count}} policies"
 }

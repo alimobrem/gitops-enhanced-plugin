@@ -16,7 +16,7 @@ export const ChildAppsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => 
   const resource = obj as AppSetResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
 
-  const [apps] = useK8sWatchResource<ApplicationResource[]>({
+  const [apps, , _appsError] = useK8sWatchResource<ApplicationResource[]>({
     groupVersionKind: ApplicationGroupVersionKind,
     isList: true,
   });
