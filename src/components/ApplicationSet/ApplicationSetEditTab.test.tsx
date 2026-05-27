@@ -22,12 +22,15 @@ import type { AppSetResource } from '../../types';
 const mockAppSet: AppSetResource = {
   metadata: { name: 'test-appset', namespace: 'default', uid: '123' },
   spec: {
+    generators: [
+      { list: { elements: [{ cluster: 'prod', url: 'https://prod.example.com' }] } },
+    ],
     template: {
       metadata: { name: 'tpl' },
       spec: {
         source: { repoURL: 'https://github.com/test/repo', path: '.', targetRevision: 'HEAD' },
-        destination: { namespace: 'default' },
-        syncPolicy: { automated: { prune: true, selfHeal: false } },
+        destination: { server: 'https://kubernetes.default.svc', namespace: 'default' },
+        syncPolicy: { automated: { prune: true, selfHeal: false }, syncOptions: ['CreateNamespace=true'] },
       },
     },
   },
@@ -38,10 +41,50 @@ describe('ApplicationSetEditTab', () => {
     render(<ApplicationSetEditTab obj={mockAppSet} />);
   });
 
-  it('renders form fields', () => {
+  it('renders form sections', () => {
     render(<ApplicationSetEditTab obj={mockAppSet} />);
+    expect(screen.getByText('Generators')).toBeInTheDocument();
     expect(screen.getByText('Template')).toBeInTheDocument();
-    expect(screen.getByText('Repository URL')).toBeInTheDocument();
     expect(screen.getByText('Sync Policy')).toBeInTheDocument();
+  });
+
+  it('renders generator editor for list generator', () => {
+    render(<ApplicationSetEditTab obj={mockAppSet} />);
+    expect(screen.getByText(/Generator 1: List/)).toBeInTheDocument();
+    expect(screen.getByDisplayValue('prod')).toBeInTheDocument();
+  });
+
+  it('renders template fields', () => {
+    render(<ApplicationSetEditTab obj={mockAppSet} />);
+    expect(screen.getByDisplayValue('https://github.com/test/repo')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('HEAD')).toBeInTheDocument();
+    expect(screen.getByDisplayValue('https://kubernetes.default.svc')).toBeInTheDocument();
+  });
+
+  it('renders sync policy checkboxes', () => {
+    render(<ApplicationSetEditTab obj={mockAppSet} />);
+    expect(screen.getByLabelText('Enable auto-sync')).toBeChecked();
+    expect(screen.getByLabelText('Prune resources')).toBeChecked();
+    expect(screen.getByLabelText('CreateNamespace')).toBeChecked();
+  });
+
+  it('shows spinner when no metadata', () => {
+    render(<ApplicationSetEditTab obj={{}} />);
+    expect(screen.queryByText('Generators')).not.toBeInTheDocument();
+  });
+
+  it('shows add generator button', () => {
+    render(<ApplicationSetEditTab obj={mockAppSet} />);
+    expect(screen.getByText('Add Generator')).toBeInTheDocument();
+  });
+
+  it('renders with no generators', () => {
+    const noGenAppSet: AppSetResource = {
+      ...mockAppSet,
+      spec: { ...mockAppSet.spec, generators: [] },
+    };
+    render(<ApplicationSetEditTab obj={noGenAppSet} />);
+    expect(screen.getByText('Generators')).toBeInTheDocument();
+    expect(screen.queryByText(/Generator 1/)).not.toBeInTheDocument();
   });
 });
