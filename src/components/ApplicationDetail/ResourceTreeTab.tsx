@@ -87,6 +87,10 @@ function healthToNodeStatus(health?: string): NodeStatus {
   }
 }
 
+function resourceNodeId(r: ManagedResource): string {
+  return `${r.kind}/${r.namespace ?? ''}/${r.name}`;
+}
+
 const LAYOUT_ID = 'DagreLayout';
 
 const CustomNode = withSelection()(DefaultNode);
@@ -140,7 +144,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
         },
       },
       ...resources.map((r) => ({
-        id: `${r.kind}/${r.namespace ?? ''}/${r.name}`,
+        id: resourceNodeId(r),
         type: 'node',
         label: r.name,
         width: 120,
@@ -159,7 +163,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
       id: `edge-${i}`,
       type: 'edge',
       source: 'app',
-      target: `${r.kind}/${r.namespace ?? ''}/${r.name}`,
+      target: resourceNodeId(r),
     }));
 
     const model: Model = {
@@ -196,7 +200,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
       const nodeId = ids[0];
       if (nodeId === 'app') return;
       const res = resources.find(
-        (r) => `${r.kind}/${r.namespace ?? ''}/${r.name}` === nodeId,
+        (r) => resourceNodeId(r) === nodeId,
       );
       if (res) {
         setDrawerResource(res);
