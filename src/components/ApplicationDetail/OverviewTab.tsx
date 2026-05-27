@@ -16,7 +16,12 @@ import {
   Switch,
   Alert,
   AlertActionCloseButton,
+  Label,
+  Flex,
+  FlexItem,
+  Tooltip,
 } from '@patternfly/react-core';
+import { ExternalLinkAltIcon, CheckCircleIcon, ExclamationCircleIcon } from '@patternfly/react-icons';
 import { useTranslation } from 'react-i18next';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
@@ -24,6 +29,26 @@ import { ApplicationModel } from '../../models';
 import { safePatch } from '../../utils/patch';
 import type { ApplicationResource } from '../../types';
 import { getApplicationSource } from '../../utils/application';
+
+function buildCommitUrl(repoURL: string, revision: string): string | null {
+  if (!repoURL || !revision) return null;
+  const cleaned = repoURL.replace(/\.git$/, '');
+  if (cleaned.includes('github.com') || cleaned.includes('gitlab.com') || cleaned.includes('bitbucket.org')) {
+    return `${cleaned}/commit/${revision}`;
+  }
+  return null;
+}
+
+function timeAgo(dateStr: string): string {
+  const diff = Date.now() - new Date(dateStr).getTime();
+  const mins = Math.floor(diff / 60000);
+  if (mins < 1) return 'just now';
+  if (mins < 60) return `${mins}m ago`;
+  const hours = Math.floor(mins / 60);
+  if (hours < 24) return `${hours}h ago`;
+  const days = Math.floor(hours / 24);
+  return `${days}d ago`;
+}
 
 export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const app = obj as ApplicationResource | undefined;
@@ -35,6 +60,15 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const isAutoSync = !!app.spec?.syncPolicy?.automated;
   const isPrune = !!app.spec?.syncPolicy?.automated?.prune;
   const isSelfHeal = !!app.spec?.syncPolicy?.automated?.selfHeal;
+
+  const syncRevision = app.status?.sync?.revision;
+  const lastSyncRevision = app.status?.operationState?.syncResult?.revision;
+  const lastSyncPhase = app.status?.operationState?.phase;
+  const lastSyncMessage = app.status?.operationState?.message;
+  const lastSyncFinished = app.status?.operationState?.finishedAt;
+  const repoURL = source?.repoURL ?? '';
+  const commitUrl = buildCommitUrl(repoURL, syncRevision ?? '');
+  const lastCommitUrl = buildCommitUrl(repoURL, lastSyncRevision ?? '');
 
   const toggleAutoSync = async () => {
     setPatchError('');
@@ -85,114 +119,166 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
 
   return (
     <Grid hasGutter>
+      {/* Sync Policy Banner */}
+      <GridItem span={12}>
+        <Alert variant={isAutoSync ? 'info' : 'warning'} isInline isPlain
+          title={isAutoSync
+            ? t('Auto sync is enabled') + (isPrune ? ` · ${t('Prune')}` : '') + (isSelfHeal ? ` · ${t('Self-heal')}` : '')
+            : t('Manual sync — changes require manual sync to deploy')
+          }
+        />
+      </GridItem>
+
+      {/* Status + Last Sync */}
       <GridItem span={6}>
         <Card>
-          <CardTitle>{t('Status')}</CardTitle>
+          <CardTitle>{t('Sync Status')}</CardTitle>
           <CardBody>
-            <DescriptionList isHorizontal>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Sync')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  <SyncStatusIcon
-                    status={app.status?.sync?.status ?? 'Unknown'}
-                  />
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Health')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  <HealthStatusIcon
-                    status={app.status?.health?.status ?? 'Unknown'}
-                  />
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Revision')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {app.status?.sync?.revision?.substring(0, 7) ?? '-'}
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Last Sync Revision')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {app.status?.operationState?.syncResult?.revision ?? '-'}
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Sync Message')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {app.status?.operationState?.message ?? '-'}
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Operation Phase')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {app.status?.operationState?.phase ?? '-'}
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-            </DescriptionList>
+            <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+              <FlexItem>
+                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                  <FlexItem><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></FlexItem>
+                  <FlexItem>
+                    {syncRevision ? (
+                      commitUrl ? (
+                        <a href={commitUrl} target="_blank" rel="noopener noreferrer">
+                          {source?.targetRevision ?? 'HEAD'} ({syncRevision.substring(0, 7)}) <ExternalLinkAltIcon />
+                        </a>
+                      ) : (
+                        <span>{source?.targetRevision ?? 'HEAD'} ({syncRevision.substring(0, 7)})</span>
+                      )
+                    ) : '-'}
+                  </FlexItem>
+                </Flex>
+              </FlexItem>
+
+              {/* Last Sync Result */}
+              {lastSyncPhase && (
+                <FlexItem>
+                  <Card isCompact isPlain>
+                    <CardBody>
+                      <DescriptionList isCompact isHorizontal>
+                        <DescriptionListGroup>
+                          <DescriptionListTerm>{t('Last Sync')}</DescriptionListTerm>
+                          <DescriptionListDescription>
+                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                              <FlexItem>
+                                {lastSyncPhase === 'Succeeded' ? (
+                                  <Label isCompact color="green" icon={<CheckCircleIcon />}>{t('Sync OK')}</Label>
+                                ) : (
+                                  <Label isCompact color="red" icon={<ExclamationCircleIcon />}>{lastSyncPhase}</Label>
+                                )}
+                              </FlexItem>
+                              {lastSyncRevision && (
+                                <FlexItem>
+                                  {lastCommitUrl ? (
+                                    <a href={lastCommitUrl} target="_blank" rel="noopener noreferrer">
+                                      {lastSyncRevision.substring(0, 7)} <ExternalLinkAltIcon />
+                                    </a>
+                                  ) : lastSyncRevision.substring(0, 7)}
+                                </FlexItem>
+                              )}
+                              {lastSyncFinished && (
+                                <FlexItem>
+                                  <Tooltip content={new Date(lastSyncFinished).toLocaleString()}>
+                                    <span className="pf-v6-u-color-200">{timeAgo(lastSyncFinished)}</span>
+                                  </Tooltip>
+                                </FlexItem>
+                              )}
+                            </Flex>
+                          </DescriptionListDescription>
+                        </DescriptionListGroup>
+                        {lastSyncMessage && lastSyncMessage !== 'successfully synced (all tasks run)' && (
+                          <DescriptionListGroup>
+                            <DescriptionListTerm>{t('Message')}</DescriptionListTerm>
+                            <DescriptionListDescription>{lastSyncMessage}</DescriptionListDescription>
+                          </DescriptionListGroup>
+                        )}
+                      </DescriptionList>
+                    </CardBody>
+                  </Card>
+                </FlexItem>
+              )}
+            </Flex>
           </CardBody>
         </Card>
       </GridItem>
+
+      {/* Health */}
+      <GridItem span={6}>
+        <Card>
+          <CardTitle>{t('Health Status')}</CardTitle>
+          <CardBody>
+            <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+              <FlexItem>
+                <HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} />
+                {app.status?.health?.message && (
+                  <span className="pf-v6-u-ml-sm pf-v6-u-color-200">{app.status.health.message}</span>
+                )}
+              </FlexItem>
+            </Flex>
+          </CardBody>
+        </Card>
+      </GridItem>
+
+      {/* Source with commit info */}
       <GridItem span={6}>
         <Card>
           <CardTitle>{t('Source')}</CardTitle>
           <CardBody>
-            <DescriptionList isHorizontal>
+            <DescriptionList isHorizontal isCompact>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Repository')}</DescriptionListTerm>
                 <DescriptionListDescription>
-                  {source?.repoURL ? <a href={source.repoURL} target="_blank" rel="noopener noreferrer">{source.repoURL}</a> : '-'}
+                  {source?.repoURL ? (
+                    <a href={source.repoURL} target="_blank" rel="noopener noreferrer">
+                      {source.repoURL.replace(/^https?:\/\//, '').replace(/\.git$/, '')} <ExternalLinkAltIcon />
+                    </a>
+                  ) : '-'}
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Path')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {source?.path ?? source?.chart ?? '-'}
-                </DescriptionListDescription>
+                <DescriptionListDescription>{source?.path ?? source?.chart ?? '-'}</DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
-                <DescriptionListTerm>
-                  {t('Target Revision')}
-                </DescriptionListTerm>
-                <DescriptionListDescription>
-                  {source?.targetRevision ?? 'HEAD'}
-                </DescriptionListDescription>
+                <DescriptionListTerm>{t('Target Revision')}</DescriptionListTerm>
+                <DescriptionListDescription>{source?.targetRevision ?? 'HEAD'}</DescriptionListDescription>
               </DescriptionListGroup>
             </DescriptionList>
           </CardBody>
         </Card>
       </GridItem>
+
+      {/* Destination */}
       <GridItem span={6}>
         <Card>
           <CardTitle>{t('Destination')}</CardTitle>
           <CardBody>
-            <DescriptionList isHorizontal>
+            <DescriptionList isHorizontal isCompact>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Cluster')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {app.spec?.destination.name ??
-                    app.spec?.destination.server ??
-                    '-'}
-                </DescriptionListDescription>
+                <DescriptionListDescription>{app.spec?.destination?.name ?? app.spec?.destination?.server ?? '-'}</DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Namespace')}</DescriptionListTerm>
                 <DescriptionListDescription>
-                  {app.spec?.destination.namespace ?? '-'}
+                  {app.spec?.destination?.namespace ? (
+                    <a href={`/k8s/cluster/namespaces/${app.spec.destination.namespace}`}>{app.spec.destination.namespace}</a>
+                  ) : '-'}
                 </DescriptionListDescription>
               </DescriptionListGroup>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Project')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {app.spec?.project}
-                </DescriptionListDescription>
+                <DescriptionListDescription>{app.spec?.project ?? '-'}</DescriptionListDescription>
               </DescriptionListGroup>
             </DescriptionList>
           </CardBody>
         </Card>
       </GridItem>
-      <GridItem span={6}>
+
+      {/* Sync Policy */}
+      <GridItem span={12}>
         <Card>
           <CardTitle>{t('Sync Policy')}</CardTitle>
           <CardBody>
@@ -202,43 +288,17 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
                 className="pf-v6-u-mb-md"
               >{patchError}</Alert>
             )}
-            <DescriptionList isHorizontal>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Auto-sync')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  <Switch
-                    id="auto-sync-toggle"
-                    isChecked={isAutoSync}
-                    onChange={toggleAutoSync}
-                    aria-label={t('Auto-sync')}
-                  />
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Prune resources')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  <Switch
-                    id="prune-toggle"
-                    isChecked={isPrune}
-                    onChange={togglePrune}
-                    isDisabled={!isAutoSync}
-                    aria-label={t('Prune resources')}
-                  />
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Self-heal')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  <Switch
-                    id="self-heal-toggle"
-                    isChecked={isSelfHeal}
-                    onChange={toggleSelfHeal}
-                    isDisabled={!isAutoSync}
-                    aria-label={t('Self-heal')}
-                  />
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-            </DescriptionList>
+            <Flex spaceItems={{ default: 'spaceItemsXl' }}>
+              <FlexItem>
+                <Switch id="auto-sync-toggle" label={t('Auto-sync')} isChecked={isAutoSync} onChange={toggleAutoSync} aria-label={t('Auto-sync')} />
+              </FlexItem>
+              <FlexItem>
+                <Switch id="prune-toggle" label={t('Prune resources')} isChecked={isPrune} onChange={togglePrune} isDisabled={!isAutoSync} aria-label={t('Prune resources')} />
+              </FlexItem>
+              <FlexItem>
+                <Switch id="self-heal-toggle" label={t('Self-heal')} isChecked={isSelfHeal} onChange={toggleSelfHeal} isDisabled={!isAutoSync} aria-label={t('Self-heal')} />
+              </FlexItem>
+            </Flex>
           </CardBody>
         </Card>
       </GridItem>
