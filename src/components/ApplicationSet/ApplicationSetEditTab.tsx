@@ -7,7 +7,9 @@ import {
   Form, FormSection, FormGroup, TextInput, Checkbox, ActionGroup, Button, Alert,
   AlertActionCloseButton, Select, SelectOption, SelectList, MenuToggle,
   HelperText, HelperTextItem, FormHelperText,
+  ExpandableSection,
 } from '@patternfly/react-core';
+import { ArrowUpIcon, ArrowDownIcon } from '@patternfly/react-icons';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { GeneratorEditor } from './generators/GeneratorEditor';
 import { ApplicationSetModel } from '../../models';
@@ -25,6 +27,26 @@ function newGenerator(type: string): AppSetGenerator {
     case 'merge': return { merge: { generators: [], mergeKeys: [] } };
     default: return {};
   }
+}
+
+function extractVariables(generators: AppSetGenerator[]): string[] {
+  const vars = new Set<string>();
+  for (const gen of generators) {
+    if ('list' in gen && gen.list?.elements?.length) {
+      for (const key of Object.keys(gen.list.elements[0])) vars.add(key);
+    }
+    if ('git' in gen) {
+      vars.add('path'); vars.add('path.basename'); vars.add('path.basenameNormalized');
+    }
+    if ('clusters' in gen) {
+      vars.add('name'); vars.add('server');
+      const labels = gen.clusters?.selector?.matchLabels;
+      if (labels) for (const key of Object.keys(labels)) vars.add(`metadata.labels.${key}`);
+      const values = gen.clusters?.values;
+      if (values) for (const key of Object.keys(values)) vars.add(`values.${key}`);
+    }
+  }
+  return [...vars].sort();
 }
 
 export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
@@ -67,6 +89,8 @@ export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ o
   const [success, setSuccess] = useState(false);
   const [showConfirm, setShowConfirm] = useState(false);
   const [addGenOpen, setAddGenOpen] = useState(false);
+  const [templateExpanded, setTemplateExpanded] = useState(false);
+  const [syncExpanded, setSyncExpanded] = useState(false);
 
   useEffect(() => {
     if (!success) return;
@@ -86,6 +110,11 @@ export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ o
     destServer !== init.destServer || destNamespace !== init.destNamespace ||
     autoSync !== init.autoSync || prune !== init.prune || selfHeal !== init.selfHeal ||
     createNamespace !== init.createNamespace || generatorsKey !== initGeneratorsKey;
+
+  const availableVars = extractVariables(generators);
+  const varHint = availableVars.length > 0
+    ? availableVars.map((v) => `{{${v}}}`).join(', ')
+    : '';
 
   const clearFeedback = () => { setError(''); setSuccess(false); };
 
@@ -111,6 +140,15 @@ export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ o
     clearFeedback();
   };
 
+  const moveGenerator = (idx: number, direction: -1 | 1) => {
+    const target = idx + direction;
+    if (target < 0 || target >= generators.length) return;
+    const updated = [...generators];
+    [updated[idx], updated[target]] = [updated[target], updated[idx]];
+    setGenerators(updated);
+    clearFeedback();
+  };
+
   const addGenerator = (type: string) => {
     setAddGenOpen(false);
     setGenerators([...generators, newGenerator(type)]);
@@ -118,7 +156,7 @@ export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ o
   };
 
   const buildSyncOptions = (): string[] => {
-    const opts = (tpl?.syncPolicy?.syncOptions ?? []).filter((o) => o !== 'CreateNamespace=true');
+    const opts = (tpl?.syncPolicy?.syncOptions ?? []).filter((o: string) => o !== 'CreateNamespace=true');
     if (createNamespace) opts.push('CreateNamespace=true');
     return opts;
   };
@@ -169,13 +207,22 @@ export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ o
       <Form isWidthLimited>
         <FormSection title={t('Generators')} titleElement="h3">
           {generators.map((gen, i) => (
-            <GeneratorEditor
-              key={i}
-              generator={gen}
-              index={i}
-              onChange={(g) => updateGenerator(i, g)}
-              onRemove={() => removeGenerator(i)}
-            />
+            <div key={i} className="pf-v6-u-display-flex pf-v6-u-align-items-start pf-v6-u-gap-sm">
+              <div className="pf-v6-u-flex-grow-1">
+                <GeneratorEditor
+                  generator={gen}
+                  index={i}
+                  onChange={(g) => updateGenerator(i, g)}
+                  onRemove={() => removeGenerator(i)}
+                />
+              </div>
+              {generators.length > 1 && (
+                <div className="pf-v6-u-display-flex pf-v6-u-flex-direction-column pf-v6-u-gap-xs pf-v6-u-mt-lg">
+                  <Button variant="plain" aria-label={t('Move up')} onClick={() => moveGenerator(i, -1)} isDisabled={i === 0}><ArrowUpIcon /></Button>
+                  <Button variant="plain" aria-label={t('Move down')} onClick={() => moveGenerator(i, 1)} isDisabled={i === generators.length - 1}><ArrowDownIcon /></Button>
+                </div>
+              )}
+            </div>
           ))}
           <Select
             isOpen={addGenOpen}
@@ -196,9 +243,19 @@ export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ o
           </Select>
         </FormSection>
 
-        <FormSection title={t('Template')} titleElement="h3">
+        <ExpandableSection
+          toggleText={t('Template')}
+          isExpanded={templateExpanded}
+          onToggle={(_e, expanded) => setTemplateExpanded(expanded)}
+        >
+          {varHint && (
+            <Alert variant="info" isInline isPlain title={t('Available variables')} className="pf-v6-u-mb-md">
+              {varHint}
+            </Alert>
+          )}
           <FormGroup label={t('Template Name')} fieldId="tplName">
             <TextInput id="tplName" value={templateName} onChange={(_e, v) => { setTemplateName(v); clearFeedback(); }} />
+            {varHint && <FormHelperText><HelperText><HelperTextItem>{t('Use template variables like {{env}}')}</HelperTextItem></HelperText></FormHelperText>}
           </FormGroup>
           <FormGroup label={t('Repository URL')} isRequired fieldId="repo">
             <TextInput id="repo" isRequired validated={repoURLValid ? 'default' : 'error'} value={repoURL} onChange={(_e, v) => { setRepoURL(v); clearFeedback(); }} />
@@ -221,9 +278,13 @@ export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ o
           <FormGroup label={t('Destination Namespace')} fieldId="destNs">
             <TextInput id="destNs" value={destNamespace} onChange={(_e, v) => { setDestNamespace(v); clearFeedback(); }} />
           </FormGroup>
-        </FormSection>
+        </ExpandableSection>
 
-        <FormSection title={t('Sync Policy')} titleElement="h3">
+        <ExpandableSection
+          toggleText={`${t('Sync Policy')}${autoSync ? ` — ${t('Auto-sync')}` : ''}`}
+          isExpanded={syncExpanded}
+          onToggle={(_e, expanded) => setSyncExpanded(expanded)}
+        >
           <FormGroup fieldId="auto">
             <Checkbox id="auto" label={t('Enable auto-sync')} isChecked={autoSync} onChange={(_e, v) => { setAutoSync(v); clearFeedback(); }} />
           </FormGroup>
@@ -240,7 +301,7 @@ export const ApplicationSetEditTab: FC<{ obj?: Record<string, unknown> }> = ({ o
           <FormGroup fieldId="createNs">
             <Checkbox id="createNs" label={t('CreateNamespace')} isChecked={createNamespace} onChange={(_e, v) => { setCreateNamespace(v); clearFeedback(); }} />
           </FormGroup>
-        </FormSection>
+        </ExpandableSection>
 
         <ActionGroup>
           <Button variant="primary" onClick={() => setShowConfirm(true)} isDisabled={saving || !formValid || !isDirty} isLoading={saving}>{t('Save')}</Button>

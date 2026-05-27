@@ -45,7 +45,7 @@ describe('ApplicationSetEditTab', () => {
     render(<ApplicationSetEditTab obj={mockAppSet} />);
     expect(screen.getByText('Generators')).toBeInTheDocument();
     expect(screen.getByText('Template')).toBeInTheDocument();
-    expect(screen.getByText('Sync Policy')).toBeInTheDocument();
+    expect(screen.getAllByText(/Sync Policy/).length).toBeGreaterThanOrEqual(1);
   });
 
   it('renders generator editor for list generator', () => {
