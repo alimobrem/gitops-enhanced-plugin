@@ -8,7 +8,7 @@ import {
   AlertActionCloseButton, NumberInput, Checkbox, Label, Tooltip,
   HelperText, HelperTextItem, FormHelperText, Select, SelectOption, SelectList, MenuToggle,
 } from '@patternfly/react-core';
-import { TrashIcon } from '@patternfly/react-icons';
+import { MinusCircleIcon } from '@patternfly/react-icons';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { RolloutModel } from '../../models';
 import type { RolloutResource } from '../../types';
@@ -258,7 +258,7 @@ export const RolloutEditTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) =
                         <TextInput value={pauseVal} validated={pauseInvalid ? 'error' : 'default'} onChange={(_e, v) => updateStep(i, { duration: v })} aria-label={`${t('Pause')} ${i + 1}`} placeholder="e.g. 30s" />
                       )}
                       <Tooltip content={t('Remove step')}>
-                        <Button variant="plain" aria-label={t('Remove step')} onClick={() => removeStep(i)} className="pf-v6-u-ml-sm"><TrashIcon /></Button>
+                        <Button variant="plain" aria-label={t('Remove step')} onClick={() => removeStep(i)} className="pf-v6-u-ml-sm"><MinusCircleIcon /></Button>
                       </Tooltip>
                     </div>
                   );

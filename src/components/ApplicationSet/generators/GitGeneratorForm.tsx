@@ -6,7 +6,7 @@ import {
   ToggleGroup, ToggleGroupItem,
   HelperText, HelperTextItem, FormHelperText,
 } from '@patternfly/react-core';
-import { TrashIcon, PlusCircleIcon } from '@patternfly/react-icons';
+import { MinusCircleIcon, PlusCircleIcon } from '@patternfly/react-icons';
 import type { GitGenerator } from '../../../types';
 
 interface GitGeneratorFormProps {
@@ -112,7 +112,7 @@ export const GitGeneratorForm: FC<GitGeneratorFormProps> = ({ generator, onChang
               />
               <Tooltip content={t('Remove')}>
                 <Button variant="plain" aria-label={t('Remove')} onClick={() => removeDirectory(i)} className="pf-v6-u-ml-sm">
-                  <TrashIcon />
+                  <MinusCircleIcon />
                 </Button>
               </Tooltip>
             </div>
@@ -133,7 +133,7 @@ export const GitGeneratorForm: FC<GitGeneratorFormProps> = ({ generator, onChang
               />
               <Tooltip content={t('Remove')}>
                 <Button variant="plain" aria-label={t('Remove')} onClick={() => removeFile(i)} className="pf-v6-u-ml-sm">
-                  <TrashIcon />
+                  <MinusCircleIcon />
                 </Button>
               </Tooltip>
             </div>

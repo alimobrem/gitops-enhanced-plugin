@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   Card, CardTitle, CardBody, Button, TextInput, FormGroup, Tooltip,
 } from '@patternfly/react-core';
-import { TrashIcon } from '@patternfly/react-icons';
+import { MinusCircleIcon } from '@patternfly/react-icons';
 import type { AppSetGenerator } from '../../../types';
 import { ListGeneratorForm } from './ListGeneratorForm';
 import { GitGeneratorForm } from './GitGeneratorForm';
@@ -146,7 +146,7 @@ export const GeneratorEditor: FC<GeneratorEditorProps> = ({ generator, index, on
           <span>{t('Generator')} {index + 1}: {typeLabel(type)}</span>
           <Tooltip content={t('Remove Generator')}>
             <Button variant="plain" aria-label={t('Remove Generator')} onClick={onRemove}>
-              <TrashIcon />
+              <MinusCircleIcon />
             </Button>
           </Tooltip>
         </div>

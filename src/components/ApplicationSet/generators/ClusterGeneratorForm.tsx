@@ -4,7 +4,7 @@ import { useTranslation } from 'react-i18next';
 import {
   FormGroup, TextInput, Button, Tooltip,
 } from '@patternfly/react-core';
-import { TrashIcon, PlusCircleIcon } from '@patternfly/react-icons';
+import { MinusCircleIcon, PlusCircleIcon } from '@patternfly/react-icons';
 import type { ClusterGenerator } from '../../../types';
 
 interface ClusterGeneratorFormProps {
@@ -91,7 +91,7 @@ export const ClusterGeneratorForm: FC<ClusterGeneratorFormProps> = ({ generator,
         />
         <Tooltip content={t('Remove Label')}>
           <Button variant="plain" aria-label={t('Remove Label')} onClick={() => onRemove(key)}>
-            <TrashIcon />
+            <MinusCircleIcon />
           </Button>
         </Tooltip>
       </div>
