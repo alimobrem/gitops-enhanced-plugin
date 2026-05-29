@@ -15,7 +15,15 @@
 .gitops-node-card {
   filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08));
   cursor: pointer;
-  transition: filter 0.2s ease, transform 0.15s ease;
+  transition: filter 0.2s ease;
+}
+
+.gitops-node-card--clickable {
+  cursor: pointer;
+}
+
+.gitops-node-card--clickable:hover .gitops-node-card__name {
+  text-decoration: underline;
 }
 
 .gitops-node-card:hover {

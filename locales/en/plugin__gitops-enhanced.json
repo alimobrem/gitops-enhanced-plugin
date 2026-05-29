@@ -407,6 +407,7 @@
   "Desired (Git)": "Desired (Git)",
   "Live (Cluster)": "Live (Cluster)",
   "Focus issues": "Focus issues",
+  "GitOps context": "GitOps context",
   "Sync window active": "Sync window active",
   "A deny sync window is currently active on project {{project}}": "A deny sync window is currently active on project {{project}}",
   "Sync blocked": "Sync blocked",

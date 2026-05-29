@@ -2,6 +2,16 @@ import React from 'react';
 import { render, screen, fireEvent } from '@testing-library/react';
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
+jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
+  useK8sWatchResource: () => [[], true, null],
+}));
+jest.mock('../../hooks/useArgoCDInstances', () => ({
+  useCurrentInstance: () => ({ instance: { name: 'test', namespace: 'default' }, instances: [], setInstance: jest.fn() }),
+}));
+jest.mock('../../models', () => ({
+  ArgoCDGroupVersionKind: { group: 'argoproj.io', version: 'v1beta1', kind: 'ArgoCD' },
+  AppProjectGroupVersionKind: { group: 'argoproj.io', version: 'v1alpha1', kind: 'AppProject' },
+}));
 jest.mock('@patternfly/react-topology', () => ({
   Visualization: jest.fn().mockImplementation(() => ({
     registerComponentFactory: jest.fn(),

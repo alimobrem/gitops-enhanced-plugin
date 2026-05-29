@@ -1,6 +1,7 @@
 import React from 'react';
 import { useEffect, useMemo, useState, useCallback, useRef, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import {
   Bullseye,
   Spinner,
@@ -51,6 +52,8 @@ import './ResourceTreeTab.css';
 import { ResourceDrawer } from './ResourceDrawer';
 import { useResourceTree } from '../../hooks/useResourceTree';
 import { nodeKey, buildHierarchy, findDegradedPaths } from '../../utils/tree';
+import { ArgoCDGroupVersionKind, AppProjectGroupVersionKind } from '../../models';
+import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 import type { ApplicationResource, SyncStatusCode } from '../../types';
 import type { ResourceNode } from '../../types/argocd-api';
 
@@ -84,6 +87,8 @@ const KIND_ABBR: Record<string, string> = {
   Route: 'RT',
   Rollout: 'RO',
   EndpointSlice: 'EP',
+  ArgoCD: 'ARGO',
+  AppProject: 'PROJ',
 };
 
 const KIND_COLOR: Record<string, string> = {
@@ -102,6 +107,8 @@ const KIND_COLOR: Record<string, string> = {
   PersistentVolumeClaim: '#2b9af3',
   Application: '#06c',
   Rollout: '#004080',
+  ArgoCD: '#e63e11',
+  AppProject: '#8a4ca7',
 };
 
 function kindAbbr(kind: string): string {
@@ -122,14 +129,6 @@ function healthToNodeStatus(health?: string): NodeStatus {
   }
 }
 
-const STATUS_RING_COLOR: Record<string, string> = {
-  [NodeStatus.success]: '#3e8635',
-  [NodeStatus.danger]: '#c9190b',
-  [NodeStatus.info]: '#06c',
-  [NodeStatus.warning]: '#f0ab00',
-  [NodeStatus.default]: '#d2d2d2',
-};
-
 function resourceNodeId(r: ManagedResource): string {
   return `${r.kind}/${r.namespace ?? ''}/${r.name}`;
 }
@@ -147,6 +146,11 @@ const HEALTH_DOT: Record<string, string> = {
   [NodeStatus.default]: '#b8bbbe',
 };
 
+interface NodeClickData {
+  navigateTo?: string;
+  isArgoResource?: boolean;
+}
+
 const ResourceCardNode: FC<{ element?: Node }> = ({ element }) => {
   if (!element) return null;
   const data = element.getData() ?? {};
@@ -159,6 +163,7 @@ const ResourceCardNode: FC<{ element?: Node }> = ({ element }) => {
   const dimmed = data.dimmed;
   const isDegradedNode = data.isDegradedNode;
   const healthColor = HEALTH_DOT[status] ?? HEALTH_DOT[NodeStatus.default];
+  const navigateTo = data.navigateTo;
 
   const truncatedName = label.length > 26 ? `${label.slice(0, 24)}…` : label;
 
@@ -169,6 +174,7 @@ const ResourceCardNode: FC<{ element?: Node }> = ({ element }) => {
         selected ? 'gitops-node-card--selected' : '',
         dimmed ? 'gitops-node--dimmed' : '',
         isDegradedNode ? 'gitops-node--degraded' : '',
+        navigateTo ? 'gitops-node-card--clickable' : '',
       ].filter(Boolean).join(' ')}
     >
       <rect
@@ -247,11 +253,34 @@ interface ResourceTreeContentProps {
 const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   const controller = useVisualizationController();
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const { instance } = useCurrentInstance();
 
   const appName = app.metadata?.name ?? t('Application');
   const appNamespace = app.metadata?.namespace ?? '';
+  const projectName = app.spec?.project ?? 'default';
 
   const { tree, loaded: treeLoaded, error: treeError } = useResourceTree(appName, appNamespace);
+
+  const [argoInstances] = useK8sWatchResource<Array<{ metadata: { name: string; namespace: string }; status?: { phase?: string } }>>({
+    groupVersionKind: ArgoCDGroupVersionKind,
+    namespace: appNamespace,
+    isList: true,
+  });
+
+  const [projects] = useK8sWatchResource<Array<{ metadata: { name: string; namespace: string } }>>({
+    groupVersionKind: AppProjectGroupVersionKind,
+    namespace: appNamespace,
+    isList: true,
+  });
+
+  const argoInstance = useMemo(
+    () => (argoInstances ?? []).find((i) => i.metadata.namespace === appNamespace) ?? (argoInstances ?? [])[0],
+    [argoInstances, appNamespace],
+  );
+  const project = useMemo(
+    () => (projects ?? []).find((p) => p.metadata.name === projectName),
+    [projects, projectName],
+  );
 
   const flatResources: ManagedResource[] = useMemo(
     () => (app.status?.resources ?? []) as ManagedResource[],
@@ -261,6 +290,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   const useHierarchy = treeLoaded && !treeError && tree && tree.nodes.length > 0;
 
   const [focusIssues, setFocusIssues] = useState(false);
+  const [showArgoContext, setShowArgoContext] = useState(true);
   const [drawerResource, setDrawerResource] = useState<ManagedResource | null>(null);
 
   const degradedPaths = useMemo(() => {
@@ -269,7 +299,60 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   }, [useHierarchy, tree]);
 
   const { modelNodes, modelEdges, resourceCount } = useMemo(() => {
-    const makeAppNode = () => ({
+    const argoNodes: Array<{ id: string; type: string; label: string; width: number; height: number; data: Record<string, unknown>; status: NodeStatus }> = [];
+    const argoEdges: Array<{ id: string; type: string; source: string; target: string }> = [];
+
+    if (showArgoContext && argoInstance) {
+      const argoNs = argoInstance.metadata.namespace;
+      const argoName = argoInstance.metadata.name;
+      argoNodes.push({
+        id: 'argo-instance',
+        type: 'node',
+        label: argoName,
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        data: {
+          badge: kindAbbr('ArgoCD'),
+          badgeColor: kindColor('ArgoCD'),
+          kindLabel: 'ArgoCD Instance',
+          isArgoResource: true,
+          navigateTo: `/k8s/ns/${argoNs}/argoproj.io~v1beta1~ArgoCD/${argoName}`,
+          dimmed: false,
+          isDegradedNode: false,
+        },
+        status: argoInstance.status?.phase === 'Available' ? NodeStatus.success : NodeStatus.default,
+      });
+    }
+
+    if (showArgoContext && project) {
+      const projNs = project.metadata.namespace;
+      argoNodes.push({
+        id: 'argo-project',
+        type: 'node',
+        label: projectName,
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
+        data: {
+          badge: kindAbbr('AppProject'),
+          badgeColor: kindColor('AppProject'),
+          kindLabel: 'AppProject',
+          isArgoResource: true,
+          navigateTo: `/k8s/ns/${projNs}/argoproj.io~v1alpha1~AppProject/${projectName}`,
+          dimmed: false,
+          isDegradedNode: false,
+        },
+        status: NodeStatus.success,
+      });
+
+      if (argoInstance) {
+        argoEdges.push({ id: 'edge-argo-to-proj', type: 'edge', source: 'argo-instance', target: 'argo-project' });
+      }
+      argoEdges.push({ id: 'edge-proj-to-app', type: 'edge', source: 'argo-project', target: 'app' });
+    } else if (showArgoContext && argoInstance) {
+      argoEdges.push({ id: 'edge-argo-to-app', type: 'edge', source: 'argo-instance', target: 'app' });
+    }
+
+    const appNode = {
       id: 'app',
       type: 'node',
       label: appName,
@@ -280,49 +363,53 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
         badgeColor: kindColor('Application'),
         kindLabel: 'Application',
         isRoot: true,
+        navigateTo: `/k8s/ns/${appNamespace}/argoproj.io~v1alpha1~Application/${appName}`,
         dimmed: false,
         isDegradedNode: false,
       },
       status: healthToNodeStatus(app.status?.health?.status),
-    });
+    };
 
     if (useHierarchy && tree) {
       const { edges: hierarchyEdges } = buildHierarchy(tree.nodes, appName);
-      const nodes = [
-        makeAppNode(),
-        ...tree.nodes.map((n: ResourceNode) => {
-          const key = nodeKey(n);
-          const onDegradedPath = degradedPaths.has(key);
-          const isDegradedNode = n.health?.status !== undefined && n.health.status !== 'Healthy';
-          return {
-            id: key,
-            type: 'node',
-            label: n.name,
-            width: NODE_WIDTH,
-            height: NODE_HEIGHT,
-            data: {
-              badge: kindAbbr(n.kind),
-              badgeColor: kindColor(n.kind),
-              kindLabel: n.kind,
-              dimmed: focusIssues && !onDegradedPath,
-              isDegradedNode: focusIssues && isDegradedNode,
-            },
-            status: focusIssues && !onDegradedPath ? NodeStatus.default : healthToNodeStatus(n.health?.status),
-          };
-        }),
-      ];
-      const edges = hierarchyEdges.map((e, i) => ({
+      const resourceNodes = tree.nodes.map((n: ResourceNode) => {
+        const key = nodeKey(n);
+        const onDegradedPath = degradedPaths.has(key);
+        const isDegradedNode = n.health?.status !== undefined && n.health.status !== 'Healthy';
+        const gvk = n.group ? `${n.group}~${n.version}~${n.kind}` : `~${n.version}~${n.kind}`;
+        return {
+          id: key,
+          type: 'node',
+          label: n.name,
+          width: NODE_WIDTH,
+          height: NODE_HEIGHT,
+          data: {
+            badge: kindAbbr(n.kind),
+            badgeColor: kindColor(n.kind),
+            kindLabel: n.kind,
+            navigateTo: n.namespace ? `/k8s/ns/${n.namespace}/${gvk}/${n.name}` : undefined,
+            dimmed: focusIssues && !onDegradedPath,
+            isDegradedNode: focusIssues && isDegradedNode,
+          },
+          status: focusIssues && !onDegradedPath ? NodeStatus.default : healthToNodeStatus(n.health?.status),
+        };
+      });
+      const resourceEdges = hierarchyEdges.map((e, i) => ({
         id: `edge-${i}`,
         type: 'edge',
         source: e.source,
         target: e.target,
       }));
-      return { modelNodes: nodes, modelEdges: edges, resourceCount: tree.nodes.length };
+      return {
+        modelNodes: [...argoNodes, appNode, ...resourceNodes],
+        modelEdges: [...argoEdges, ...resourceEdges],
+        resourceCount: tree.nodes.length,
+      };
     }
 
-    const nodes = [
-      makeAppNode(),
-      ...flatResources.map((r) => ({
+    const resourceNodes = flatResources.map((r) => {
+      const gvk = r.group ? `${r.group}~v1~${r.kind}` : `~v1~${r.kind}`;
+      return {
         id: resourceNodeId(r),
         type: 'node',
         label: r.name,
@@ -332,20 +419,25 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
           badge: kindAbbr(r.kind),
           badgeColor: kindColor(r.kind),
           kindLabel: r.kind,
+          navigateTo: r.namespace ? `/k8s/ns/${r.namespace}/${gvk}/${r.name}` : undefined,
           dimmed: false,
           isDegradedNode: false,
         },
         status: healthToNodeStatus(r.health?.status),
-      })),
-    ];
-    const edges = flatResources.map((r, i) => ({
+      };
+    });
+    const resourceEdges = flatResources.map((r, i) => ({
       id: `edge-${i}`,
       type: 'edge',
       source: 'app',
       target: resourceNodeId(r),
     }));
-    return { modelNodes: nodes, modelEdges: edges, resourceCount: flatResources.length };
-  }, [useHierarchy, tree, appName, app.status?.health?.status, flatResources, focusIssues, degradedPaths]);
+    return {
+      modelNodes: [...argoNodes, appNode, ...resourceNodes],
+      modelEdges: [...argoEdges, ...resourceEdges],
+      resourceCount: flatResources.length,
+    };
+  }, [useHierarchy, tree, appName, appNamespace, app.status?.health?.status, flatResources, focusIssues, degradedPaths, showArgoContext, argoInstance, project, projectName]);
 
   useEffect(() => {
     const model: Model = {
@@ -372,7 +464,15 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     (ids: string[]) => {
       if (ids.length === 0) { setDrawerResource(null); return; }
       const nodeId = ids[0];
-      if (nodeId === 'app') return;
+
+      const allNodes = modelNodes;
+      const selectedNode = allNodes.find((n) => n.id === nodeId);
+      const nodeData = selectedNode?.data as NodeClickData | undefined;
+
+      if (nodeData?.navigateTo && (nodeData.isArgoResource || nodeId === 'app')) {
+        window.location.href = nodeData.navigateTo;
+        return;
+      }
 
       if (useHierarchy && tree) {
         const node = tree.nodes.find((n: ResourceNode) => nodeKey(n) === nodeId);
@@ -392,7 +492,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
       const res = flatResources.find((r) => resourceNodeId(r) === nodeId);
       if (res) setDrawerResource(res);
     },
-    [useHierarchy, tree, flatResources],
+    [useHierarchy, tree, flatResources, modelNodes],
   );
 
   useEffect(() => {
@@ -439,6 +539,14 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
             <Label isCompact color={healthyCount === resourceCount ? 'green' : 'gold'}>{healthyCount}/{resourceCount} {t('Healthy')}</Label>
           </ToolbarItem>
           <ToolbarItem variant="separator" />
+          <ToolbarItem>
+            <Switch
+              id="show-argo-context"
+              label={t('GitOps context')}
+              isChecked={showArgoContext}
+              onChange={(_e, checked) => setShowArgoContext(checked)}
+            />
+          </ToolbarItem>
           {useHierarchy && (
             <ToolbarItem>
               <Switch
@@ -449,6 +557,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
               />
             </ToolbarItem>
           )}
+          <ToolbarItem variant="separator" />
           <ToolbarItem>
             <Button variant="plain" aria-label={t('Zoom in')} onClick={handleZoomIn}><SearchPlusIcon /></Button>
           </ToolbarItem>
