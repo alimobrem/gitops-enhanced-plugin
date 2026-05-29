@@ -71,7 +71,7 @@ export const ResourcesTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => 
       const items = resources
         .filter((r) => selected.has(resourceKey(r)))
         .map((r) => ({ group: r.group ?? '', kind: r.kind, name: r.name, namespace: r.namespace }));
-      await sync(undefined, items);
+      await sync({ resources: items });
       setSelected(new Set());
     } catch (e) {
       setSyncError((e as Error).message);

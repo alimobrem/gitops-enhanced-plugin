@@ -380,5 +380,15 @@
   "Disconnected": "Disconnected",
   "Fetch errors": "Fetch errors",
   "{{count}} conditions detected": "{{count}} conditions detected",
-  "Show details": "Show details"
+  "Show details": "Show details",
+  "Sync Options": "Sync Options",
+  "Dry Run": "Dry Run",
+  "Force": "Force",
+  "Apply Only": "Apply Only",
+  "Preview changes without applying": "Preview changes without applying",
+  "Delete resources not in Git": "Delete resources not in Git",
+  "Force replace instead of apply": "Force replace instead of apply",
+  "Skip hooks, only apply manifests": "Skip hooks, only apply manifests",
+  "Sync with options...": "Sync with options...",
+  "Select resources to sync": "Select resources to sync"
 }

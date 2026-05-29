@@ -39,7 +39,7 @@ export const HistoryTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
     setRolling(true);
     setRollbackError('');
     try {
-      await sync(rollbackTarget.revision);
+      await sync({ revision: rollbackTarget.revision });
       setRollbackTarget(null);
     } catch (e) {
       setRollbackError((e as Error).message);

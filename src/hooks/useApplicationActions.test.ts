@@ -53,7 +53,7 @@ describe('useApplicationActions', () => {
     it('supports selective sync with resources array', async () => {
       const { sync } = useApplicationActions(mockApp);
       const resources = [{ group: 'apps', kind: 'Deployment', name: 'nginx', namespace: 'default' }];
-      await sync(undefined, resources);
+      await sync({ resources });
       expect(mockK8sPatch).toHaveBeenCalledWith(
         expect.objectContaining({
           data: [expect.objectContaining({

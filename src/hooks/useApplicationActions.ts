@@ -4,19 +4,35 @@ import { useCurrentUser } from './useCurrentUser';
 import { getApplicationSource } from '../utils/application';
 import type { ApplicationResource } from '../types';
 
+export interface SyncOptions {
+  revision?: string;
+  resources?: Array<{ group: string; kind: string; name: string; namespace?: string }>;
+  dryRun?: boolean;
+  prune?: boolean;
+  force?: boolean;
+  applyOnly?: boolean;
+}
+
 export function useApplicationActions(app: ApplicationResource | null) {
   const username = useCurrentUser();
 
-  const sync = async (
-    revision?: string,
-    resources?: Array<{ group: string; kind: string; name: string; namespace?: string }>,
-  ) => {
+  const sync = async (options: SyncOptions = {}) => {
     if (!app) return;
     const syncValue: Record<string, unknown> = {
-      revision: revision ?? getApplicationSource(app)?.targetRevision ?? 'HEAD',
+      revision: options.revision ?? getApplicationSource(app)?.targetRevision ?? 'HEAD',
     };
-    if (resources?.length) {
-      syncValue.resources = resources;
+    if (options.resources?.length) {
+      syncValue.resources = options.resources;
+    }
+    if (options.dryRun) {
+      syncValue.dryRun = true;
+    }
+    const syncOptionItems: string[] = [];
+    if (options.prune) syncOptionItems.push('Prune=true');
+    if (options.force) syncOptionItems.push('Force=true');
+    if (options.applyOnly) syncOptionItems.push('ApplyOnly=true');
+    if (syncOptionItems.length > 0) {
+      syncValue.syncOptions = { items: syncOptionItems };
     }
     await k8sPatch({
       model: ApplicationModel,
@@ -82,7 +98,7 @@ export function useApplicationActions(app: ApplicationResource | null) {
       ?? app.status?.sync?.revision
       ?? getApplicationSource(app)?.targetRevision
       ?? 'HEAD';
-    await sync(lastRevision);
+    await sync({ revision: lastRevision });
   };
 
   return { sync, refresh, terminate, deleteApp, retry };
