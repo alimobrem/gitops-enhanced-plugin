@@ -26,6 +26,7 @@ import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { DiffViewer } from '../shared/DiffViewer';
 import { useManagedResources } from '../../hooks/useManagedResources';
 import { timeAgo } from '../../utils/time';
+import { toSortedYaml } from '../../utils/yaml';
 import type { SyncStatusCode } from '../../types';
 import * as yaml from 'js-yaml';
 
@@ -186,14 +187,6 @@ const ManifestPanel: FC<{ resource: ManagedResource }> = ({ resource }) => {
     </pre>
   );
 };
-
-function toSortedYaml(jsonStr: string): string {
-  try {
-    return yaml.dump(JSON.parse(jsonStr), { sortKeys: true });
-  } catch {
-    return jsonStr;
-  }
-}
 
 const DiffPanel: FC<{ resource: ManagedResource; appName?: string; appNamespace?: string }> = ({
   resource,

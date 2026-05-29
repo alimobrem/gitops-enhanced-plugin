@@ -15,23 +15,31 @@ export function useResourceTree(
   const [tree, setTree] = useState<ApplicationTree | null>(null);
   const [loaded, setLoaded] = useState(false);
   const [error, setError] = useState<string | null>(null);
-
-  const fetchData = useCallback(async () => {
-    setLoaded(false);
-    setError(null);
-    try {
-      const result = await fetchResourceTree(namespace, appName, instanceAlias);
-      setTree(result);
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setLoaded(true);
-    }
-  }, [appName, namespace, instanceAlias]);
+  const [fetchCount, setFetchCount] = useState(0);
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    let cancelled = false;
+    const doFetch = async () => {
+      setLoaded(false);
+      setError(null);
+      try {
+        const result = await fetchResourceTree(namespace, appName, instanceAlias);
+        if (!cancelled) {
+          setTree(result);
+          setLoaded(true);
+        }
+      } catch (err) {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : String(err));
+          setLoaded(true);
+        }
+      }
+    };
+    doFetch();
+    return () => { cancelled = true; };
+  }, [appName, namespace, instanceAlias, fetchCount]);
 
-  return { tree, loaded, error, refetch: fetchData };
+  const refetch = useCallback(() => setFetchCount((c) => c + 1), []);
+
+  return { tree, loaded, error, refetch };
 }

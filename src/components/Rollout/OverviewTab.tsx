@@ -17,7 +17,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const rollout = obj as RolloutResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
   const [detailsExpanded, setDetailsExpanded] = useState(false);
-  const { abort, restart } = useRolloutActions(rollout ?? null);
+  const { abort, restart, promote, promoteFull } = useRolloutActions(rollout ?? null);
   const [showAbortConfirm, setShowAbortConfirm] = useState(false);
   const [showRestartConfirm, setShowRestartConfirm] = useState(false);
   const [isAborting, setIsAborting] = useState(false);
@@ -46,10 +46,10 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
         </FlexItem>
       </Flex>
 
-      <RolloutVisualization rollout={rollout} />
+      <RolloutVisualization rollout={rollout} promote={promote} promoteFull={promoteFull} />
 
       <ExpandableSection
-        toggleText={detailsExpanded ? t('Configuration') : t('Configuration')}
+        toggleText={t('Configuration')}
         onToggle={(_event, expanded) => setDetailsExpanded(expanded)}
         isExpanded={detailsExpanded}
         className="pf-v6-u-mt-md"

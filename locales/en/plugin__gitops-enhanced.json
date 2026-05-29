@@ -426,5 +426,6 @@
   "ArgoCD uses Casbin-format policies to control access. Each policy line has the form: p, subject, resource, action, object, effect. Deny rules take priority over allow rules. If no rule matches, access is denied by default.": "ArgoCD uses Casbin-format policies to control access. Each policy line has the form: p, subject, resource, action, object, effect. Deny rules take priority over allow rules. If no rule matches, access is denied by default.",
   "Object": "Object",
   "Resource": "Resource",
-  "Action": "Action"
+  "Action": "Action",
+  "Sync blocked by sync window on project {{project}}": "Sync blocked by sync window on project {{project}}"
 }

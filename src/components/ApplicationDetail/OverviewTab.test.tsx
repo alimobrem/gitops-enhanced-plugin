@@ -23,7 +23,7 @@ jest.mock('./ConditionsBanner', () => ({
 }));
 
 jest.mock('../../hooks/useSyncWindowStatus', () => ({
-  useSyncWindowStatus: () => ({ blocked: false, message: '', projectName: 'default' }),
+  useSyncWindowStatus: () => ({ blocked: false, projectName: 'default' }),
 }));
 
 const mockApp = {

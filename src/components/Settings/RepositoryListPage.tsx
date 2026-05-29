@@ -13,6 +13,8 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { ApplicationGroupVersionKind } from '../../models';
 import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
+import { decodeBase64 } from '../../utils/application';
+import { parsePrometheusGauge } from '../../utils/prometheus';
 import type { ApplicationResource } from '../../types';
 
 interface SecretResource {
@@ -45,11 +47,6 @@ export const RepositoryListPage: FC = () => {
     (s) => s.metadata.labels?.['argocd.argoproj.io/secret-type'] === 'repository',
   );
 
-  const decode = (val?: string) => {
-    if (!val) return '';
-    try { return atob(val); } catch { return val; }
-  };
-
   const appRepos = new Map<string, { url: string; appCount: number; type: string }>();
   for (const app of apps ?? []) {
     const sources = app.spec?.sources ?? (app.spec?.source ? [app.spec?.source] : []);
@@ -69,28 +66,20 @@ export const RepositoryListPage: FC = () => {
     query: 'sum(argocd_git_fetch_fail_total) by (repo)',
   });
 
-  const fetchFailByRepo = React.useMemo(() => {
-    const m = new Map<string, number>();
-    if (!fetchFailLoaded || !fetchFailResp?.data?.result) return m;
-    for (const entry of fetchFailResp.data.result) {
-      const repo = entry.metric?.repo;
-      const val = parseFloat(entry.value?.[1] ?? '');
-      if (repo && !isNaN(val)) {
-        m.set(repo, val);
-      }
-    }
-    return m;
-  }, [fetchFailResp, fetchFailLoaded]);
+  const fetchFailByRepo = React.useMemo(
+    () => parsePrometheusGauge(fetchFailResp, fetchFailLoaded, 'repo'),
+    [fetchFailResp, fetchFailLoaded],
+  );
 
-  const configuredURLs = new Set(repoSecrets.map((s) => decode(s.data?.url)));
+  const configuredURLs = new Set(repoSecrets.map((s) => decodeBase64(s.data?.url)));
 
   const allRepos = [
     ...repoSecrets.map((s) => ({
-      url: decode(s.data?.url),
-      type: decode(s.data?.type) || 'git',
-      name: decode(s.data?.name) || s.metadata.name,
+      url: decodeBase64(s.data?.url),
+      type: decodeBase64(s.data?.type) || 'git',
+      name: decodeBase64(s.data?.name) || s.metadata.name,
       configured: true,
-      appCount: appRepos.get(decode(s.data?.url))?.appCount ?? 0,
+      appCount: appRepos.get(decodeBase64(s.data?.url))?.appCount ?? 0,
     })),
     ...[...appRepos.entries()]
       .filter(([url]) => !configuredURLs.has(url))
@@ -134,11 +123,10 @@ export const RepositoryListPage: FC = () => {
                     <Label isCompact color={r.configured ? 'green' : 'grey'}>
                       {r.configured ? t('Configured') : t('Public')}
                     </Label>
-                    {fetchFailByRepo.has(r.url) && fetchFailByRepo.get(r.url)! > 0 && (
-                      <>{' '}<Label isCompact color="red">{t('Fetch errors')} ({fetchFailByRepo.get(r.url)})</Label></>
-                    )}
-                    {fetchFailByRepo.has(r.url) && fetchFailByRepo.get(r.url) === 0 && (
-                      <>{' '}<Label isCompact color="green">{t('Connected')}</Label></>
+                    {fetchFailByRepo.has(r.url) && (
+                      <>{' '}<Label isCompact color={fetchFailByRepo.get(r.url)! > 0 ? 'red' : 'green'}>
+                        {fetchFailByRepo.get(r.url)! > 0 ? `${t('Fetch errors')} (${fetchFailByRepo.get(r.url)})` : t('Connected')}
+                      </Label></>
                     )}
                   </Td>
                 </Tr>

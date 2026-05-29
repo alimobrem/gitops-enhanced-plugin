@@ -11,13 +11,6 @@ const useApplicationActionsProvider = (resource: ApplicationResource): [Action[]
   const isFailed = resource?.status?.operationState?.phase === 'Error' || resource?.status?.operationState?.phase === 'Failed';
   const actions = useMemo<Action[]>(() => [
     { id: 'argocd-sync', label: 'Sync', cta: () => actionsRef.current?.sync() },
-    {
-      id: 'argocd-sync-options',
-      label: 'Sync with options...',
-      cta: () => window.dispatchEvent(new CustomEvent('gitops-open-sync-modal', {
-        detail: { appName: resource.metadata.name, appNamespace: resource.metadata.namespace },
-      })),
-    },
     ...(isFailed ? [{ id: 'argocd-retry', label: 'Retry', cta: () => actionsRef.current?.retry() }] : []),
     { id: 'argocd-refresh', label: 'Refresh', cta: () => actionsRef.current?.refresh(false) },
     { id: 'argocd-hard-refresh', label: 'Hard Refresh', cta: () => actionsRef.current?.refresh(true) },

@@ -16,15 +16,7 @@ import {
 import { useManagedResources } from '../../hooks/useManagedResources';
 import { DiffViewer } from '../shared/DiffViewer';
 import type { ApplicationResource } from '../../types';
-import * as yaml from 'js-yaml';
-
-function toSortedYaml(jsonStr: string): string {
-  try {
-    return yaml.dump(JSON.parse(jsonStr), { sortKeys: true });
-  } catch {
-    return jsonStr;
-  }
-}
+import { toSortedYaml } from '../../utils/yaml';
 
 export const DiffTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const app = obj as ApplicationResource | undefined;
@@ -37,10 +29,11 @@ export const DiffTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
 
   const changedResources = useMemo(() => {
     if (!loaded) return [];
-    return resources.filter((r) => {
-      if (!r.targetState || !r.liveState) return false;
-      return toSortedYaml(r.targetState) !== toSortedYaml(r.liveState);
-    });
+    return resources.filter(r => r.targetState && r.liveState).map(r => {
+      const desiredYaml = toSortedYaml(r.targetState!);
+      const liveYaml = toSortedYaml(r.liveState!);
+      return { ...r, desiredYaml, liveYaml, hasChanges: desiredYaml !== liveYaml };
+    }).filter(r => r.hasChanges);
   }, [resources, loaded]);
 
   if (!app?.metadata) {
@@ -72,10 +65,7 @@ export const DiffTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
           </Label>
         </FlexItem>
       </Flex>
-      {changedResources.map((r) => {
-        const desiredYaml = toSortedYaml(r.targetState!);
-        const liveYaml = toSortedYaml(r.liveState!);
-        return (
+      {changedResources.map((r) => (
           <ExpandableSection
             key={`${r.kind}/${r.namespace}/${r.name}`}
             toggleContent={
@@ -87,14 +77,13 @@ export const DiffTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
             className="pf-v6-u-mb-sm"
           >
             <DiffViewer
-              desired={desiredYaml}
-              live={liveYaml}
+              desired={r.desiredYaml}
+              live={r.liveYaml}
               resourceName={r.name}
               kind={r.kind}
             />
           </ExpandableSection>
-        );
-      })}
+      ))}
     </PageSection>
   );
 };

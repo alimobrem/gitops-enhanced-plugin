@@ -13,6 +13,7 @@ import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { useApplicationActions } from '../../hooks/useApplicationActions';
 import { ResourceDrawer } from './ResourceDrawer';
+import { resourceKey } from '../../utils/application';
 import type { ApplicationResource, SyncStatusCode } from '../../types';
 
 interface ManagedResource {
@@ -36,8 +37,6 @@ export const ResourcesTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => 
   const [kindFilter, setKindFilter] = useState('');
   const [kindOpen, setKindOpen] = useState(false);
   const [drawerResource, setDrawerResource] = useState<ManagedResource | null>(null);
-
-  const resourceKey = (r: ManagedResource) => `${r.group ?? ''}/${r.kind}/${r.namespace ?? ''}/${r.name}`;
 
   const kinds = useMemo(() => [...new Set(resources.map((r) => r.kind))].sort(), [resources]);
 

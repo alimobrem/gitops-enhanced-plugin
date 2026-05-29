@@ -1,5 +1,5 @@
 import React from 'react';
-import { useState, type FC } from 'react';
+import { useState, useEffect, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Modal, ModalVariant, ModalHeader, ModalBody, ModalFooter,
@@ -15,7 +15,7 @@ import {
 } from '@patternfly/react-core';
 import type { ApplicationResource, SyncStatusCode } from '../../types';
 import type { SyncOptions } from '../../hooks/useApplicationActions';
-import { getApplicationSource } from '../../utils/application';
+import { getApplicationSource, resourceKey } from '../../utils/application';
 import { SyncStatusIcon } from './SyncStatusIcon';
 
 interface ResourceEntry {
@@ -33,11 +33,8 @@ interface SyncOptionsModalProps {
   app: ApplicationResource;
   onSync: (options: SyncOptions) => Promise<void>;
   preSelectedResources?: Array<{ group: string; kind: string; name: string; namespace?: string }>;
-  syncBlocked?: { blocked: boolean; message: string };
+  syncBlocked?: { blocked: boolean; projectName: string };
 }
-
-const resourceKey = (r: { group?: string; kind: string; name: string; namespace?: string }) =>
-  `${r.group ?? ''}/${r.kind}/${r.namespace ?? ''}/${r.name}`;
 
 export const SyncOptionsModal: FC<SyncOptionsModalProps> = ({
   isOpen,
@@ -61,6 +58,18 @@ export const SyncOptionsModal: FC<SyncOptionsModalProps> = ({
   const [isLoading, setIsLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [resourcesExpanded, setResourcesExpanded] = useState(!!preSelectedResources?.length);
+
+  useEffect(() => {
+    if (isOpen) {
+      setRevision(getApplicationSource(app)?.targetRevision ?? 'HEAD');
+      setDryRun(false);
+      setPrune(false);
+      setForce(false);
+      setApplyOnly(false);
+      setError(null);
+      setSelectedResources(new Set((preSelectedResources ?? []).map(resourceKey)));
+    }
+  }, [isOpen]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const resources: ResourceEntry[] = app.status?.resources ?? [];
 
@@ -108,7 +117,7 @@ export const SyncOptionsModal: FC<SyncOptionsModalProps> = ({
           </Alert>
         )}
         {isBlocked && (
-          <Alert variant="warning" isInline title={syncBlocked!.message} className="pf-v6-u-mb-md" />
+          <Alert variant="warning" isInline title={t('Sync blocked by sync window on project {{project}}', { project: syncBlocked!.projectName })} className="pf-v6-u-mb-md" />
         )}
         <Form>
           <FormGroup label={t('Revision')} fieldId="sync-revision">
@@ -201,7 +210,7 @@ export const SyncOptionsModal: FC<SyncOptionsModalProps> = ({
       </ModalBody>
       <ModalFooter>
         {isBlocked ? (
-          <Tooltip content={syncBlocked!.message}>
+          <Tooltip content={t('Sync blocked by sync window on project {{project}}', { project: syncBlocked!.projectName })}>
             <Button variant="primary" isDisabled>{t('Sync')}</Button>
           </Tooltip>
         ) : (

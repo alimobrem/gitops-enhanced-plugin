@@ -21,6 +21,15 @@ export function conditionToAlertVariant(conditionType: string): 'danger' | 'warn
   }
 }
 
+export function resourceKey(r: { group?: string; kind: string; name: string; namespace?: string }): string {
+  return `${r.group ?? ''}/${r.kind}/${r.namespace ?? ''}/${r.name}`;
+}
+
+export function decodeBase64(val?: string): string {
+  if (!val) return '';
+  try { return atob(val); } catch { return val; }
+}
+
 export function getAllSources(app: ApplicationResource): Array<ApplicationSource & { index: number }> {
   if (app.spec?.sources?.length) {
     return app.spec.sources.map((s, i) => ({ ...s, index: i }));

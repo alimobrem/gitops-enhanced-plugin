@@ -7,7 +7,6 @@ import type { AppProjectResource } from '../types/appproject';
 
 interface SyncWindowStatus {
   blocked: boolean;
-  message: string;
   projectName: string;
 }
 
@@ -23,16 +22,12 @@ export function useSyncWindowStatus(app: ApplicationResource | null): SyncWindow
 
   return useMemo(() => {
     if (!loaded || error || !project || !app) {
-      return { blocked: false, message: '', projectName };
+      return { blocked: false, projectName };
     }
     if (!project.spec?.syncWindows?.length) {
-      return { blocked: false, message: '', projectName };
+      return { blocked: false, projectName };
     }
     const blocked = isSyncBlocked(project, app.metadata?.name ?? '', app.metadata?.namespace);
-    return {
-      blocked,
-      message: blocked ? `Sync blocked by sync window on project ${projectName}` : '',
-      projectName,
-    };
+    return { blocked, projectName };
   }, [project, loaded, error, app, projectName]);
 }

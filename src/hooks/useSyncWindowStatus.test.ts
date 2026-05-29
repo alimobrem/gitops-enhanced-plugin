@@ -35,7 +35,6 @@ describe('useSyncWindowStatus', () => {
 
     const { result } = renderHook(() => useSyncWindowStatus(app));
     expect(result.current.blocked).toBe(false);
-    expect(result.current.message).toBe('');
     expect(result.current.projectName).toBe('team-a');
   });
 
@@ -52,7 +51,7 @@ describe('useSyncWindowStatus', () => {
 
     const { result } = renderHook(() => useSyncWindowStatus(app));
     expect(result.current.blocked).toBe(true);
-    expect(result.current.message).toContain('team-a');
+    expect(result.current.projectName).toBe('team-a');
   });
 
   it('returns blocked: false when not loaded', () => {

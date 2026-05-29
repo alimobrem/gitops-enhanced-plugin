@@ -102,10 +102,10 @@ describe('SyncOptionsModal', () => {
     render(
       <SyncOptionsModal
         {...defaultProps}
-        syncBlocked={{ blocked: true, message: 'Sync window closed' }}
+        syncBlocked={{ blocked: true, projectName: 'team-a' }}
       />,
     );
-    expect(screen.getByText('Sync window closed')).toBeInTheDocument();
+    expect(screen.getByText('Sync blocked by sync window on project {{project}}')).toBeInTheDocument();
     expect(screen.getByRole('button', { name: 'Sync' })).toBeDisabled();
   });
 

@@ -3,6 +3,8 @@ import type { FC } from 'react';
 import { useK8sWatchResource, DocumentTitle, usePrometheusPoll, PrometheusEndpoint } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
+import { decodeBase64 } from '../../utils/application';
+import { parsePrometheusGauge } from '../../utils/prometheus';
 import {
   PageSection,
   Title,
@@ -41,22 +43,16 @@ export const ClusterListPage: FC = () => {
     query: 'argocd_cluster_connection_status',
   });
 
-  const clusterStatusByServer = React.useMemo(() => {
-    const m = new Map<string, number>();
-    if (!clusterStatusLoaded || !clusterStatusResp?.data?.result) return m;
-    for (const entry of clusterStatusResp.data.result) {
-      const server = entry.metric?.server;
-      const val = parseFloat(entry.value?.[1] ?? '');
-      if (server && !isNaN(val)) {
-        m.set(server, val);
-      }
-    }
-    return m;
-  }, [clusterStatusResp, clusterStatusLoaded]);
+  const clusterStatusByServer = React.useMemo(
+    () => parsePrometheusGauge(clusterStatusResp, clusterStatusLoaded, 'server'),
+    [clusterStatusResp, clusterStatusLoaded],
+  );
 
-  const decode = (val?: string) => {
-    if (!val) return '';
-    try { return atob(val); } catch { return val; }
+  const clusterStatusLabel = (server: string) => {
+    if (!clusterStatusByServer.has(server)) return <Label isCompact color="grey">{t('Unknown')}</Label>;
+    return clusterStatusByServer.get(server) === 1
+      ? <Label isCompact color="green">{t('Connected')}</Label>
+      : <Label isCompact color="red">{t('Disconnected')}</Label>;
   };
 
   return (
@@ -92,25 +88,18 @@ export const ClusterListPage: FC = () => {
               </Tr>
             </Thead>
             <Tbody>
-              {clusterSecrets.map((s) => (
-                <Tr key={s.metadata.name}>
-                  <Td>
-                    <Label>{decode(s.data?.name) || s.metadata.name}</Label>
-                  </Td>
-                  <Td>{decode(s.data?.server)}</Td>
-                  <Td>
-                    {clusterStatusByServer.has(decode(s.data?.server)) ? (
-                      clusterStatusByServer.get(decode(s.data?.server)) === 1 ? (
-                        <Label isCompact color="green">{t('Connected')}</Label>
-                      ) : (
-                        <Label isCompact color="red">{t('Disconnected')}</Label>
-                      )
-                    ) : (
-                      <Label isCompact color="grey">{t('Unknown')}</Label>
-                    )}
-                  </Td>
-                </Tr>
-              ))}
+              {clusterSecrets.map((s) => {
+                const server = decodeBase64(s.data?.server);
+                return (
+                  <Tr key={s.metadata.name}>
+                    <Td>
+                      <Label>{decodeBase64(s.data?.name) || s.metadata.name}</Label>
+                    </Td>
+                    <Td>{server}</Td>
+                    <Td>{clusterStatusLabel(server)}</Td>
+                  </Tr>
+                );
+              })}
             </Tbody>
           </Table>
         )}

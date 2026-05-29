@@ -17,7 +17,6 @@ import {
   ArrowRightIcon,
 } from '@patternfly/react-icons';
 import { AnalysisRunGroupVersionKind } from '../../models';
-import { useRolloutActions } from '../../hooks/useRolloutActions';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import type { RolloutResource } from '../../types';
 import './RolloutVisualization.css';
@@ -86,9 +85,14 @@ const phaseColor = (phase?: string): 'green' | 'red' | 'blue' | 'grey' => {
   }
 };
 
-export const RolloutVisualization: FC<{ rollout: RolloutResource }> = ({ rollout }) => {
+interface RolloutVisualizationProps {
+  rollout: RolloutResource;
+  promote: () => Promise<void>;
+  promoteFull: () => Promise<void>;
+}
+
+export const RolloutVisualization: FC<RolloutVisualizationProps> = ({ rollout, promote, promoteFull }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const { promote, promoteFull } = useRolloutActions(rollout);
 
   const [showPromoteConfirm, setShowPromoteConfirm] = useState(false);
   const [showPromoteFullConfirm, setShowPromoteFullConfirm] = useState(false);
@@ -172,14 +176,13 @@ export const RolloutVisualization: FC<{ rollout: RolloutResource }> = ({ rollout
   const rsImage = (rs?: RSResource): string =>
     rs?.spec?.template?.spec?.containers?.[0]?.image ?? '-';
 
-  // Suppress unused variable warnings for error params
-  void rsError;
-  void arError;
-
   if (!rollout?.metadata) return null;
 
   return (
     <div>
+      {(rsError || arError) && (
+        <Alert variant="warning" isInline isPlain title={t('Error loading resources')} className="pf-v6-u-mb-sm" />
+      )}
       {/* Section 1: Phase Banner */}
       <Alert
         variant={phaseAlertVariant(phase)}
