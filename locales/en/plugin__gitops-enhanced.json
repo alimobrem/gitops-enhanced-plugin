@@ -400,6 +400,8 @@
   "Are you sure you want to restart this rollout?": "Are you sure you want to restart this rollout?",
   "Diff": "Diff",
   "All resources are in sync": "All resources are in sync",
+  "Diff requires ArgoCD API access": "Diff requires ArgoCD API access",
+  "Configure OIDC between OpenShift and ArgoCD to enable manifest diffs. Showing sync status from the Application CR instead.": "Configure OIDC between OpenShift and ArgoCD to enable manifest diffs. Showing sync status from the Application CR instead.",
   "No differences": "No differences",
   "{{count}} resources with differences": "{{count}} resources with differences",
   "Desired (Git)": "Desired (Git)",

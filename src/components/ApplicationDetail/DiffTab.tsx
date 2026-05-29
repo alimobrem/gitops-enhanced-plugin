@@ -45,7 +45,34 @@ export const DiffTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   }
 
   if (error) {
-    return <Alert variant="danger" isInline title={t('Error loading resources')}>{error}</Alert>;
+    const isAuthError = error.includes('session') || error.includes('Unauthorized') || error.includes('401');
+    const outOfSyncResources = (app.status?.resources ?? []).filter(
+      (r) => r.status === 'OutOfSync',
+    );
+    return (
+      <PageSection>
+        <Alert
+          variant={isAuthError ? 'info' : 'danger'}
+          isInline
+          title={isAuthError ? t('Diff requires ArgoCD API access') : t('Error loading resources')}
+          className="pf-v6-u-mb-md"
+        >
+          {isAuthError
+            ? t('Configure OIDC between OpenShift and ArgoCD to enable manifest diffs. Showing sync status from the Application CR instead.')
+            : error}
+        </Alert>
+        {outOfSyncResources.length > 0 && outOfSyncResources.map((r) => (
+          <Flex key={`${r.kind}/${r.namespace ?? ''}/${r.name}`} spaceItems={{ default: 'spaceItemsSm' }} className="pf-v6-u-mb-xs">
+            <FlexItem><Label isCompact color="orange">{t('OutOfSync')}</Label></FlexItem>
+            <FlexItem><Label isCompact>{r.kind}</Label></FlexItem>
+            <FlexItem>{r.name}</FlexItem>
+          </Flex>
+        ))}
+        {outOfSyncResources.length === 0 && (
+          <EmptyState><EmptyStateBody>{t('All resources are in sync')}</EmptyStateBody></EmptyState>
+        )}
+      </PageSection>
+    );
   }
 
   if (changedResources.length === 0) {
