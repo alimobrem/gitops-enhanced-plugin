@@ -1,27 +1,103 @@
 .gitops-resource-tree {
-  height: 600px;
-  border: 1px solid var(--pf-t--global--border--color--default);
-  border-radius: var(--pf-t--global--border--radius--small);
-  background: var(--pf-t--global--background--color--secondary--default);
+  height: 650px;
+  border-radius: 12px;
+  background-color: #fafbfc;
+  background-image: radial-gradient(circle, #d8dde3 1px, transparent 1px);
+  background-size: 20px 20px;
+  position: relative;
+  overflow: hidden;
+}
+
+.gitops-resource-tree .pf-topology-visualization-surface {
+  background: transparent !important;
+}
+
+.gitops-node-card {
+  filter: drop-shadow(0 2px 8px rgba(0, 0, 0, 0.08));
+  cursor: pointer;
+  transition: filter 0.2s ease, transform 0.15s ease;
+}
+
+.gitops-node-card:hover {
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.14));
+}
+
+.gitops-node-card--selected {
+  filter: drop-shadow(0 0 0 2px #06c) drop-shadow(0 4px 16px rgba(0, 102, 204, 0.2));
+}
+
+.gitops-node-card__body {
+  fill: #fff;
+  rx: 10;
+  ry: 10;
+}
+
+.gitops-node-card__icon-bg {
+  transition: opacity 0.2s ease;
+}
+
+.gitops-node-card__abbr {
+  font-family: 'Red Hat Mono', 'SF Mono', 'Menlo', monospace;
+  font-weight: 700;
+  fill: #fff;
+  pointer-events: none;
+}
+
+.gitops-node-card__name {
+  font-family: 'Red Hat Text', -apple-system, sans-serif;
+  font-size: 11px;
+  font-weight: 500;
+  fill: #1f2329;
+  pointer-events: none;
+}
+
+.gitops-node-card__kind {
+  font-family: 'Red Hat Text', -apple-system, sans-serif;
+  font-size: 9px;
+  font-weight: 400;
+  fill: #6a6e73;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  pointer-events: none;
+}
+
+.gitops-node-card__health-dot {
+  transition: fill 0.3s ease;
+}
+
+.gitops-node-card__status-ring {
+  fill: none;
+  stroke-width: 2.5;
+  transition: stroke 0.3s ease;
 }
 
 .gitops-node--dimmed {
-  opacity: 0.3;
-  transition: opacity 0.3s ease;
+  opacity: 0.2;
+  transition: opacity 0.4s ease;
 }
 
-.gitops-node--degraded {
-  animation: gitops-pulse-border 2s ease-in-out infinite;
+.gitops-node--degraded .gitops-node-card__body {
+  animation: gitops-card-pulse 2.5s ease-in-out infinite;
 }
 
-@keyframes gitops-pulse-border {
-  0%, 100% { filter: drop-shadow(0 0 3px var(--pf-t--global--color--status--danger--default, #c9190b)); }
-  50% { filter: drop-shadow(0 0 8px var(--pf-t--global--color--status--danger--default, #c9190b)); }
+@keyframes gitops-card-pulse {
+  0%, 100% { filter: drop-shadow(0 0 4px rgba(201, 25, 11, 0.3)); }
+  50% { filter: drop-shadow(0 0 12px rgba(201, 25, 11, 0.5)); }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  .gitops-node--degraded {
+  .gitops-node--degraded .gitops-node-card__body {
     animation: none;
-    filter: drop-shadow(0 0 5px var(--pf-t--global--color--status--danger--default, #c9190b));
+    filter: drop-shadow(0 0 6px rgba(201, 25, 11, 0.4));
   }
+  .gitops-node-card {
+    transition: none;
+  }
+}
+
+.gitops-tree-toolbar {
+  border-bottom: 1px solid #e7e7e7;
+  background: #fff;
+  border-radius: 12px 12px 0 0;
+  padding: 4px 0;
 }

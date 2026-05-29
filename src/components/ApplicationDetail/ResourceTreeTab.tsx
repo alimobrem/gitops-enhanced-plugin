@@ -136,72 +136,93 @@ function resourceNodeId(r: ManagedResource): string {
 
 const LAYOUT_ID = 'DagreLayout';
 
-const NODE_WIDTH = 104;
-const NODE_HEIGHT = 104;
-const ICON_RADIUS = 28;
+const NODE_WIDTH = 160;
+const NODE_HEIGHT = 64;
+const ICON_SIZE = 32;
+const HEALTH_DOT: Record<string, string> = {
+  [NodeStatus.success]: '#3e8635',
+  [NodeStatus.danger]: '#c9190b',
+  [NodeStatus.info]: '#06c',
+  [NodeStatus.warning]: '#f0ab00',
+  [NodeStatus.default]: '#b8bbbe',
+};
 
-const ResourceIconNode: FC<{ element?: Node }> = ({ element }) => {
+const ResourceCardNode: FC<{ element?: Node }> = ({ element }) => {
   if (!element) return null;
   const data = element.getData() ?? {};
   const label = element.getLabel?.() ?? '';
   const status = (element as unknown as { getNodeStatus?: () => string }).getNodeStatus?.() ?? NodeStatus.default;
-  const ringColor = STATUS_RING_COLOR[status] ?? STATUS_RING_COLOR[NodeStatus.default];
   const selected = (element as unknown as { isSelected?: () => boolean }).isSelected?.() ?? false;
   const abbr = data.badge ?? '?';
   const bgColor = data.badgeColor ?? '#6a6e73';
+  const kindLabel = data.kindLabel ?? '';
   const dimmed = data.dimmed;
   const isDegradedNode = data.isDegradedNode;
+  const healthColor = HEALTH_DOT[status] ?? HEALTH_DOT[NodeStatus.default];
 
-  const cx = NODE_WIDTH / 2;
-  const cy = 36;
+  const truncatedName = label.length > 20 ? `${label.slice(0, 18)}…` : label;
 
   return (
     <g
       className={[
+        'gitops-node-card',
+        selected ? 'gitops-node-card--selected' : '',
         dimmed ? 'gitops-node--dimmed' : '',
         isDegradedNode ? 'gitops-node--degraded' : '',
-      ].filter(Boolean).join(' ') || undefined}
+      ].filter(Boolean).join(' ')}
     >
-      <circle cx={cx} cy={cy} r={ICON_RADIUS + 4} fill="none" stroke={ringColor} strokeWidth={selected ? 3 : 2} />
-      <circle cx={cx} cy={cy} r={ICON_RADIUS} fill={bgColor} />
+      <rect
+        className="gitops-node-card__body"
+        x={0} y={0}
+        width={NODE_WIDTH} height={NODE_HEIGHT}
+        rx={10} ry={10}
+        fill="#fff"
+        stroke={selected ? '#06c' : '#e0e0e0'}
+        strokeWidth={selected ? 2 : 1}
+      />
+      <rect
+        className="gitops-node-card__icon-bg"
+        x={10} y={(NODE_HEIGHT - ICON_SIZE) / 2}
+        width={ICON_SIZE} height={ICON_SIZE}
+        rx={8} ry={8}
+        fill={bgColor}
+      />
       <text
-        x={cx}
-        y={cy + 1}
+        className="gitops-node-card__abbr"
+        x={10 + ICON_SIZE / 2}
+        y={NODE_HEIGHT / 2 + 1}
         textAnchor="middle"
         dominantBaseline="central"
-        fill="#fff"
-        fontSize={abbr.length > 3 ? 10 : 12}
-        fontWeight={700}
-        fontFamily="var(--pf-t--global--font--family--mono, monospace)"
+        fontSize={abbr.length > 3 ? 9 : 11}
       >
         {abbr}
       </text>
       <text
-        x={cx}
-        y={cy + ICON_RADIUS + 16}
-        textAnchor="middle"
+        className="gitops-node-card__name"
+        x={50} y={NODE_HEIGHT / 2 - 7}
         dominantBaseline="central"
-        fill="var(--pf-t--global--text--color--regular, #151515)"
-        fontSize={11}
-        fontFamily="var(--pf-t--global--font--family--body, RedHatText, sans-serif)"
       >
-        {label.length > 18 ? `${label.slice(0, 16)}…` : label}
+        {truncatedName}
       </text>
-      {selected && (
-        <rect
-          x={1} y={1}
-          width={NODE_WIDTH - 2} height={NODE_HEIGHT - 2}
-          fill="none"
-          stroke="var(--pf-t--global--color--brand--default, #06c)"
-          strokeWidth={2}
-          rx={8}
-        />
-      )}
+      <text
+        className="gitops-node-card__kind"
+        x={50} y={NODE_HEIGHT / 2 + 9}
+        dominantBaseline="central"
+      >
+        {kindLabel}
+      </text>
+      <circle
+        className="gitops-node-card__health-dot"
+        cx={NODE_WIDTH - 14}
+        cy={NODE_HEIGHT / 2}
+        r={5}
+        fill={healthColor}
+      />
     </g>
   );
 };
 
-const SelectableResourceNode = withSelection()(ResourceIconNode as FC);
+const SelectableResourceNode = withSelection()(ResourceCardNode as FC);
 
 const componentFactory: ComponentFactory = (kind, _type) => {
   switch (kind) {
@@ -257,6 +278,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
       data: {
         badge: kindAbbr('Application'),
         badgeColor: kindColor('Application'),
+        kindLabel: 'Application',
         isRoot: true,
         dimmed: false,
         isDegradedNode: false,
@@ -281,6 +303,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
             data: {
               badge: kindAbbr(n.kind),
               badgeColor: kindColor(n.kind),
+              kindLabel: n.kind,
               dimmed: focusIssues && !onDegradedPath,
               isDegradedNode: focusIssues && isDegradedNode,
             },
@@ -308,6 +331,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
         data: {
           badge: kindAbbr(r.kind),
           badgeColor: kindColor(r.kind),
+          kindLabel: r.kind,
           dimmed: false,
           isDegradedNode: false,
         },
@@ -401,7 +425,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
 
   return (
     <>
-      <Toolbar className="pf-v6-u-mb-sm">
+      <Toolbar className="gitops-tree-toolbar">
         <ToolbarContent>
           <ToolbarItem>
             <Label isCompact color="blue">{resourceCount} {t('resources')}</Label>
