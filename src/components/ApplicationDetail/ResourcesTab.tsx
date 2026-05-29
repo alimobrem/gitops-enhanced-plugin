@@ -87,7 +87,7 @@ export const ResourcesTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => 
   const outOfSyncCount = resources.filter((r) => r.status !== 'Synced').length;
 
   const drawerPanel = drawerResource ? (
-    <ResourceDrawer resource={drawerResource} onClose={() => setDrawerResource(null)} />
+    <ResourceDrawer resource={drawerResource} appName={app.metadata.name} appNamespace={app.metadata.namespace} onClose={() => setDrawerResource(null)} />
   ) : undefined;
 
   return (

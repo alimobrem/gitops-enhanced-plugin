@@ -1,0 +1,29 @@
+.gitops-diff-container {
+  font-family: var(--pf-t--global--font--family--mono, monospace);
+  font-size: var(--pf-t--global--font--size--sm, 0.875rem);
+  overflow: auto;
+  max-height: 500px;
+  border: 1px solid var(--pf-t--global--border--color--default, #d2d2d2);
+  border-radius: var(--pf-t--global--border--radius--small, 3px);
+}
+.gitops-diff-line {
+  display: flex;
+  white-space: pre;
+  padding: 0 var(--pf-t--global--spacer--sm, 0.5rem);
+  line-height: 1.5;
+}
+.gitops-diff-add {
+  background-color: #e6ffec;
+  color: #1a3a1a;
+}
+.gitops-diff-remove {
+  background-color: #ffebe9;
+  color: #3a1a1a;
+}
+.gitops-diff-gutter {
+  min-width: 40px;
+  text-align: right;
+  padding-right: var(--pf-t--global--spacer--sm, 0.5rem);
+  user-select: none;
+  opacity: 0.6;
+}

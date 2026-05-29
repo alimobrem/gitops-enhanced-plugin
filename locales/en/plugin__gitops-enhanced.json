@@ -390,5 +390,18 @@
   "Force replace instead of apply": "Force replace instead of apply",
   "Skip hooks, only apply manifests": "Skip hooks, only apply manifests",
   "Sync with options...": "Sync with options...",
-  "Select resources to sync": "Select resources to sync"
+  "Select resources to sync": "Select resources to sync",
+  "Traffic will shift from {{from}}% to {{to}}%": "Traffic will shift from {{from}}% to {{to}}%",
+  "Are you sure you want to abort this rollout? This will revert traffic to the stable version.": "Are you sure you want to abort this rollout? This will revert traffic to the stable version.",
+  "Skip remaining steps and promote to 100% traffic": "Skip remaining steps and promote to 100% traffic",
+  "Promote Full": "Promote Full",
+  "Abort Rollout": "Abort Rollout",
+  "Restart Rollout": "Restart Rollout",
+  "Are you sure you want to restart this rollout?": "Are you sure you want to restart this rollout?",
+  "Diff": "Diff",
+  "All resources are in sync": "All resources are in sync",
+  "No differences": "No differences",
+  "{{count}} resources with differences": "{{count}} resources with differences",
+  "Desired (Git)": "Desired (Git)",
+  "Live (Cluster)": "Live (Cluster)"
 }

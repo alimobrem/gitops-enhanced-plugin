@@ -218,7 +218,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   const healthyCount = resources.filter((r) => r.health?.status === 'Healthy').length;
 
   const drawerPanel = drawerResource ? (
-    <ResourceDrawer resource={drawerResource} onClose={() => setDrawerResource(null)} />
+    <ResourceDrawer resource={drawerResource} appName={app.metadata.name} appNamespace={app.metadata.namespace} onClose={() => setDrawerResource(null)} />
   ) : undefined;
 
   return (

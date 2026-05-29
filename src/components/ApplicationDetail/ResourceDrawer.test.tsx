@@ -18,6 +18,10 @@ jest.mock('js-yaml', () => ({
   dump: (obj: unknown) => JSON.stringify(obj),
 }));
 
+jest.mock('../../hooks/useManagedResources', () => ({
+  useManagedResources: () => ({ resources: [], loaded: true, error: null }),
+}));
+
 const mockResource = {
   group: 'apps',
   version: 'v1',
@@ -50,6 +54,7 @@ describe('ResourceDrawer', () => {
     expect(screen.getByText('Summary')).toBeInTheDocument();
     expect(screen.getByText('Events')).toBeInTheDocument();
     expect(screen.getByText('Live Manifest')).toBeInTheDocument();
+    expect(screen.getByText('Diff')).toBeInTheDocument();
   });
 
   it('renders core resource without group', () => {

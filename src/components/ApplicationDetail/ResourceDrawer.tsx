@@ -23,6 +23,8 @@ import {
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
+import { DiffViewer } from '../shared/DiffViewer';
+import { useManagedResources } from '../../hooks/useManagedResources';
 import { timeAgo } from '../../utils/time';
 import type { SyncStatusCode } from '../../types';
 import * as yaml from 'js-yaml';
@@ -39,6 +41,8 @@ interface ManagedResource {
 
 interface ResourceDrawerProps {
   resource: ManagedResource;
+  appName?: string;
+  appNamespace?: string;
   onClose: () => void;
 }
 
@@ -183,7 +187,56 @@ const ManifestPanel: FC<{ resource: ManagedResource }> = ({ resource }) => {
   );
 };
 
-export const ResourceDrawer: FC<ResourceDrawerProps> = ({ resource, onClose }) => {
+function toSortedYaml(jsonStr: string): string {
+  try {
+    return yaml.dump(JSON.parse(jsonStr), { sortKeys: true });
+  } catch {
+    return jsonStr;
+  }
+}
+
+const DiffPanel: FC<{ resource: ManagedResource; appName?: string; appNamespace?: string }> = ({
+  resource,
+  appName,
+  appNamespace,
+}) => {
+  const { t } = useTranslation('plugin__gitops-enhanced');
+  const { resources, loaded } = useManagedResources(appName ?? '', appNamespace ?? '');
+
+  if (!appName || !appNamespace) {
+    return <div>{t('No differences')}</div>;
+  }
+
+  if (!loaded) {
+    return <Bullseye><Spinner /></Bullseye>;
+  }
+
+  const match = resources.find(
+    (r) => r.kind === resource.kind && r.name === resource.name && r.namespace === (resource.namespace ?? ''),
+  );
+
+  if (!match?.targetState || !match?.liveState) {
+    return <div>{t('No differences')}</div>;
+  }
+
+  const desiredYaml = toSortedYaml(match.targetState);
+  const liveYaml = toSortedYaml(match.liveState);
+
+  if (desiredYaml === liveYaml) {
+    return <div>{t('No differences')}</div>;
+  }
+
+  return (
+    <DiffViewer
+      desired={desiredYaml}
+      live={liveYaml}
+      resourceName={resource.name}
+      kind={resource.kind}
+    />
+  );
+};
+
+export const ResourceDrawer: FC<ResourceDrawerProps> = ({ resource, appName, appNamespace, onClose }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const [activeTab, setActiveTab] = useState<string | number>(0);
 
@@ -212,6 +265,11 @@ export const ResourceDrawer: FC<ResourceDrawerProps> = ({ resource, onClose }) =
           <Tab eventKey={2} title={<TabTitleText>{t('Live Manifest')}</TabTitleText>}>
             <div className="pf-v6-u-mt-md">
               <ManifestPanel resource={resource} />
+            </div>
+          </Tab>
+          <Tab eventKey={3} title={<TabTitleText>{t('Diff')}</TabTitleText>}>
+            <div className="pf-v6-u-mt-md">
+              <DiffPanel resource={resource} appName={appName} appNamespace={appNamespace} />
             </div>
           </Tab>
         </Tabs>

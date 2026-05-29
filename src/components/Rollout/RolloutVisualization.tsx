@@ -1,9 +1,10 @@
 import React from 'react';
-import { useMemo, type FC } from 'react';
+import { useMemo, useState, type FC } from 'react';
 import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
+  Button,
   Card, CardTitle, CardBody,
   Flex, FlexItem,
   Grid, GridItem,
@@ -16,6 +17,8 @@ import {
   ArrowRightIcon,
 } from '@patternfly/react-icons';
 import { AnalysisRunGroupVersionKind } from '../../models';
+import { useRolloutActions } from '../../hooks/useRolloutActions';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import type { RolloutResource } from '../../types';
 import './RolloutVisualization.css';
 
@@ -85,6 +88,12 @@ const phaseColor = (phase?: string): 'green' | 'red' | 'blue' | 'grey' => {
 
 export const RolloutVisualization: FC<{ rollout: RolloutResource }> = ({ rollout }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const { promote, promoteFull } = useRolloutActions(rollout);
+
+  const [showPromoteConfirm, setShowPromoteConfirm] = useState(false);
+  const [showPromoteFullConfirm, setShowPromoteFullConfirm] = useState(false);
+  const [isPromoting, setIsPromoting] = useState(false);
+  const [isPromotingFull, setIsPromotingFull] = useState(false);
 
   const phase = rollout?.status?.phase;
   const currentStepIndex = rollout?.status?.currentStepIndex ?? 0;
@@ -134,6 +143,14 @@ export const RolloutVisualization: FC<{ rollout: RolloutResource }> = ({ rollout
     }
     return 0;
   }, [steps, currentStepIndex, isCanary]);
+
+  const nextWeight = useMemo(() => {
+    if (!steps) return 100;
+    for (let i = currentStepIndex + 1; i < steps.length; i++) {
+      if (steps[i]?.setWeight !== undefined) return Number(steps[i].setWeight);
+    }
+    return 100;
+  }, [steps, currentStepIndex]);
 
   // Latest analysis run
   const latestRun = useMemo(() => {
@@ -206,6 +223,20 @@ export const RolloutVisualization: FC<{ rollout: RolloutResource }> = ({ rollout
                               <InProgressIcon className="gitops-step-icon--progress" />
                             )}
                           </div>
+                          {isCurrent && phase === 'Paused' && (
+                            <Flex className="pf-v6-u-mt-sm">
+                              <FlexItem>
+                                <Button variant="primary" size="sm" onClick={() => setShowPromoteConfirm(true)}>
+                                  {t('Promote')}
+                                </Button>
+                              </FlexItem>
+                              <FlexItem>
+                                <Button variant="link" size="sm" onClick={() => setShowPromoteFullConfirm(true)}>
+                                  {t('Promote Full')}
+                                </Button>
+                              </FlexItem>
+                            </Flex>
+                          )}
                         </CardBody>
                       </Card>
                     </FlexItem>
@@ -289,6 +320,39 @@ export const RolloutVisualization: FC<{ rollout: RolloutResource }> = ({ rollout
           </CardBody>
         </Card>
       )}
+
+      <ConfirmModal
+        title={t('Promote')}
+        isOpen={showPromoteConfirm}
+        onConfirm={async () => {
+          setIsPromoting(true);
+          await promote();
+          setIsPromoting(false);
+          setShowPromoteConfirm(false);
+        }}
+        onCancel={() => setShowPromoteConfirm(false)}
+        isLoading={isPromoting}
+        confirmLabel={t('Promote')}
+      >
+        {t('Traffic will shift from {{from}}% to {{to}}%', { from: String(currentWeight), to: String(nextWeight) })}
+      </ConfirmModal>
+
+      <ConfirmModal
+        title={t('Promote Full')}
+        isOpen={showPromoteFullConfirm}
+        onConfirm={async () => {
+          setIsPromotingFull(true);
+          await promoteFull();
+          setIsPromotingFull(false);
+          setShowPromoteFullConfirm(false);
+        }}
+        onCancel={() => setShowPromoteFullConfirm(false)}
+        isLoading={isPromotingFull}
+        confirmLabel={t('Promote Full')}
+        confirmVariant="danger"
+      >
+        {t('Skip remaining steps and promote to 100% traffic')}
+      </ConfirmModal>
     </div>
   );
 };

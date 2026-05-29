@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor } from '@testing-library/react';
 
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string, opts?: Record<string, unknown>) => {
   if (opts) return s.replace(/\{\{(\w+)\}\}/g, (_, k) => String(opts[k] ?? ''));
@@ -9,6 +9,19 @@ jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string, opts
 const mockUseK8sWatchResource = jest.fn().mockReturnValue([[], true, undefined]);
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   useK8sWatchResource: (...args: unknown[]) => mockUseK8sWatchResource(...args),
+}));
+
+const mockPromote = jest.fn().mockResolvedValue(undefined);
+const mockPromoteFull = jest.fn().mockResolvedValue(undefined);
+const mockAbort = jest.fn().mockResolvedValue(undefined);
+const mockRestart = jest.fn().mockResolvedValue(undefined);
+jest.mock('../../hooks/useRolloutActions', () => ({
+  useRolloutActions: () => ({
+    promote: mockPromote,
+    promoteFull: mockPromoteFull,
+    abort: mockAbort,
+    restart: mockRestart,
+  }),
 }));
 
 import { RolloutVisualization } from './RolloutVisualization';
@@ -85,6 +98,10 @@ const degradedRollout: RolloutResource = {
 
 beforeEach(() => {
   mockUseK8sWatchResource.mockReturnValue([[], true, undefined]);
+  mockPromote.mockClear();
+  mockPromoteFull.mockClear();
+  mockAbort.mockClear();
+  mockRestart.mockClear();
 });
 
 describe('RolloutVisualization', () => {
@@ -187,6 +204,78 @@ describe('RolloutVisualization', () => {
       expect(screen.getByText('Analysis Result')).toBeInTheDocument();
       expect(screen.getByText('Successful')).toBeInTheDocument();
       expect(screen.getByText('All metrics passed')).toBeInTheDocument();
+    });
+  });
+
+  describe('Promote/Promote Full buttons', () => {
+    it('renders Promote and Promote Full buttons when phase is Paused', () => {
+      render(<RolloutVisualization rollout={canaryRollout} />);
+      expect(screen.getByText('Promote')).toBeInTheDocument();
+      expect(screen.getByText('Promote Full')).toBeInTheDocument();
+    });
+
+    it('does not render Promote button when phase is Progressing', () => {
+      const progressingRollout: RolloutResource = {
+        ...canaryRollout,
+        status: { ...canaryRollout.status, phase: 'Progressing' },
+      };
+      render(<RolloutVisualization rollout={progressingRollout} />);
+      expect(screen.queryByText('Promote')).not.toBeInTheDocument();
+      expect(screen.queryByText('Promote Full')).not.toBeInTheDocument();
+    });
+
+    it('clicking Promote opens ConfirmModal with traffic shift message', () => {
+      render(<RolloutVisualization rollout={canaryRollout} />);
+      fireEvent.click(screen.getByText('Promote'));
+      expect(screen.getByText('Traffic will shift from 20% to 100%')).toBeInTheDocument();
+    });
+
+    it('clicking Promote Full opens ConfirmModal with skip message', () => {
+      render(<RolloutVisualization rollout={canaryRollout} />);
+      fireEvent.click(screen.getByText('Promote Full'));
+      expect(screen.getByText('Skip remaining steps and promote to 100% traffic')).toBeInTheDocument();
+    });
+
+    it('confirming Promote calls promote()', async () => {
+      render(<RolloutVisualization rollout={canaryRollout} />);
+      fireEvent.click(screen.getByText('Promote'));
+      const confirmButtons = screen.getAllByText('Promote');
+      const modalConfirm = confirmButtons[confirmButtons.length - 1];
+      fireEvent.click(modalConfirm);
+      await waitFor(() => expect(mockPromote).toHaveBeenCalledTimes(1));
+    });
+
+    it('confirming Promote Full calls promoteFull()', async () => {
+      render(<RolloutVisualization rollout={canaryRollout} />);
+      fireEvent.click(screen.getByText('Promote Full'));
+      const confirmButtons = screen.getAllByText('Promote Full');
+      const modalConfirm = confirmButtons[confirmButtons.length - 1];
+      fireEvent.click(modalConfirm);
+      await waitFor(() => expect(mockPromoteFull).toHaveBeenCalledTimes(1));
+    });
+
+    it('computes nextWeight from subsequent setWeight step', () => {
+      const rolloutWithNext: RolloutResource = {
+        ...canaryRollout,
+        spec: {
+          ...canaryRollout.spec,
+          strategy: {
+            canary: {
+              steps: [
+                { setWeight: 20 },
+                { pause: {} },
+                { setWeight: 50 },
+                { pause: {} },
+                { setWeight: 80 },
+              ],
+            },
+          },
+        },
+        status: { ...canaryRollout.status, phase: 'Paused', currentStepIndex: 1 },
+      };
+      render(<RolloutVisualization rollout={rolloutWithNext} />);
+      fireEvent.click(screen.getByText('Promote'));
+      expect(screen.getByText('Traffic will shift from 20% to 50%')).toBeInTheDocument();
     });
   });
 });
