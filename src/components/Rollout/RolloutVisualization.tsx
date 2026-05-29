@@ -19,6 +19,7 @@ import {
 import { AnalysisRunGroupVersionKind } from '../../models';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import type { RolloutResource } from '../../types';
+import { FLEX_SPACE_SM, FLEX_ALIGN_CENTER } from '../../utils/pf-constants';
 import './RolloutVisualization.css';
 
 interface RSResource {
@@ -197,7 +198,7 @@ export const RolloutVisualization: FC<RolloutVisualizationProps> = ({ rollout, p
         <Card isCompact className="pf-v6-u-mb-md">
           <CardTitle>{t('Step {{n}} of {{total}}', { n: currentStepIndex + 1, total: steps.length })}</CardTitle>
           <CardBody>
-            <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+            <Flex spaceItems={FLEX_SPACE_SM} alignItems={FLEX_ALIGN_CENTER}>
               {steps.map((step, i) => {
                 const key = Object.keys(step)[0];
                 const isComplete = i < currentStepIndex;

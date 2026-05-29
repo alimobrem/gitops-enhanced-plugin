@@ -21,6 +21,7 @@ import {
 } from '@patternfly/react-icons';
 import { ApplicationGroupVersionKind } from '../../models';
 import type { ApplicationResource } from '../../types';
+import { FLEX_SPACE_XS, FLEX_ALIGN_CENTER } from '../../utils/pf-constants';
 
 export const GitOpsDashboardCard: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
@@ -55,7 +56,7 @@ export const GitOpsDashboardCard: FC = () => {
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>
-              <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+              <Flex spaceItems={FLEX_SPACE_XS} alignItems={FLEX_ALIGN_CENTER}>
                 <FlexItem><CheckCircleIcon color="var(--pf-t--global--color--status--success--default)" /></FlexItem>
                 <FlexItem>{t('Synced')}</FlexItem>
               </Flex>
@@ -64,7 +65,7 @@ export const GitOpsDashboardCard: FC = () => {
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>
-              <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+              <Flex spaceItems={FLEX_SPACE_XS} alignItems={FLEX_ALIGN_CENTER}>
                 <FlexItem><ExclamationTriangleIcon color="var(--pf-t--global--color--status--warning--default)" /></FlexItem>
                 <FlexItem>{t('OutOfSync')}</FlexItem>
               </Flex>
@@ -73,7 +74,7 @@ export const GitOpsDashboardCard: FC = () => {
           </DescriptionListGroup>
           <DescriptionListGroup>
             <DescriptionListTerm>
-              <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+              <Flex spaceItems={FLEX_SPACE_XS} alignItems={FLEX_ALIGN_CENTER}>
                 <FlexItem><CheckCircleIcon color="var(--pf-t--global--color--status--success--default)" /></FlexItem>
                 <FlexItem>{t('Healthy')}</FlexItem>
               </Flex>
@@ -83,7 +84,7 @@ export const GitOpsDashboardCard: FC = () => {
           {degraded > 0 && (
             <DescriptionListGroup>
               <DescriptionListTerm>
-                <Flex spaceItems={{ default: 'spaceItemsXs' }} alignItems={{ default: 'alignItemsCenter' }}>
+                <Flex spaceItems={FLEX_SPACE_XS} alignItems={FLEX_ALIGN_CENTER}>
                   <FlexItem><ExclamationCircleIcon color="var(--pf-t--global--color--status--danger--default)" /></FlexItem>
                   <FlexItem>{t('Degraded')}</FlexItem>
                 </Flex>

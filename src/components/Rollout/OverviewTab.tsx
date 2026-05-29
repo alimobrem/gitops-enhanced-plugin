@@ -12,6 +12,7 @@ import type { RolloutResource } from '../../types';
 import { useRolloutActions } from '../../hooks/useRolloutActions';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { RolloutVisualization } from './RolloutVisualization';
+import { FLEX_SPACE_SM } from '../../utils/pf-constants';
 
 export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const rollout = obj as RolloutResource | undefined;
@@ -31,7 +32,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
 
   return (
     <>
-      <Flex className="pf-v6-u-mb-md" spaceItems={{ default: 'spaceItemsSm' }}>
+      <Flex className="pf-v6-u-mb-md" spaceItems={FLEX_SPACE_SM}>
         {(phase === 'Paused' || phase === 'Progressing') && (
           <FlexItem>
             <Button variant="danger" size="sm" onClick={() => setShowAbortConfirm(true)}>

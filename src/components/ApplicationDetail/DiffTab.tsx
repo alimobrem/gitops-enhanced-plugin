@@ -17,6 +17,7 @@ import { useManagedResources } from '../../hooks/useManagedResources';
 import { DiffViewer } from '../shared/DiffViewer';
 import type { ApplicationResource } from '../../types';
 import { toSortedYaml } from '../../utils/yaml';
+import { FLEX_SPACE_SM } from '../../utils/pf-constants';
 
 export const DiffTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const app = obj as ApplicationResource | undefined;
@@ -62,7 +63,7 @@ export const DiffTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
             : error}
         </Alert>
         {outOfSyncResources.length > 0 && outOfSyncResources.map((r) => (
-          <Flex key={`${r.kind}/${r.namespace ?? ''}/${r.name}`} spaceItems={{ default: 'spaceItemsSm' }} className="pf-v6-u-mb-xs">
+          <Flex key={`${r.kind}/${r.namespace ?? ''}/${r.name}`} spaceItems={FLEX_SPACE_SM} className="pf-v6-u-mb-xs">
             <FlexItem><Label isCompact color="orange">{t('OutOfSync')}</Label></FlexItem>
             <FlexItem><Label isCompact>{r.kind}</Label></FlexItem>
             <FlexItem>{r.name}</FlexItem>
@@ -96,7 +97,7 @@ export const DiffTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
           <ExpandableSection
             key={`${r.kind}/${r.namespace}/${r.name}`}
             toggleContent={
-              <Flex spaceItems={{ default: 'spaceItemsSm' }}>
+              <Flex spaceItems={FLEX_SPACE_SM}>
                 <FlexItem><Label isCompact>{r.kind}</Label></FlexItem>
                 <FlexItem>{r.name}</FlexItem>
               </Flex>

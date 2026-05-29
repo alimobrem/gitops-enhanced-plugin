@@ -32,6 +32,13 @@ import type { ApplicationResource } from '../../types';
 import { getApplicationSource, getAllSources, isMultiSource } from '../../utils/application';
 import { ConditionsBanner } from './ConditionsBanner';
 import { useSyncWindowStatus } from '../../hooks/useSyncWindowStatus';
+import {
+  FLEX_SPACE_SM,
+  FLEX_SPACE_XL,
+  FLEX_SPACE_MD,
+  FLEX_ALIGN_CENTER,
+  FLEX_COLUMN,
+} from '../../utils/pf-constants';
 
 function buildCommitUrl(repoURL: string, revision: string): string | null {
   if (!repoURL || !revision) return null;
@@ -135,9 +142,9 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
         <Card>
           <CardTitle>{t('Sync Status')}</CardTitle>
           <CardBody>
-            <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+            <Flex direction={FLEX_COLUMN} spaceItems={FLEX_SPACE_MD}>
               <FlexItem>
-                <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                <Flex alignItems={FLEX_ALIGN_CENTER} spaceItems={FLEX_SPACE_SM}>
                   <FlexItem><SyncStatusIcon status={app.status?.sync?.status ?? 'Unknown'} /></FlexItem>
                   <FlexItem>
                     {syncRevision ? (
@@ -162,7 +169,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
                         <DescriptionListGroup>
                           <DescriptionListTerm>{t('Last Sync')}</DescriptionListTerm>
                           <DescriptionListDescription>
-                            <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                            <Flex alignItems={FLEX_ALIGN_CENTER} spaceItems={FLEX_SPACE_SM}>
                               <FlexItem>
                                 {lastSyncPhase === 'Succeeded' ? (
                                   <Label isCompact color="green" icon={<CheckCircleIcon />}>{t('Sync OK')}</Label>
@@ -210,7 +217,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
         <Card>
           <CardTitle>{t('Health Status')}</CardTitle>
           <CardBody>
-            <Flex direction={{ default: 'column' }} spaceItems={{ default: 'spaceItemsMd' }}>
+            <Flex direction={FLEX_COLUMN} spaceItems={FLEX_SPACE_MD}>
               <FlexItem>
                 <HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} />
                 {app.status?.health?.message && (
@@ -234,7 +241,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
             {allSources.map((src) => (
               <React.Fragment key={src.index}>
                 {isMultiSource(app) && (
-                  <Flex spaceItems={{ default: 'spaceItemsSm' }} className="pf-v6-u-mb-sm">
+                  <Flex spaceItems={FLEX_SPACE_SM} className="pf-v6-u-mb-sm">
                     <FlexItem>
                       <Label isCompact>
                         {t('Source {{n}} of {{total}}', { n: src.index + 1, total: allSources.length })}
@@ -311,7 +318,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
                 className="pf-v6-u-mb-md"
               >{patchError}</Alert>
             )}
-            <Flex spaceItems={{ default: 'spaceItemsXl' }}>
+            <Flex spaceItems={FLEX_SPACE_XL}>
               <FlexItem>
                 <Switch id="auto-sync-toggle" label={t('Auto-sync')} isChecked={isAutoSync} onChange={toggleAutoSync} aria-label={t('Auto-sync')} />
               </FlexItem>

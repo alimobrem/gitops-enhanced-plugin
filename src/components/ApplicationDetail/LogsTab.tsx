@@ -22,6 +22,7 @@ import {
 } from '@patternfly/react-core';
 import { LogViewer } from '@patternfly/react-log-viewer';
 import type { ApplicationResource } from '../../types';
+import { FLEX_SPACE_MD } from '../../utils/pf-constants';
 
 interface OwnerRef {
   kind: string;
@@ -163,7 +164,7 @@ export const LogsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
 
   return (
     <PageSection>
-      <Flex spaceItems={{ default: 'spaceItemsMd' }} className="pf-v6-u-mb-md">
+      <Flex spaceItems={FLEX_SPACE_MD} className="pf-v6-u-mb-md">
         <FlexItem>
           <Select
             isOpen={podSelectOpen}

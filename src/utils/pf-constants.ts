@@ -1,0 +1,11 @@
+export const FLEX_SPACE_XS = { default: 'spaceItemsXs' } as const;
+export const FLEX_SPACE_SM = { default: 'spaceItemsSm' } as const;
+export const FLEX_SPACE_MD = { default: 'spaceItemsMd' } as const;
+export const FLEX_SPACE_LG = { default: 'spaceItemsLg' } as const;
+export const FLEX_SPACE_XL = { default: 'spaceItemsXl' } as const;
+export const FLEX_ALIGN_CENTER = { default: 'alignItemsCenter' } as const;
+export const FLEX_COLUMN = { default: 'column' } as const;
+export const FLEX_WRAP = { default: 'wrap' } as const;
+export const FLEX_JUSTIFY_BETWEEN = { default: 'justifyContentSpaceBetween' } as const;
+export const FLEX_JUSTIFY_EVENLY = { default: 'justifyContentSpaceEvenly' } as const;
+export const DIVIDER_VERTICAL = { default: 'vertical' } as const;

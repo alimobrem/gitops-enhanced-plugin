@@ -31,6 +31,7 @@ import { ArgoCDModel, ArgoCDGroupVersionKind, ApplicationGroupVersionKind } from
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { timeAgo } from '../../utils/time';
 import type { ApplicationResource } from '../../types';
+import { FLEX_SPACE_SM, FLEX_ALIGN_CENTER, FLEX_WRAP } from '../../utils/pf-constants';
 
 /* ------------------------------------------------------------------ */
 /* Types                                                               */
@@ -472,7 +473,7 @@ export const ArgoCDListPage: FC = () => {
                         <CardHeader
                           actions={{ actions: <InstanceCardActions instance={inst} onViewYaml={setDrawerInstance} /> }}
                         >
-                          <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                          <Flex spaceItems={FLEX_SPACE_SM} alignItems={FLEX_ALIGN_CENTER}>
                             <FlexItem>
                               <Title headingLevel="h3" size="md">{name}</Title>
                             </FlexItem>
@@ -527,7 +528,7 @@ export const ArgoCDListPage: FC = () => {
                           </DescriptionList>
                         </CardBody>
                         <CardFooter>
-                          <Flex spaceItems={{ default: 'spaceItemsSm' }} wrap={{ default: 'wrap' }}>
+                          <Flex spaceItems={FLEX_SPACE_SM} wrap={FLEX_WRAP}>
                             <FlexItem><Label isCompact color={componentColor(inst.status?.server)}>server</Label></FlexItem>
                             <FlexItem><Label isCompact color={componentColor(inst.status?.repo)}>repo</Label></FlexItem>
                             <FlexItem><Label isCompact color={componentColor(inst.status?.redis)}>redis</Label></FlexItem>

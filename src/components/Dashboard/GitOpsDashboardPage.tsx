@@ -54,6 +54,14 @@ import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstanc
 import { isWindowActive } from '../../utils/sync-windows';
 import { timeAgo } from '../../utils/time';
 import type { ApplicationResource } from '../../types';
+import {
+  FLEX_SPACE_SM,
+  FLEX_SPACE_MD,
+  FLEX_ALIGN_CENTER,
+  FLEX_JUSTIFY_BETWEEN,
+  FLEX_JUSTIFY_EVENLY,
+  DIVIDER_VERTICAL,
+} from '../../utils/pf-constants';
 import './GitOpsDashboardPage.css';
 
 function parsePrometheusScalar(response: PrometheusResponse | undefined): number | null {
@@ -200,6 +208,14 @@ export const GitOpsDashboardPage: FC = () => {
 
   const syncPct = total > 0 ? Math.round((synced / total) * 100) : 0;
   const healthPct = total > 0 ? Math.round((healthy / total) * 100) : 0;
+
+  const healthEntries = useMemo(() => [
+    { count: healthy, label: t('Healthy'), variant: ProgressVariant.success },
+    { count: progressing, label: t('Progressing'), variant: undefined },
+    { count: degraded, label: t('Degraded'), variant: ProgressVariant.danger },
+    { count: suspended, label: t('Suspended'), variant: undefined },
+    { count: missing, label: t('Missing'), variant: ProgressVariant.warning },
+  ].filter((s) => s.count > 0), [healthy, progressing, degraded, suspended, missing, t]);
   const syncSuccess = parsePrometheusScalar(syncSuccessResp);
   const failedSyncs = parsePrometheusScalar(failedSyncsResp);
   const reconciliations = parsePrometheusScalar(reconcileResp);
@@ -217,7 +233,7 @@ export const GitOpsDashboardPage: FC = () => {
     <React.Fragment>
       <DocumentTitle>{t('GitOps Dashboard')}</DocumentTitle>
       <PageSection>
-        <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }} className="pf-v6-u-mb-lg">
+        <Flex justifyContent={FLEX_JUSTIFY_BETWEEN} alignItems={FLEX_ALIGN_CENTER} className="pf-v6-u-mb-lg">
           <FlexItem><Title headingLevel="h1">{t('GitOps Overview')}</Title></FlexItem>
           <FlexItem><InstancePicker /></FlexItem>
         </Flex>
@@ -239,44 +255,44 @@ export const GitOpsDashboardPage: FC = () => {
           <GridItem span={12}>
             <Card>
               <CardBody>
-                <Flex justifyContent={{ default: 'justifyContentSpaceEvenly' }} alignItems={{ default: 'alignItemsCenter' }}>
+                <Flex justifyContent={FLEX_JUSTIFY_EVENLY} alignItems={FLEX_ALIGN_CENTER}>
                   <FlexItem>
                     <div className="gitops-dashboard__stat">
                       <div className="gitops-dashboard__stat-value">{total}</div>
                       <div className="gitops-dashboard__stat-label">{t('Applications')}</div>
                     </div>
                   </FlexItem>
-                  <Divider orientation={{ default: 'vertical' }} />
+                  <Divider orientation={DIVIDER_VERTICAL} />
                   <FlexItem>
                     <div className="gitops-dashboard__stat">
-                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <Flex alignItems={FLEX_ALIGN_CENTER} spaceItems={FLEX_SPACE_SM}>
                         <FlexItem><CheckCircleIcon className="gitops-dashboard__icon--success" /></FlexItem>
                         <FlexItem><span className="gitops-dashboard__stat-value">{syncPct}%</span></FlexItem>
                       </Flex>
                       <div className="gitops-dashboard__stat-label">{t('Synced')}</div>
                     </div>
                   </FlexItem>
-                  <Divider orientation={{ default: 'vertical' }} />
+                  <Divider orientation={DIVIDER_VERTICAL} />
                   <FlexItem>
                     <div className="gitops-dashboard__stat">
-                      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                      <Flex alignItems={FLEX_ALIGN_CENTER} spaceItems={FLEX_SPACE_SM}>
                         <FlexItem><CheckCircleIcon className="gitops-dashboard__icon--success" /></FlexItem>
                         <FlexItem><span className="gitops-dashboard__stat-value">{healthPct}%</span></FlexItem>
                       </Flex>
                       <div className="gitops-dashboard__stat-label">{t('Healthy')}</div>
                     </div>
                   </FlexItem>
-                  <Divider orientation={{ default: 'vertical' }} />
+                  <Divider orientation={DIVIDER_VERTICAL} />
                   <FlexItem>
                     <div className="gitops-dashboard__stat">
                       <div className="gitops-dashboard__stat-value">{needsAttention.length}</div>
                       <div className={`gitops-dashboard__stat-label${needsAttention.length > 0 ? ' gitops-dashboard__stat-label--danger' : ''}`}>{t('Needs Attention')}</div>
                     </div>
                   </FlexItem>
-                  <Divider orientation={{ default: 'vertical' }} />
+                  <Divider orientation={DIVIDER_VERTICAL} />
                   <FlexItem>
                     <div className="gitops-dashboard__stat">
-                      <Flex spaceItems={{ default: 'spaceItemsMd' }}>
+                      <Flex spaceItems={FLEX_SPACE_MD}>
                         <FlexItem><span className="gitops-dashboard__stat-value-sm">{appsets?.length ?? 0}</span> <span className="gitops-dashboard__stat-label-inline">{t('AppSets')}</span></FlexItem>
                         <FlexItem><span className="gitops-dashboard__stat-value-sm">{projects?.length ?? 0}</span> <span className="gitops-dashboard__stat-label-inline">{t('Projects')}</span></FlexItem>
                         <FlexItem><span className="gitops-dashboard__stat-value-sm">{instances?.length ?? 0}</span> <span className="gitops-dashboard__stat-label-inline">{t('Instances')}</span></FlexItem>
@@ -293,7 +309,7 @@ export const GitOpsDashboardPage: FC = () => {
             <GridItem span={12}>
               <Card>
                 <CardTitle>
-                  <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsSm' }}>
+                  <Flex alignItems={FLEX_ALIGN_CENTER} spaceItems={FLEX_SPACE_SM}>
                     <FlexItem><ExclamationTriangleIcon className="gitops-dashboard__icon--warning" /></FlexItem>
                     <FlexItem>{t('Needs Attention')} ({needsAttention.length})</FlexItem>
                   </Flex>
@@ -363,13 +379,7 @@ export const GitOpsDashboardPage: FC = () => {
             <Card className="gitops-dashboard__card-equal">
               <CardTitle>{t('Health Status')}</CardTitle>
               <CardBody>
-                {[
-                  { count: healthy, label: t('Healthy'), variant: ProgressVariant.success },
-                  { count: progressing, label: t('Progressing'), variant: undefined },
-                  { count: degraded, label: t('Degraded'), variant: ProgressVariant.danger },
-                  { count: suspended, label: t('Suspended'), variant: undefined },
-                  { count: missing, label: t('Missing'), variant: ProgressVariant.warning },
-                ].filter((s) => s.count > 0).map((s) => (
+                {healthEntries.map((s) => (
                   <div key={s.label} className="pf-v6-u-mb-md">
                     <Progress value={total > 0 ? Math.round((s.count / total) * 100) : 0} title={`${s.count} ${s.label}`} variant={s.variant} measureLocation={ProgressMeasureLocation.outside} />
                   </div>
@@ -515,7 +525,7 @@ export const GitOpsDashboardPage: FC = () => {
                         <DescriptionListTerm>{t('GitOps Operator')}</DescriptionListTerm>
                         <DescriptionListDescription>
                           {gitopsOperator ? (
-                            <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                            <Flex spaceItems={FLEX_SPACE_SM} alignItems={FLEX_ALIGN_CENTER}>
                               <FlexItem><Label isCompact color={gitopsOperator.phase === 'Succeeded' ? 'green' : 'red'}>{gitopsOperator.phase}</Label></FlexItem>
                               <FlexItem><span className="gitops-dashboard__version-text">v{gitopsOperator.version}</span></FlexItem>
                             </Flex>
@@ -527,7 +537,7 @@ export const GitOpsDashboardPage: FC = () => {
                         <DescriptionListDescription>
                           {stableInstances.map((inst) => (
                               <div key={inst.uid} className="pf-v6-u-mb-xs">
-                                <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                                <Flex spaceItems={FLEX_SPACE_SM} alignItems={FLEX_ALIGN_CENTER}>
                                   <FlexItem><Label isCompact color={inst.phase === 'Available' ? 'green' : 'gold'}>{inst.phase}</Label></FlexItem>
                                   <FlexItem>{inst.name}</FlexItem>
                                   <FlexItem><span className="gitops-dashboard__version-text">{inst.namespace}</span></FlexItem>
@@ -547,7 +557,7 @@ export const GitOpsDashboardPage: FC = () => {
                             <span className="gitops-dashboard__empty-text">{t('None')}</span>
                           ) : stableRolloutManagers.map((rm) => (
                               <div key={rm.uid} className="pf-v6-u-mb-xs">
-                                <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                                <Flex spaceItems={FLEX_SPACE_SM} alignItems={FLEX_ALIGN_CENTER}>
                                   <FlexItem><Label isCompact color={rm.phase === 'Available' ? 'green' : 'red'}>{rm.phase}</Label></FlexItem>
                                   <FlexItem>{rm.name}</FlexItem>
                                   <FlexItem><span className="gitops-dashboard__version-text">{rm.namespace}</span></FlexItem>
@@ -577,7 +587,7 @@ export const GitOpsDashboardPage: FC = () => {
                       <DescriptionListGroup>
                         <DescriptionListTerm>{t('Console Plugin')}</DescriptionListTerm>
                         <DescriptionListDescription>
-                          <Flex spaceItems={{ default: 'spaceItemsSm' }} alignItems={{ default: 'alignItemsCenter' }}>
+                          <Flex spaceItems={FLEX_SPACE_SM} alignItems={FLEX_ALIGN_CENTER}>
                             <FlexItem><Label isCompact color="blue">v0.1.0</Label></FlexItem>
                             <FlexItem><span className="gitops-dashboard__version-text">SDK 4.21</span></FlexItem>
                           </Flex>

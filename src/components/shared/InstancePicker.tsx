@@ -13,6 +13,7 @@ import {
 } from '@patternfly/react-core';
 import { ServerIcon } from '@patternfly/react-icons';
 import { useCurrentInstance, ALL_INSTANCES, isAllInstances } from '../../hooks/useArgoCDInstances';
+import { FLEX_SPACE_XS, FLEX_ALIGN_CENTER } from '../../utils/pf-constants';
 
 export const InstancePicker: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
@@ -23,7 +24,7 @@ export const InstancePicker: FC = () => {
 
   if (instances.length <= 1) {
     return (
-      <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+      <Flex alignItems={FLEX_ALIGN_CENTER} spaceItems={FLEX_SPACE_XS}>
         <FlexItem><ServerIcon /></FlexItem>
         <FlexItem>
           <Label isCompact>{instance.namespace}</Label>
@@ -47,7 +48,7 @@ export const InstancePicker: FC = () => {
       }}
       toggle={(ref) => (
         <MenuToggle ref={ref} onClick={() => setIsOpen(!isOpen)}>
-          <Flex alignItems={{ default: 'alignItemsCenter' }} spaceItems={{ default: 'spaceItemsXs' }}>
+          <Flex alignItems={FLEX_ALIGN_CENTER} spaceItems={FLEX_SPACE_XS}>
             <FlexItem><ServerIcon /></FlexItem>
             <FlexItem>{displayName}</FlexItem>
           </Flex>
