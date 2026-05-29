@@ -4,3 +4,24 @@
   border-radius: var(--pf-t--global--border--radius--small);
   background: var(--pf-t--global--background--color--secondary--default);
 }
+
+.gitops-node--dimmed {
+  opacity: 0.3;
+  transition: opacity 0.3s ease;
+}
+
+.gitops-node--degraded {
+  animation: gitops-pulse-border 2s ease-in-out infinite;
+}
+
+@keyframes gitops-pulse-border {
+  0%, 100% { filter: drop-shadow(0 0 3px var(--pf-t--global--color--status--danger--default, #c9190b)); }
+  50% { filter: drop-shadow(0 0 8px var(--pf-t--global--color--status--danger--default, #c9190b)); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .gitops-node--degraded {
+    animation: none;
+    filter: drop-shadow(0 0 5px var(--pf-t--global--color--status--danger--default, #c9190b));
+  }
+}

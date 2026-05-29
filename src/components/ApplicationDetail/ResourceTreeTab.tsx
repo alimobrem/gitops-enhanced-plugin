@@ -15,6 +15,8 @@ import {
   ToolbarItem,
   Button,
   Label,
+  Alert,
+  Switch,
 } from '@patternfly/react-core';
 import { SearchPlusIcon, SearchMinusIcon, ExpandArrowsAltIcon } from '@patternfly/react-icons';
 import {
@@ -48,7 +50,10 @@ import '@patternfly/react-topology/dist/esm/css/topology-controlbar.css';
 import '@patternfly/react-topology/dist/esm/css/topology-view.css';
 import './ResourceTreeTab.css';
 import { ResourceDrawer } from './ResourceDrawer';
+import { useResourceTree } from '../../hooks/useResourceTree';
+import { nodeKey, buildHierarchy, findDegradedPaths } from '../../utils/tree';
 import type { ApplicationResource, SyncStatusCode } from '../../types';
+import type { ResourceNode } from '../../types/argocd-api';
 
 interface ManagedResource {
   group?: string;
@@ -99,7 +104,20 @@ function resourceNodeId(r: ManagedResource): string {
 
 const LAYOUT_ID = 'DagreLayout';
 
-const CustomNode = withSelection()(DefaultNode);
+const FocusableNode: FC<{ element?: { getData?: () => Record<string, unknown> } }> = (props) => {
+  const data = props.element?.getData?.() ?? {};
+  const classNames = [
+    data.dimmed ? 'gitops-node--dimmed' : '',
+    data.isDegradedNode ? 'gitops-node--degraded' : '',
+  ].filter(Boolean).join(' ');
+  return (
+    <g className={classNames || undefined}>
+      <DefaultNode {...(props as Record<string, unknown>)} />
+    </g>
+  );
+};
+
+const CustomNode = withSelection()(FocusableNode as FC);
 
 const componentFactory: ComponentFactory = (kind, _type) => {
   switch (kind) {
@@ -125,15 +143,74 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   const controller = useVisualizationController();
   const { t } = useTranslation('plugin__gitops-enhanced');
 
-  const resources: ManagedResource[] = useMemo(
+  const appName = app.metadata?.name ?? t('Application');
+  const appNamespace = app.metadata?.namespace ?? '';
+
+  const { tree, loaded: treeLoaded, error: treeError } = useResourceTree(appName, appNamespace);
+
+  const flatResources: ManagedResource[] = useMemo(
     () => (app.status?.resources ?? []) as ManagedResource[],
     [app.status?.resources],
   );
 
+  const useHierarchy = treeLoaded && !treeError && tree && tree.nodes.length > 0;
+
+  const [focusIssues, setFocusIssues] = useState(false);
   const [drawerResource, setDrawerResource] = useState<ManagedResource | null>(null);
 
-  useEffect(() => {
-    const appName = app.metadata?.name ?? t('Application');
+  const degradedPaths = useMemo(() => {
+    if (!useHierarchy || !tree) return new Set<string>();
+    return findDegradedPaths(tree.nodes);
+  }, [useHierarchy, tree]);
+
+  const { modelNodes, modelEdges, resourceCount } = useMemo(() => {
+    if (useHierarchy && tree) {
+      const { edges: hierarchyEdges } = buildHierarchy(tree.nodes, appName);
+      const nodes = [
+        {
+          id: 'app',
+          type: 'node',
+          label: appName,
+          width: 160,
+          height: 50,
+          data: {
+            badge: kindBadge('Application'),
+            badgeColor: '#0066cc',
+            isRoot: true,
+            dimmed: false,
+            isDegradedNode: false,
+          },
+          status: healthToNodeStatus(app.status?.health?.status),
+        },
+        ...tree.nodes.map((n: ResourceNode) => {
+          const key = nodeKey(n);
+          const onDegradedPath = degradedPaths.has(key);
+          const isDegradedNode = n.health?.status !== undefined && n.health.status !== 'Healthy';
+          return {
+            id: key,
+            type: 'node',
+            label: n.name,
+            width: 160,
+            height: 50,
+            data: {
+              badge: kindBadge(n.kind),
+              badgeColor: n.health?.status === 'Healthy' ? '#3e8635' : n.health?.status === 'Degraded' ? '#c9190b' : '#6a6e73',
+              dimmed: focusIssues && !onDegradedPath,
+              isDegradedNode: focusIssues && isDegradedNode,
+            },
+            status: focusIssues && !onDegradedPath ? NodeStatus.default : healthToNodeStatus(n.health?.status),
+          };
+        }),
+      ];
+      const edges = hierarchyEdges.map((e, i) => ({
+        id: `edge-${i}`,
+        type: 'edge',
+        source: e.source,
+        target: e.target,
+      }));
+      return { modelNodes: nodes, modelEdges: edges, resourceCount: tree.nodes.length };
+    }
+
     const nodes = [
       {
         id: 'app',
@@ -145,10 +222,12 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
           badge: kindBadge('Application'),
           badgeColor: '#0066cc',
           isRoot: true,
+          dimmed: false,
+          isDegradedNode: false,
         },
         status: healthToNodeStatus(app.status?.health?.status),
       },
-      ...resources.map((r) => ({
+      ...flatResources.map((r) => ({
         id: resourceNodeId(r),
         type: 'node',
         label: r.name,
@@ -157,30 +236,33 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
         data: {
           badge: kindBadge(r.kind),
           badgeColor: r.health?.status === 'Healthy' ? '#3e8635' : r.health?.status === 'Degraded' ? '#c9190b' : '#6a6e73',
+          dimmed: false,
+          isDegradedNode: false,
         },
         status: healthToNodeStatus(r.health?.status),
       })),
     ];
-
-    const edges = resources.map((r, i) => ({
+    const edges = flatResources.map((r, i) => ({
       id: `edge-${i}`,
       type: 'edge',
       source: 'app',
       target: resourceNodeId(r),
     }));
+    return { modelNodes: nodes, modelEdges: edges, resourceCount: flatResources.length };
+  }, [useHierarchy, tree, appName, app.status?.health?.status, flatResources, focusIssues, degradedPaths]);
 
+  useEffect(() => {
     const model: Model = {
       graph: {
         id: 'resource-tree-graph',
         type: 'graph',
         layout: LAYOUT_ID,
       },
-      nodes,
-      edges,
+      nodes: modelNodes,
+      edges: modelEdges,
     };
-
     controller.fromModel(model, false);
-  }, [controller, app, resources, t]);
+  }, [controller, modelNodes, modelEdges]);
 
   useEffect(() => {
     const onLayoutEnd = () => {
@@ -195,10 +277,26 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
       if (ids.length === 0) { setDrawerResource(null); return; }
       const nodeId = ids[0];
       if (nodeId === 'app') return;
-      const res = resources.find((r) => resourceNodeId(r) === nodeId);
+
+      if (useHierarchy && tree) {
+        const node = tree.nodes.find((n: ResourceNode) => nodeKey(n) === nodeId);
+        if (node) {
+          setDrawerResource({
+            group: node.group,
+            version: node.version,
+            kind: node.kind,
+            namespace: node.namespace,
+            name: node.name,
+            status: 'Unknown' as SyncStatusCode,
+            health: node.health,
+          });
+        }
+        return;
+      }
+      const res = flatResources.find((r) => resourceNodeId(r) === nodeId);
       if (res) setDrawerResource(res);
     },
-    [resources],
+    [useHierarchy, tree, flatResources],
   );
 
   useEffect(() => {
@@ -210,12 +308,18 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   const handleZoomIn = () => controller.getGraph()?.scaleBy(1.2);
   const handleZoomOut = () => controller.getGraph()?.scaleBy(0.8);
 
-  if (resources.length === 0) {
+  if (!treeLoaded && flatResources.length === 0) {
+    return <Bullseye><Spinner /></Bullseye>;
+  }
+
+  if (resourceCount === 0) {
     return <EmptyState><EmptyStateBody>{t('No managed resources found.')}</EmptyStateBody></EmptyState>;
   }
 
-  const syncedCount = resources.filter((r) => r.status === 'Synced').length;
-  const healthyCount = resources.filter((r) => r.health?.status === 'Healthy').length;
+  const syncedCount = flatResources.filter((r) => r.status === 'Synced').length;
+  const healthyCount = useHierarchy && tree
+    ? tree.nodes.filter((n: ResourceNode) => n.health?.status === 'Healthy').length
+    : flatResources.filter((r) => r.health?.status === 'Healthy').length;
 
   const drawerPanel = drawerResource ? (
     <ResourceDrawer resource={drawerResource} appName={app.metadata.name} appNamespace={app.metadata.namespace} onClose={() => setDrawerResource(null)} />
@@ -223,18 +327,35 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
 
   return (
     <>
+      {treeError && (
+        <Alert variant="warning" isInline isPlain title={t('Error loading resources')}>
+          {treeError}
+        </Alert>
+      )}
       <Toolbar className="pf-v6-u-mb-sm">
         <ToolbarContent>
           <ToolbarItem>
-            <Label isCompact color="blue">{resources.length} {t('resources')}</Label>
+            <Label isCompact color="blue">{resourceCount} {t('resources')}</Label>
           </ToolbarItem>
+          {!useHierarchy && (
+            <ToolbarItem>
+              <Label isCompact color={syncedCount === flatResources.length ? 'green' : 'gold'}>{syncedCount}/{flatResources.length} {t('Synced')}</Label>
+            </ToolbarItem>
+          )}
           <ToolbarItem>
-            <Label isCompact color={syncedCount === resources.length ? 'green' : 'gold'}>{syncedCount}/{resources.length} {t('Synced')}</Label>
-          </ToolbarItem>
-          <ToolbarItem>
-            <Label isCompact color={healthyCount === resources.length ? 'green' : 'gold'}>{healthyCount}/{resources.length} {t('Healthy')}</Label>
+            <Label isCompact color={healthyCount === resourceCount ? 'green' : 'gold'}>{healthyCount}/{resourceCount} {t('Healthy')}</Label>
           </ToolbarItem>
           <ToolbarItem variant="separator" />
+          {useHierarchy && (
+            <ToolbarItem>
+              <Switch
+                id="focus-issues-toggle"
+                label={t('Focus issues')}
+                isChecked={focusIssues}
+                onChange={(_e, checked) => setFocusIssues(checked)}
+              />
+            </ToolbarItem>
+          )}
           <ToolbarItem>
             <Button variant="plain" aria-label={t('Zoom in')} onClick={handleZoomIn}><SearchPlusIcon /></Button>
           </ToolbarItem>

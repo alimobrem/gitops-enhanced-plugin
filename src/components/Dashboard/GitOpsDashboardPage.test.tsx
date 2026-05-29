@@ -18,6 +18,12 @@ jest.mock('../../hooks/useArgoCDInstances', () => ({
   InstanceContext: { Provider: ({ children }: { children: React.ReactNode }) => <>{children}</> },
 }));
 jest.mock('../shared/InstanceProvider', () => ({ InstanceProvider: ({ children }: { children: React.ReactNode }) => <>{children}</> }));
+jest.mock('../shared/DismissibleAlert', () => ({
+  DismissibleAlert: ({ title, children }: { title: string; children: React.ReactNode }) => <div data-testid="dismissible-alert">{title}: {children}</div>,
+}));
+jest.mock('../../utils/sync-windows', () => ({
+  isWindowActive: () => false,
+}));
 
 import { GitOpsDashboardPage } from './GitOpsDashboardPage';
 

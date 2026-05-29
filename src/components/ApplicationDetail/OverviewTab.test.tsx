@@ -22,6 +22,10 @@ jest.mock('./ConditionsBanner', () => ({
   ConditionsBanner: () => null,
 }));
 
+jest.mock('../../hooks/useSyncWindowStatus', () => ({
+  useSyncWindowStatus: () => ({ blocked: false, message: '', projectName: 'default' }),
+}));
+
 const mockApp = {
   apiVersion: 'argoproj.io/v1alpha1' as const,
   kind: 'Application' as const,

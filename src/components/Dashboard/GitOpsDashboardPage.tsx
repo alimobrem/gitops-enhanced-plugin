@@ -49,7 +49,9 @@ import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { InstancePicker } from '../shared/InstancePicker';
 import { InstanceProvider } from '../shared/InstanceProvider';
+import { DismissibleAlert } from '../shared/DismissibleAlert';
 import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
+import { isWindowActive } from '../../utils/sync-windows';
 import { timeAgo } from '../../utils/time';
 import type { ApplicationResource } from '../../types';
 import './GitOpsDashboardPage.css';
@@ -132,6 +134,14 @@ export const GitOpsDashboardPage: FC = () => {
     () => [appsError, appsetsError, projectsError, instancesError].filter(Boolean) as Error[],
     [appsError, appsetsError, projectsError, instancesError],
   );
+
+  const activeDenyProjects = useMemo(() => {
+    return (projects ?? []).filter((p) => {
+      const spec = p.spec as { syncWindows?: Array<{ kind: string; schedule: string; duration?: string }> } | undefined;
+      const windows = spec?.syncWindows ?? [];
+      return windows.some((w) => w.kind === 'deny' && isWindowActive(w));
+    }).map((p) => (p.metadata as Record<string, string>)?.name);
+  }, [projects]);
 
   const allApps = apps ?? [];
   const appsKey = allApps.map((a) => `${a.metadata.uid}:${a.status?.sync?.status}:${a.status?.health?.status}:${a.status?.operationState?.phase}`).join('|');
@@ -217,6 +227,12 @@ export const GitOpsDashboardPage: FC = () => {
             {err.message}
           </Alert>
         ))}
+
+        {activeDenyProjects.length > 0 && (
+          <DismissibleAlert variant="warning" title={t('Sync window active')}>
+            {t('A deny sync window is currently active on project {{project}}', { project: activeDenyProjects.join(', ') })}
+          </DismissibleAlert>
+        )}
 
         <Grid hasGutter>
           {/* Row 1: Summary strip */}

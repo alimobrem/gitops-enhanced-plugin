@@ -93,6 +93,7 @@
       "AppProjectDestsTab": "./components/AppProject/DestsTab",
       "AppProjectRolesTab": "./components/AppProject/RolesTab",
       "AppProjectWindowsTab": "./components/AppProject/WindowsTab",
+      "AppProjectAccessTestTab": "./components/AppProject/AccessTestTab",
       "AppProjectConfigTab": "./components/AppProject/AppProjectEditTab",
       "RolloutOverviewTab": "./components/Rollout/OverviewTab",
       "RolloutPodsTab": "./components/Rollout/PodsTab",

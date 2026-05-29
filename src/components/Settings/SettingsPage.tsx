@@ -7,6 +7,7 @@ import { ArgoCDListPage } from '../ArgoInstance/ArgoCDListPage';
 import { RepositoryListPage } from './RepositoryListPage';
 import { ClusterListPage } from './ClusterListPage';
 import { GenericResourceListPage } from '../GenericResource/GenericResourceListPage';
+import { NotificationHistoryPage } from './NotificationHistoryPage';
 import { InstanceProvider } from '../shared/InstanceProvider';
 import {
   NotificationsConfigurationGroupVersionKind,
@@ -85,6 +86,9 @@ export const SettingsPage: FC = () => {
               groupVersionKind={ExperimentGroupVersionKind}
               columns={[{ title: 'Name', field: 'metadata.name' }, { title: 'Namespace', field: 'metadata.namespace' }, { title: 'Phase', field: 'status.phase' }]}
             />
+          </Tab>
+          <Tab eventKey={10} title={<TabTitleText>{t('Notification History')}</TabTitleText>}>
+            <NotificationHistoryPage />
           </Tab>
         </Tabs>
       </PageSection>

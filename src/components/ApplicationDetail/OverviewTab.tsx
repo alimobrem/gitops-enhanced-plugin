@@ -31,6 +31,7 @@ import { timeAgo } from '../../utils/time';
 import type { ApplicationResource } from '../../types';
 import { getApplicationSource, getAllSources, isMultiSource } from '../../utils/application';
 import { ConditionsBanner } from './ConditionsBanner';
+import { useSyncWindowStatus } from '../../hooks/useSyncWindowStatus';
 
 function buildCommitUrl(repoURL: string, revision: string): string | null {
   if (!repoURL || !revision) return null;
@@ -44,6 +45,7 @@ function buildCommitUrl(repoURL: string, revision: string): string | null {
 export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const app = obj as ApplicationResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const syncWindow = useSyncWindowStatus(app ?? null);
   const [patchError, setPatchError] = useState('');
   if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
   const source = getApplicationSource(app);
@@ -112,6 +114,11 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   return (
     <>
     <ConditionsBanner conditions={app?.status?.conditions} />
+    {syncWindow.blocked && (
+      <Alert variant="warning" isInline isPlain title={t('Sync blocked')} className="pf-v6-u-mb-md">
+        {t('A deny sync window is currently active on project {{project}}', { project: syncWindow.projectName })}
+      </Alert>
+    )}
     <Grid hasGutter>
       {/* Sync Policy Banner */}
       <GridItem span={12}>
