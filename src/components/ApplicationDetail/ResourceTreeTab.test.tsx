@@ -148,7 +148,7 @@ describe('ResourceTreeTab', () => {
     expect(toggle).toBeInTheDocument();
   });
 
-  it('shows warning alert when tree fetch errors', () => {
+  it('falls back to flat view silently when tree fetch errors', () => {
     mockUseResourceTree.mockReturnValue({
       tree: null,
       loaded: true,
@@ -156,6 +156,6 @@ describe('ResourceTreeTab', () => {
       refetch: jest.fn(),
     });
     render(<ResourceTreeTab obj={mockApp} />);
-    expect(screen.getByText('network error')).toBeInTheDocument();
+    expect(screen.getByText('2 resources')).toBeInTheDocument();
   });
 });

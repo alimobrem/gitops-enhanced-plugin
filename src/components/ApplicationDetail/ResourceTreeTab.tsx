@@ -15,7 +15,6 @@ import {
   ToolbarItem,
   Button,
   Label,
-  Alert,
   Switch,
 } from '@patternfly/react-core';
 import { SearchPlusIcon, SearchMinusIcon, ExpandArrowsAltIcon } from '@patternfly/react-icons';
@@ -27,7 +26,6 @@ import {
   SELECTION_EVENT,
   ModelKind,
   GraphComponent,
-  DefaultNode,
   DefaultEdge,
   DefaultGroup,
   NodeStatus,
@@ -44,6 +42,7 @@ import type {
   Layout,
   LayoutFactory,
   SelectionEventListener,
+  Node,
 } from '@patternfly/react-topology';
 import '@patternfly/react-topology/dist/esm/css/topology-components.css';
 import '@patternfly/react-topology/dist/esm/css/topology-controlbar.css';
@@ -66,26 +65,51 @@ interface ManagedResource {
 }
 
 const KIND_ABBR: Record<string, string> = {
-  Service: 'svc',
-  Deployment: 'deploy',
-  ReplicaSet: 'rs',
-  Pod: 'pod',
-  ConfigMap: 'cm',
-  Secret: 'sec',
-  Ingress: 'ing',
-  StatefulSet: 'sts',
-  DaemonSet: 'ds',
-  Job: 'job',
-  CronJob: 'cj',
-  PersistentVolumeClaim: 'pvc',
-  ServiceAccount: 'sa',
-  NetworkPolicy: 'netpol',
-  HorizontalPodAutoscaler: 'hpa',
-  Application: 'app',
+  Service: 'SVC',
+  Deployment: 'D',
+  ReplicaSet: 'RS',
+  Pod: 'P',
+  ConfigMap: 'CM',
+  Secret: 'S',
+  Ingress: 'ING',
+  StatefulSet: 'SS',
+  DaemonSet: 'DS',
+  Job: 'J',
+  CronJob: 'CJ',
+  PersistentVolumeClaim: 'PVC',
+  ServiceAccount: 'SA',
+  NetworkPolicy: 'NP',
+  HorizontalPodAutoscaler: 'HPA',
+  Application: 'APP',
+  Route: 'RT',
+  Rollout: 'RO',
+  EndpointSlice: 'EP',
 };
 
-function kindBadge(kind: string): string {
-  return KIND_ABBR[kind] ?? kind.toLowerCase().slice(0, 4);
+const KIND_COLOR: Record<string, string> = {
+  Deployment: '#004080',
+  ReplicaSet: '#0066cc',
+  Pod: '#009596',
+  Service: '#6753ac',
+  Ingress: '#8476d1',
+  Route: '#8476d1',
+  ConfigMap: '#3e8635',
+  Secret: '#c46100',
+  StatefulSet: '#004080',
+  DaemonSet: '#004080',
+  Job: '#005f60',
+  CronJob: '#005f60',
+  PersistentVolumeClaim: '#2b9af3',
+  Application: '#06c',
+  Rollout: '#004080',
+};
+
+function kindAbbr(kind: string): string {
+  return KIND_ABBR[kind] ?? kind.toUpperCase().slice(0, 3);
+}
+
+function kindColor(kind: string): string {
+  return KIND_COLOR[kind] ?? '#6a6e73';
 }
 
 function healthToNodeStatus(health?: string): NodeStatus {
@@ -98,33 +122,93 @@ function healthToNodeStatus(health?: string): NodeStatus {
   }
 }
 
+const STATUS_RING_COLOR: Record<string, string> = {
+  [NodeStatus.success]: '#3e8635',
+  [NodeStatus.danger]: '#c9190b',
+  [NodeStatus.info]: '#06c',
+  [NodeStatus.warning]: '#f0ab00',
+  [NodeStatus.default]: '#d2d2d2',
+};
+
 function resourceNodeId(r: ManagedResource): string {
   return `${r.kind}/${r.namespace ?? ''}/${r.name}`;
 }
 
 const LAYOUT_ID = 'DagreLayout';
 
-const FocusableNode: FC<{ element?: { getData?: () => Record<string, unknown> } }> = (props) => {
-  const data = props.element?.getData?.() ?? {};
-  const classNames = [
-    data.dimmed ? 'gitops-node--dimmed' : '',
-    data.isDegradedNode ? 'gitops-node--degraded' : '',
-  ].filter(Boolean).join(' ');
+const NODE_WIDTH = 104;
+const NODE_HEIGHT = 104;
+const ICON_RADIUS = 28;
+
+const ResourceIconNode: FC<{ element?: Node }> = ({ element }) => {
+  if (!element) return null;
+  const data = element.getData() ?? {};
+  const label = element.getLabel?.() ?? '';
+  const status = (element as unknown as { getNodeStatus?: () => string }).getNodeStatus?.() ?? NodeStatus.default;
+  const ringColor = STATUS_RING_COLOR[status] ?? STATUS_RING_COLOR[NodeStatus.default];
+  const selected = (element as unknown as { isSelected?: () => boolean }).isSelected?.() ?? false;
+  const abbr = data.badge ?? '?';
+  const bgColor = data.badgeColor ?? '#6a6e73';
+  const dimmed = data.dimmed;
+  const isDegradedNode = data.isDegradedNode;
+
+  const cx = NODE_WIDTH / 2;
+  const cy = 36;
+
   return (
-    <g className={classNames || undefined}>
-      <DefaultNode {...(props as Record<string, unknown>)} />
+    <g
+      className={[
+        dimmed ? 'gitops-node--dimmed' : '',
+        isDegradedNode ? 'gitops-node--degraded' : '',
+      ].filter(Boolean).join(' ') || undefined}
+    >
+      <circle cx={cx} cy={cy} r={ICON_RADIUS + 4} fill="none" stroke={ringColor} strokeWidth={selected ? 3 : 2} />
+      <circle cx={cx} cy={cy} r={ICON_RADIUS} fill={bgColor} />
+      <text
+        x={cx}
+        y={cy + 1}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill="#fff"
+        fontSize={abbr.length > 3 ? 10 : 12}
+        fontWeight={700}
+        fontFamily="var(--pf-t--global--font--family--mono, monospace)"
+      >
+        {abbr}
+      </text>
+      <text
+        x={cx}
+        y={cy + ICON_RADIUS + 16}
+        textAnchor="middle"
+        dominantBaseline="central"
+        fill="var(--pf-t--global--text--color--regular, #151515)"
+        fontSize={11}
+        fontFamily="var(--pf-t--global--font--family--body, RedHatText, sans-serif)"
+      >
+        {label.length > 18 ? `${label.slice(0, 16)}…` : label}
+      </text>
+      {selected && (
+        <rect
+          x={1} y={1}
+          width={NODE_WIDTH - 2} height={NODE_HEIGHT - 2}
+          fill="none"
+          stroke="var(--pf-t--global--color--brand--default, #06c)"
+          strokeWidth={2}
+          rx={8}
+        />
+      )}
     </g>
   );
 };
 
-const CustomNode = withSelection()(FocusableNode as FC);
+const SelectableResourceNode = withSelection()(ResourceIconNode as FC);
 
 const componentFactory: ComponentFactory = (kind, _type) => {
   switch (kind) {
     case ModelKind.graph:
       return withPanZoom()(GraphComponent);
     case ModelKind.node:
-      return CustomNode;
+      return SelectableResourceNode;
     case ModelKind.edge:
       return DefaultEdge;
     default:
@@ -133,7 +217,7 @@ const componentFactory: ComponentFactory = (kind, _type) => {
 };
 
 const layoutFactory: LayoutFactory = (_type: string, graph: Graph): Layout =>
-  new DagreLayout(graph, { rankdir: TOP_TO_BOTTOM, nodesep: 60, ranksep: 80 });
+  new DagreLayout(graph, { rankdir: TOP_TO_BOTTOM, nodesep: 40, ranksep: 60 });
 
 interface ResourceTreeContentProps {
   app: ApplicationResource;
@@ -164,24 +248,26 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   }, [useHierarchy, tree]);
 
   const { modelNodes, modelEdges, resourceCount } = useMemo(() => {
+    const makeAppNode = () => ({
+      id: 'app',
+      type: 'node',
+      label: appName,
+      width: NODE_WIDTH,
+      height: NODE_HEIGHT,
+      data: {
+        badge: kindAbbr('Application'),
+        badgeColor: kindColor('Application'),
+        isRoot: true,
+        dimmed: false,
+        isDegradedNode: false,
+      },
+      status: healthToNodeStatus(app.status?.health?.status),
+    });
+
     if (useHierarchy && tree) {
       const { edges: hierarchyEdges } = buildHierarchy(tree.nodes, appName);
       const nodes = [
-        {
-          id: 'app',
-          type: 'node',
-          label: appName,
-          width: 160,
-          height: 50,
-          data: {
-            badge: kindBadge('Application'),
-            badgeColor: '#0066cc',
-            isRoot: true,
-            dimmed: false,
-            isDegradedNode: false,
-          },
-          status: healthToNodeStatus(app.status?.health?.status),
-        },
+        makeAppNode(),
         ...tree.nodes.map((n: ResourceNode) => {
           const key = nodeKey(n);
           const onDegradedPath = degradedPaths.has(key);
@@ -190,11 +276,11 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
             id: key,
             type: 'node',
             label: n.name,
-            width: 160,
-            height: 50,
+            width: NODE_WIDTH,
+            height: NODE_HEIGHT,
             data: {
-              badge: kindBadge(n.kind),
-              badgeColor: n.health?.status === 'Healthy' ? '#3e8635' : n.health?.status === 'Degraded' ? '#c9190b' : '#6a6e73',
+              badge: kindAbbr(n.kind),
+              badgeColor: kindColor(n.kind),
               dimmed: focusIssues && !onDegradedPath,
               isDegradedNode: focusIssues && isDegradedNode,
             },
@@ -212,30 +298,16 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     }
 
     const nodes = [
-      {
-        id: 'app',
-        type: 'node',
-        label: appName,
-        width: 160,
-        height: 50,
-        data: {
-          badge: kindBadge('Application'),
-          badgeColor: '#0066cc',
-          isRoot: true,
-          dimmed: false,
-          isDegradedNode: false,
-        },
-        status: healthToNodeStatus(app.status?.health?.status),
-      },
+      makeAppNode(),
       ...flatResources.map((r) => ({
         id: resourceNodeId(r),
         type: 'node',
         label: r.name,
-        width: 160,
-        height: 50,
+        width: NODE_WIDTH,
+        height: NODE_HEIGHT,
         data: {
-          badge: kindBadge(r.kind),
-          badgeColor: r.health?.status === 'Healthy' ? '#3e8635' : r.health?.status === 'Degraded' ? '#c9190b' : '#6a6e73',
+          badge: kindAbbr(r.kind),
+          badgeColor: kindColor(r.kind),
           dimmed: false,
           isDegradedNode: false,
         },
@@ -304,9 +376,9 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     return () => controller.removeEventListener(SELECTION_EVENT, handleSelection);
   }, [controller, handleSelection]);
 
-  const handleFitToScreen = () => controller.getGraph()?.fit(50);
-  const handleZoomIn = () => controller.getGraph()?.scaleBy(1.2);
-  const handleZoomOut = () => controller.getGraph()?.scaleBy(0.8);
+  const handleFitToScreen = useCallback(() => controller.getGraph()?.fit(50), [controller]);
+  const handleZoomIn = useCallback(() => controller.getGraph()?.scaleBy(1.2), [controller]);
+  const handleZoomOut = useCallback(() => controller.getGraph()?.scaleBy(0.8), [controller]);
 
   if (!treeLoaded && flatResources.length === 0) {
     return <Bullseye><Spinner /></Bullseye>;
@@ -321,17 +393,14 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     ? tree.nodes.filter((n: ResourceNode) => n.health?.status === 'Healthy').length
     : flatResources.filter((r) => r.health?.status === 'Healthy').length;
 
+  const handleCloseDrawer = useCallback(() => setDrawerResource(null), []);
+
   const drawerPanel = drawerResource ? (
-    <ResourceDrawer resource={drawerResource} appName={app.metadata.name} appNamespace={app.metadata.namespace} onClose={() => setDrawerResource(null)} />
+    <ResourceDrawer resource={drawerResource} appName={app.metadata.name} appNamespace={app.metadata.namespace} onClose={handleCloseDrawer} />
   ) : undefined;
 
   return (
     <>
-      {treeError && (
-        <Alert variant="warning" isInline isPlain title={t('Error loading resources')}>
-          {treeError}
-        </Alert>
-      )}
       <Toolbar className="pf-v6-u-mb-sm">
         <ToolbarContent>
           <ToolbarItem>
