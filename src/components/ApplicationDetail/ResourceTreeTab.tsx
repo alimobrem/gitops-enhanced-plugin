@@ -136,7 +136,7 @@ function resourceNodeId(r: ManagedResource): string {
 
 const LAYOUT_ID = 'DagreLayout';
 
-const NODE_WIDTH = 160;
+const NODE_WIDTH = 200;
 const NODE_HEIGHT = 64;
 const ICON_SIZE = 32;
 const HEALTH_DOT: Record<string, string> = {
@@ -160,7 +160,7 @@ const ResourceCardNode: FC<{ element?: Node }> = ({ element }) => {
   const isDegradedNode = data.isDegradedNode;
   const healthColor = HEALTH_DOT[status] ?? HEALTH_DOT[NodeStatus.default];
 
-  const truncatedName = label.length > 20 ? `${label.slice(0, 18)}…` : label;
+  const truncatedName = label.length > 26 ? `${label.slice(0, 24)}…` : label;
 
   return (
     <g
