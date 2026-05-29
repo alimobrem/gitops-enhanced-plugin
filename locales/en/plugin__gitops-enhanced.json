@@ -372,5 +372,13 @@
   "Available": "Available",
   "Pending": "Pending",
   "Failed": "Failed",
-  "Git Fetch Failures (24h)": "Git Fetch Failures (24h)"
+  "Git Fetch Failures (24h)": "Git Fetch Failures (24h)",
+  "Source {{n}} of {{total}}": "Source {{n}} of {{total}}",
+  "Sources ({{count}})": "Sources ({{count}})",
+  "Chart": "Chart",
+  "Connected": "Connected",
+  "Disconnected": "Disconnected",
+  "Fetch errors": "Fetch errors",
+  "{{count}} conditions detected": "{{count}} conditions detected",
+  "Show details": "Show details"
 }

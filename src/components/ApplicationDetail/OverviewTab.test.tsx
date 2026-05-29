@@ -7,7 +7,19 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
 }));
 
 jest.mock('react-i18next', () => ({
-  useTranslation: () => ({ t: (s: string) => s }),
+  useTranslation: () => ({
+    t: (s: string, opts?: Record<string, unknown>) => {
+      if (!opts) return s;
+      return Object.entries(opts).reduce(
+        (acc, [k, v]) => acc.replace(`{{${k}}}`, String(v)),
+        s,
+      );
+    },
+  }),
+}));
+
+jest.mock('./ConditionsBanner', () => ({
+  ConditionsBanner: () => null,
 }));
 
 const mockApp = {
@@ -61,5 +73,76 @@ describe('OverviewTab', () => {
     expect(screen.getByText('Auto-sync')).toBeInTheDocument();
     expect(screen.getByText('Prune resources')).toBeInTheDocument();
     expect(screen.getByText('Self-heal')).toBeInTheDocument();
+  });
+
+  it('renders multi-source card title with count', () => {
+    const multiSourceApp = {
+      ...mockApp,
+      spec: {
+        ...mockApp.spec,
+        source: undefined,
+        sources: [
+          { repoURL: 'https://github.com/org/repo', path: 'manifests', targetRevision: 'main' },
+          { repoURL: 'https://github.com/org/values', targetRevision: 'main', ref: '$values' },
+          { repoURL: 'https://charts.example.com', chart: 'my-chart', targetRevision: '1.2.3' },
+        ],
+      },
+    };
+    render(<OverviewTab obj={multiSourceApp} />);
+    expect(screen.getByText('Sources (3)')).toBeInTheDocument();
+  });
+
+  it('renders each source label for multi-source app', () => {
+    const multiSourceApp = {
+      ...mockApp,
+      spec: {
+        ...mockApp.spec,
+        source: undefined,
+        sources: [
+          { repoURL: 'https://github.com/org/repo', path: 'manifests', targetRevision: 'main' },
+          { repoURL: 'https://github.com/org/values', targetRevision: 'main', ref: '$values' },
+        ],
+      },
+    };
+    render(<OverviewTab obj={multiSourceApp} />);
+    expect(screen.getByText('Source 1 of 2')).toBeInTheDocument();
+    expect(screen.getByText('Source 2 of 2')).toBeInTheDocument();
+  });
+
+  it('shows ref label for sources with ref property', () => {
+    const multiSourceApp = {
+      ...mockApp,
+      spec: {
+        ...mockApp.spec,
+        source: undefined,
+        sources: [
+          { repoURL: 'https://github.com/org/repo', path: 'manifests', targetRevision: 'main' },
+          { repoURL: 'https://github.com/org/values', targetRevision: 'main', ref: '$values' },
+        ],
+      },
+    };
+    render(<OverviewTab obj={multiSourceApp} />);
+    expect(screen.getByText('$values')).toBeInTheDocument();
+  });
+
+  it('shows Chart label for chart sources', () => {
+    const multiSourceApp = {
+      ...mockApp,
+      spec: {
+        ...mockApp.spec,
+        source: undefined,
+        sources: [
+          { repoURL: 'https://charts.example.com', chart: 'my-chart', targetRevision: '1.2.3' },
+        ],
+      },
+    };
+    render(<OverviewTab obj={multiSourceApp} />);
+    expect(screen.getByText('my-chart')).toBeInTheDocument();
+  });
+
+  it('renders single source without index labels', () => {
+    render(<OverviewTab obj={mockApp} />);
+    expect(screen.getByText('Source')).toBeInTheDocument();
+    expect(screen.queryByText(/Source 1 of/)).not.toBeInTheDocument();
   });
 });

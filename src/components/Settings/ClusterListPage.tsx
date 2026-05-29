@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FC } from 'react';
-import { useK8sWatchResource, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk';
+import { useK8sWatchResource, DocumentTitle, usePrometheusPoll, PrometheusEndpoint } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
 import {
@@ -36,6 +36,24 @@ export const ClusterListPage: FC = () => {
     (s) => s.metadata.labels?.['argocd.argoproj.io/secret-type'] === 'cluster',
   );
 
+  const [clusterStatusResp, clusterStatusLoaded] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'argocd_cluster_connection_status',
+  });
+
+  const clusterStatusByServer = React.useMemo(() => {
+    const m = new Map<string, number>();
+    if (!clusterStatusLoaded || !clusterStatusResp?.data?.result) return m;
+    for (const entry of clusterStatusResp.data.result) {
+      const server = entry.metric?.server;
+      const val = parseFloat(entry.value?.[1] ?? '');
+      if (server && !isNaN(val)) {
+        m.set(server, val);
+      }
+    }
+    return m;
+  }, [clusterStatusResp, clusterStatusLoaded]);
+
   const decode = (val?: string) => {
     if (!val) return '';
     try { return atob(val); } catch { return val; }
@@ -70,6 +88,7 @@ export const ClusterListPage: FC = () => {
               <Tr>
                 <Th>{t('Name')}</Th>
                 <Th>{t('Server')}</Th>
+                <Th>{t('Status')}</Th>
               </Tr>
             </Thead>
             <Tbody>
@@ -79,6 +98,17 @@ export const ClusterListPage: FC = () => {
                     <Label>{decode(s.data?.name) || s.metadata.name}</Label>
                   </Td>
                   <Td>{decode(s.data?.server)}</Td>
+                  <Td>
+                    {clusterStatusByServer.has(decode(s.data?.server)) ? (
+                      clusterStatusByServer.get(decode(s.data?.server)) === 1 ? (
+                        <Label isCompact color="green">{t('Connected')}</Label>
+                      ) : (
+                        <Label isCompact color="red">{t('Disconnected')}</Label>
+                      )
+                    ) : (
+                      <Label isCompact color="grey">{t('Unknown')}</Label>
+                    )}
+                  </Td>
                 </Tr>
               ))}
             </Tbody>

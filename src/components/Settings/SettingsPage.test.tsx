@@ -3,6 +3,8 @@ import { render, screen } from '@testing-library/react';
 
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   useK8sWatchResource: () => [[], true, null],
+  usePrometheusPoll: () => [undefined, false, null],
+  PrometheusEndpoint: { QUERY: 'api/v1/query' },
   DocumentTitle: ({ children }: { children: string }) => <title>{children}</title>,
   ListPageHeader: ({ title, children }: { title: string; children?: React.ReactNode }) => <div><h1>{title}</h1>{children}</div>,
   ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,

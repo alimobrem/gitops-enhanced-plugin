@@ -1,6 +1,6 @@
 import React from 'react';
 import type { FC } from 'react';
-import { useK8sWatchResource, DocumentTitle } from '@openshift-console/dynamic-plugin-sdk';
+import { useK8sWatchResource, DocumentTitle, usePrometheusPoll, PrometheusEndpoint } from '@openshift-console/dynamic-plugin-sdk';
 import { useTranslation } from 'react-i18next';
 import {
   Alert,
@@ -64,6 +64,24 @@ export const RepositoryListPage: FC = () => {
     }
   }
 
+  const [fetchFailResp, fetchFailLoaded] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(argocd_git_fetch_fail_total) by (repo)',
+  });
+
+  const fetchFailByRepo = React.useMemo(() => {
+    const m = new Map<string, number>();
+    if (!fetchFailLoaded || !fetchFailResp?.data?.result) return m;
+    for (const entry of fetchFailResp.data.result) {
+      const repo = entry.metric?.repo;
+      const val = parseFloat(entry.value?.[1] ?? '');
+      if (repo && !isNaN(val)) {
+        m.set(repo, val);
+      }
+    }
+    return m;
+  }, [fetchFailResp, fetchFailLoaded]);
+
   const configuredURLs = new Set(repoSecrets.map((s) => decode(s.data?.url)));
 
   const allRepos = [
@@ -116,6 +134,12 @@ export const RepositoryListPage: FC = () => {
                     <Label isCompact color={r.configured ? 'green' : 'grey'}>
                       {r.configured ? t('Configured') : t('Public')}
                     </Label>
+                    {fetchFailByRepo.has(r.url) && fetchFailByRepo.get(r.url)! > 0 && (
+                      <>{' '}<Label isCompact color="red">{t('Fetch errors')} ({fetchFailByRepo.get(r.url)})</Label></>
+                    )}
+                    {fetchFailByRepo.has(r.url) && fetchFailByRepo.get(r.url) === 0 && (
+                      <>{' '}<Label isCompact color="green">{t('Connected')}</Label></>
+                    )}
                   </Td>
                 </Tr>
               ))}

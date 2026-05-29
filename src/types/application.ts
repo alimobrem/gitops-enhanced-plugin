@@ -30,6 +30,7 @@ export interface ApplicationSource {
     images?: string[];
     commonLabels?: Record<string, string>;
   };
+  ref?: string;
 }
 
 export interface ApplicationDestination {

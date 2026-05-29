@@ -29,7 +29,8 @@ import { ApplicationModel } from '../../models';
 import { safePatch } from '../../utils/patch';
 import { timeAgo } from '../../utils/time';
 import type { ApplicationResource } from '../../types';
-import { getApplicationSource } from '../../utils/application';
+import { getApplicationSource, getAllSources, isMultiSource } from '../../utils/application';
+import { ConditionsBanner } from './ConditionsBanner';
 
 function buildCommitUrl(repoURL: string, revision: string): string | null {
   if (!repoURL || !revision) return null;
@@ -46,6 +47,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const [patchError, setPatchError] = useState('');
   if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
   const source = getApplicationSource(app);
+  const allSources = getAllSources(app);
 
   const isAutoSync = !!app.spec?.syncPolicy?.automated;
   const isPrune = !!app.spec?.syncPolicy?.automated?.prune;
@@ -108,6 +110,8 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   };
 
   return (
+    <>
+    <ConditionsBanner conditions={app?.status?.conditions} />
     <Grid hasGutter>
       {/* Sync Policy Banner */}
       <GridItem span={12}>
@@ -214,28 +218,50 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
       {/* Source with commit info */}
       <GridItem span={6}>
         <Card>
-          <CardTitle>{t('Source')}</CardTitle>
+          <CardTitle>
+            {isMultiSource(app)
+              ? t('Sources ({{count}})', { count: allSources.length })
+              : t('Source')}
+          </CardTitle>
           <CardBody>
-            <DescriptionList isHorizontal isCompact>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Repository')}</DescriptionListTerm>
-                <DescriptionListDescription>
-                  {source?.repoURL ? (
-                    <a href={source.repoURL} target="_blank" rel="noopener noreferrer">
-                      {source.repoURL.replace(/^https?:\/\//, '').replace(/\.git$/, '')} <ExternalLinkAltIcon />
-                    </a>
-                  ) : '-'}
-                </DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Path')}</DescriptionListTerm>
-                <DescriptionListDescription>{source?.path ?? source?.chart ?? '-'}</DescriptionListDescription>
-              </DescriptionListGroup>
-              <DescriptionListGroup>
-                <DescriptionListTerm>{t('Target Revision')}</DescriptionListTerm>
-                <DescriptionListDescription>{source?.targetRevision ?? 'HEAD'}</DescriptionListDescription>
-              </DescriptionListGroup>
-            </DescriptionList>
+            {allSources.map((src) => (
+              <React.Fragment key={src.index}>
+                {isMultiSource(app) && (
+                  <Flex spaceItems={{ default: 'spaceItemsSm' }} className="pf-v6-u-mb-sm">
+                    <FlexItem>
+                      <Label isCompact>
+                        {t('Source {{n}} of {{total}}', { n: src.index + 1, total: allSources.length })}
+                      </Label>
+                    </FlexItem>
+                    {src.ref && (
+                      <FlexItem>
+                        <Label isCompact color="blue">{src.ref}</Label>
+                      </FlexItem>
+                    )}
+                  </Flex>
+                )}
+                <DescriptionList isHorizontal isCompact className={isMultiSource(app) && src.index < allSources.length - 1 ? 'pf-v6-u-mb-lg' : undefined}>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Repository')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      {src.repoURL ? (
+                        <a href={src.repoURL} target="_blank" rel="noopener noreferrer">
+                          {src.repoURL.replace(/^https?:\/\//, '').replace(/\.git$/, '')} <ExternalLinkAltIcon />
+                        </a>
+                      ) : '-'}
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{src.chart ? t('Chart') : t('Path')}</DescriptionListTerm>
+                    <DescriptionListDescription>{src.path ?? src.chart ?? '-'}</DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Target Revision')}</DescriptionListTerm>
+                    <DescriptionListDescription>{src.targetRevision ?? 'HEAD'}</DescriptionListDescription>
+                  </DescriptionListGroup>
+                </DescriptionList>
+              </React.Fragment>
+            ))}
           </CardBody>
         </Card>
       </GridItem>
@@ -293,6 +319,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
         </Card>
       </GridItem>
     </Grid>
+    </>
   );
 };
 
