@@ -103,7 +103,9 @@ export const ApplicationSetListPage: FC = () => {
   const columns = [t('Name'), t('Namespace'), t('Generators'), t('Template'), t('Status'), ''];
 
   const rows = useMemo(() => items.map((as) => {
-    const healthy = as.status?.conditions?.every((c) => c.status === 'True');
+    const healthy = as.status?.conditions?.every((c) =>
+      c.type === 'ErrorOccurred' ? c.status === 'False' : c.status === 'True',
+    );
     return {
       id: as.metadata.uid,
       row: [
