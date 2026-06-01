@@ -197,6 +197,23 @@ export const GitOpsDashboardPage: FC = () => {
     query: 'sum(increase(argocd_app_reconcile_count[1h]))',
   });
 
+  const [clusterConnResp, clusterConnLoaded] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(argocd_cluster_connection_status)',
+  });
+  const [clusterTotalResp, clusterTotalLoaded] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'count(argocd_cluster_connection_status)',
+  });
+  const [pendingRepoResp, pendingRepoLoaded] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(argocd_repo_pending_request_total)',
+  });
+  const [gitFetchFailResp, gitFetchFailLoaded] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY,
+    query: 'sum(increase(argocd_git_fetch_fail_total[24h]))',
+  });
+
   const healthEntries = useMemo(() => [
     { count: healthy, label: t('Healthy'), variant: ProgressVariant.success },
     { count: progressing, label: t('Progressing'), variant: undefined },
@@ -219,6 +236,10 @@ export const GitOpsDashboardPage: FC = () => {
   const syncSuccess = parsePrometheusScalar(syncSuccessResp);
   const failedSyncs = parsePrometheusScalar(failedSyncsResp);
   const reconciliations = parsePrometheusScalar(reconcileResp);
+  const clusterConn = parsePrometheusScalar(clusterConnResp);
+  const clusterTotal = parsePrometheusScalar(clusterTotalResp);
+  const pendingRepo = parsePrometheusScalar(pendingRepoResp);
+  const gitFetchFail = parsePrometheusScalar(gitFetchFailResp);
 
   const opPhaseColor = (phase?: string): 'green' | 'red' | 'blue' | 'grey' => {
     switch (phase) {
@@ -420,6 +441,36 @@ export const GitOpsDashboardPage: FC = () => {
                       {reconcileLoaded && reconciliations !== null ? (
                         <Label isCompact color="blue">{Math.round(reconciliations)}</Label>
                       ) : reconcileLoaded ? (
+                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                      ) : <Spinner size="sm" />}
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Cluster Connectivity')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      {clusterConnLoaded && clusterTotalLoaded && clusterConn !== null && clusterTotal !== null ? (
+                        <Label isCompact color={clusterConn === clusterTotal ? 'green' : 'red'}>{Math.round(clusterConn)}/{Math.round(clusterTotal)}</Label>
+                      ) : clusterConnLoaded && clusterTotalLoaded ? (
+                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                      ) : <Spinner size="sm" />}
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Repo Queue')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      {pendingRepoLoaded && pendingRepo !== null ? (
+                        <Label isCompact color={pendingRepo > 5 ? 'gold' : 'green'}>{Math.round(pendingRepo)}</Label>
+                      ) : pendingRepoLoaded ? (
+                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                      ) : <Spinner size="sm" />}
+                    </DescriptionListDescription>
+                  </DescriptionListGroup>
+                  <DescriptionListGroup>
+                    <DescriptionListTerm>{t('Git Fetch Failures (24h)')}</DescriptionListTerm>
+                    <DescriptionListDescription>
+                      {gitFetchFailLoaded && gitFetchFail !== null ? (
+                        <Label isCompact color={gitFetchFail > 0 ? 'red' : 'green'}>{Math.round(gitFetchFail)}</Label>
+                      ) : gitFetchFailLoaded ? (
                         <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
                       ) : <Spinner size="sm" />}
                     </DescriptionListDescription>

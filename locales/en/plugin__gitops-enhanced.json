@@ -431,5 +431,14 @@
   "Object": "Object",
   "Resource": "Resource",
   "Action": "Action",
-  "Sync blocked by sync window on project {{project}}": "Sync blocked by sync window on project {{project}}"
+  "Sync blocked by sync window on project {{project}}": "Sync blocked by sync window on project {{project}}",
+  "Failed Syncs": "Failed Syncs",
+  "Sync Activity": "Sync Activity",
+  "Total Syncs": "Total Syncs",
+  "Reconciliation": "Reconciliation",
+  "Avg Duration": "Avg Duration",
+  "Resource Health": "Resource Health",
+  "OutOfSync Resources": "OutOfSync Resources",
+  "Repo Queue": "Repo Queue",
+  "Cluster Queue": "Cluster Queue"
 }

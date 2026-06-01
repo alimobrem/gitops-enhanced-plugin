@@ -85,6 +85,7 @@
       "ApplicationResourceTreeTab": "./components/ApplicationDetail/ResourceTreeTab",
       "ApplicationConfigTab": "./components/ApplicationDetail/EditTab",
       "ApplicationDiffTab": "./components/ApplicationDetail/DiffTab",
+      "ApplicationMetricsTab": "./components/ApplicationDetail/MetricsTab",
       "AppSetOverviewTab": "./components/ApplicationSet/OverviewTab",
       "AppSetChildAppsTab": "./components/ApplicationSet/ChildAppsTab",
       "AppSetConfigTab": "./components/ApplicationSet/ApplicationSetEditTab",
