@@ -197,6 +197,14 @@ export const GitOpsDashboardPage: FC = () => {
     query: 'sum(increase(argocd_app_reconcile_count[1h]))',
   });
 
+  const healthEntries = useMemo(() => [
+    { count: healthy, label: t('Healthy'), variant: ProgressVariant.success },
+    { count: progressing, label: t('Progressing'), variant: undefined },
+    { count: degraded, label: t('Degraded'), variant: ProgressVariant.danger },
+    { count: suspended, label: t('Suspended'), variant: undefined },
+    { count: missing, label: t('Missing'), variant: ProgressVariant.warning },
+  ].filter((s) => s.count > 0), [healthy, progressing, degraded, suspended, missing, t]);
+
   if (!appsLoaded && errors.length === 0) {
     return (
       <React.Fragment>
@@ -208,14 +216,6 @@ export const GitOpsDashboardPage: FC = () => {
 
   const syncPct = total > 0 ? Math.round((synced / total) * 100) : 0;
   const healthPct = total > 0 ? Math.round((healthy / total) * 100) : 0;
-
-  const healthEntries = useMemo(() => [
-    { count: healthy, label: t('Healthy'), variant: ProgressVariant.success },
-    { count: progressing, label: t('Progressing'), variant: undefined },
-    { count: degraded, label: t('Degraded'), variant: ProgressVariant.danger },
-    { count: suspended, label: t('Suspended'), variant: undefined },
-    { count: missing, label: t('Missing'), variant: ProgressVariant.warning },
-  ].filter((s) => s.count > 0), [healthy, progressing, degraded, suspended, missing, t]);
   const syncSuccess = parsePrometheusScalar(syncSuccessResp);
   const failedSyncs = parsePrometheusScalar(failedSyncsResp);
   const reconciliations = parsePrometheusScalar(reconcileResp);
