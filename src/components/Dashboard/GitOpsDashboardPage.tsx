@@ -184,34 +184,36 @@ export const GitOpsDashboardPage: FC = () => {
 
   const { total, synced, outOfSync, healthy, degraded, progressing, suspended, missing, needsAttention, recentOps } = computed;
 
+  const nsFilter = ns ? `namespace="${ns}"` : '';
+  const nsComma = nsFilter ? `${nsFilter},` : '';
+
   const [syncSuccessResp, syncSuccessLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
-    query: 'sum(argocd_app_sync_total{phase="Succeeded"}) / sum(argocd_app_sync_total) * 100',
+    query: `sum(argocd_app_sync_total{${nsComma}phase="Succeeded"}) / sum(argocd_app_sync_total{${nsFilter}}) * 100`,
   });
   const [failedSyncsResp, failedSyncsLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
-    query: 'sum(increase(argocd_app_sync_total{phase=~"Error|Failed"}[24h]))',
+    query: `sum(increase(argocd_app_sync_total{${nsComma}phase=~"Error|Failed"}[24h]))`,
   });
   const [reconcileResp, reconcileLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
-    query: 'sum(increase(argocd_app_reconcile_count[1h]))',
+    query: `sum(increase(argocd_app_reconcile_count{${nsFilter}}[1h]))`,
   });
-
   const [clusterConnResp, clusterConnLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
-    query: 'sum(argocd_cluster_connection_status)',
+    query: `sum(argocd_cluster_connection_status{${nsFilter}})`,
   });
   const [clusterTotalResp, clusterTotalLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
-    query: 'count(argocd_cluster_connection_status)',
+    query: `count(argocd_cluster_connection_status{${nsFilter}})`,
   });
   const [pendingRepoResp, pendingRepoLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
-    query: 'sum(argocd_repo_pending_request_total)',
+    query: `sum(argocd_repo_pending_request_total{${nsFilter}})`,
   });
   const [gitFetchFailResp, gitFetchFailLoaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
-    query: 'sum(increase(argocd_git_fetch_fail_total[24h]))',
+    query: `sum(increase(argocd_git_fetch_fail_total{${nsFilter}}[24h]))`,
   });
 
   const healthEntries = useMemo(() => [

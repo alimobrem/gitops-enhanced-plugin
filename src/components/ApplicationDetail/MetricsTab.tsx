@@ -41,27 +41,28 @@ export const MetricsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
 
   const app = obj as ApplicationResource | undefined;
   const appName = app?.metadata?.name ?? '';
+  const appNs = app?.metadata?.namespace ?? '';
   const resources = app?.status?.resources ?? [];
 
   const [totalSyncs, totalSyncsLoaded] = useAppMetric(
     appName,
-    'sum(argocd_app_sync_total{name="APPNAME"})',
+    `sum(argocd_app_sync_total{namespace="${appNs}",name="APPNAME"})`,
   );
   const [successSyncs, successSyncsLoaded] = useAppMetric(
     appName,
-    'sum(argocd_app_sync_total{name="APPNAME",phase="Succeeded"})',
+    `sum(argocd_app_sync_total{namespace="${appNs}",name="APPNAME",phase="Succeeded"})`,
   );
   const [failedSyncs, failedSyncsLoaded] = useAppMetric(
     appName,
-    'sum(argocd_app_sync_total{name="APPNAME",phase=~"Error|Failed"})',
+    `sum(argocd_app_sync_total{namespace="${appNs}",name="APPNAME",phase=~"Error|Failed"})`,
   );
   const [reconcileCount, reconcileCountLoaded] = useAppMetric(
     appName,
-    'sum(increase(argocd_app_reconcile_count{name="APPNAME"}[1h]))',
+    `sum(increase(argocd_app_reconcile_count{namespace="${appNs}",name="APPNAME"}[1h]))`,
   );
   const [avgReconcile, avgReconcileLoaded] = useAppMetric(
     appName,
-    'avg(argocd_app_reconcile_bucket{name="APPNAME",le="10"})',
+    `avg(argocd_app_reconcile_bucket{namespace="${appNs}",name="APPNAME",le="10"})`,
   );
 
   const allLoaded = totalSyncsLoaded && successSyncsLoaded && failedSyncsLoaded && reconcileCountLoaded && avgReconcileLoaded;
