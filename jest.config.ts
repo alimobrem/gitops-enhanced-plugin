@@ -11,7 +11,7 @@ const config: Config = {
   },
   setupFilesAfterEnv: ['<rootDir>/setup-tests.ts'],
   transformIgnorePatterns: [
-    'node_modules/(?!(@patternfly/react-data-view|@patternfly/react-tokens)/)',
+    'node_modules/(?!(@patternfly/react-data-view|@patternfly/react-tokens|@patternfly/react-charts|victory-.+|victory)/)',
   ],
   testPathIgnorePatterns: ['/node_modules/', '/e2e/'],
   collectCoverageFrom: [

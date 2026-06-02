@@ -22,9 +22,6 @@ import {
   Spinner,
   Bullseye,
   Alert,
-  Progress,
-  ProgressMeasureLocation,
-  ProgressVariant,
   Label,
   DescriptionList,
   DescriptionListGroup,
@@ -32,6 +29,8 @@ import {
   DescriptionListDescription,
   Divider,
 } from '@patternfly/react-core';
+import { ChartDonutUtilization } from '@patternfly/react-charts/victory';
+import { ChartArea, Chart, ChartAxis, ChartGroup, ChartVoronoiContainer } from '@patternfly/react-charts/victory';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import {
   CheckCircleIcon,
@@ -65,6 +64,7 @@ import {
   DIVIDER_VERTICAL,
 } from '../../utils/pf-constants';
 import './GitOpsDashboardPage.css';
+import './GitOpsDashboardCharts.css';
 
 function parsePrometheusScalar(response: PrometheusResponse | undefined): number | null {
   if (!response?.data?.result?.[0]?.value) return null;
@@ -218,13 +218,32 @@ export const GitOpsDashboardPage: FC = () => {
     query: `sum(increase(argocd_git_fetch_fail_total{${nsFilter}}[24h]))`,
   });
 
-  const healthEntries = useMemo(() => [
-    { count: healthy, label: t('Healthy'), variant: ProgressVariant.success },
-    { count: progressing, label: t('Progressing'), variant: undefined },
-    { count: degraded, label: t('Degraded'), variant: ProgressVariant.danger },
-    { count: suspended, label: t('Suspended'), variant: undefined },
-    { count: missing, label: t('Missing'), variant: ProgressVariant.warning },
-  ].filter((s) => s.count > 0), [healthy, progressing, degraded, suspended, missing, t]);
+  const [syncRangeResp] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY_RANGE,
+    query: `sum(increase(argocd_app_sync_total{${nsFilter}}[1h]))`,
+    timespan: 86400,
+  });
+  const [reconcileRangeResp] = usePrometheusPoll({
+    endpoint: PrometheusEndpoint.QUERY_RANGE,
+    query: `sum(increase(argocd_app_reconcile_count{${nsFilter}}[1h]))`,
+    timespan: 86400,
+  });
+
+  const syncChartData = useMemo(() => {
+    const values = (syncRangeResp as PrometheusResponse | undefined)?.data?.result?.[0]?.values ?? [];
+    return (values as Array<[number, string]>).map(([ts, val]) => ({
+      x: new Date(ts * 1000),
+      y: parseFloat(val) || 0,
+    }));
+  }, [syncRangeResp]);
+
+  const reconcileChartData = useMemo(() => {
+    const values = (reconcileRangeResp as PrometheusResponse | undefined)?.data?.result?.[0]?.values ?? [];
+    return (values as Array<[number, string]>).map(([ts, val]) => ({
+      x: new Date(ts * 1000),
+      y: parseFloat(val) || 0,
+    }));
+  }, [reconcileRangeResp]);
 
   if (!appsLoaded && errors.length === 0) {
     return (
@@ -383,108 +402,191 @@ export const GitOpsDashboardPage: FC = () => {
             </GridItem>
           )}
 
-          {/* Row 3: Status breakdown + Metrics */}
-          <GridItem span={4}>
-            <Card className="gitops-dashboard__card-equal">
+          {/* Row 3: Donut charts + Operational Metrics */}
+          <GridItem span={3}>
+            <Card className="gitops-dashboard__chart-card">
               <CardTitle>{t('Sync Status')}</CardTitle>
               <CardBody>
-                <div className="pf-v6-u-mb-md">
-                  <Progress value={syncPct} title={`${synced} ${t('Synced')}`} variant={ProgressVariant.success} measureLocation={ProgressMeasureLocation.outside} />
+                <div className="gitops-dashboard__donut-container">
+                  <ChartDonutUtilization
+                    data={{ x: t('Synced'), y: syncPct }}
+                    title={`${syncPct}%`}
+                    subTitle={t('Synced')}
+                    height={150}
+                    width={150}
+                    thresholds={[{ value: 80, color: '#f0ab00' }, { value: 60, color: '#c9190b' }]}
+                    colorScale={syncPct === 100 ? ['#3e8635', '#d2d2d2'] : syncPct > 80 ? ['#f0ab00', '#d2d2d2'] : ['#c9190b', '#d2d2d2']}
+                  />
+                  <div className="gitops-dashboard__donut-count">{synced}/{total} {t('Synced')}</div>
                 </div>
-                {outOfSync > 0 && (
-                  <div className="pf-v6-u-mb-md">
-                    <Progress value={total > 0 ? Math.round((outOfSync / total) * 100) : 0} title={`${outOfSync} ${t('OutOfSync')}`} variant={ProgressVariant.warning} measureLocation={ProgressMeasureLocation.outside} />
+              </CardBody>
+            </Card>
+          </GridItem>
+
+          <GridItem span={3}>
+            <Card className="gitops-dashboard__chart-card">
+              <CardTitle>{t('Health Status')}</CardTitle>
+              <CardBody>
+                <div className="gitops-dashboard__donut-container">
+                  <ChartDonutUtilization
+                    data={{ x: t('Healthy'), y: healthPct }}
+                    title={`${healthPct}%`}
+                    subTitle={t('Healthy')}
+                    height={150}
+                    width={150}
+                    thresholds={[{ value: 80, color: '#f0ab00' }, { value: 60, color: '#c9190b' }]}
+                    colorScale={healthPct === 100 ? ['#3e8635', '#d2d2d2'] : healthPct > 80 ? ['#f0ab00', '#d2d2d2'] : ['#c9190b', '#d2d2d2']}
+                  />
+                  <div className="gitops-dashboard__donut-count">{healthy}/{total} {t('Healthy')}</div>
+                </div>
+              </CardBody>
+            </Card>
+          </GridItem>
+
+          <GridItem span={6}>
+            <Card className="gitops-dashboard__chart-card">
+              <CardTitle>{t('Operational Metrics')}</CardTitle>
+              <CardBody>
+                <Grid hasGutter>
+                  <GridItem span={6}>
+                    <DescriptionList isCompact>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Sync Success Rate')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {syncSuccessLoaded && syncSuccess !== null ? (
+                            <Label isCompact color={syncSuccess >= 90 ? 'green' : syncSuccess >= 50 ? 'gold' : 'red'}>{Math.round(syncSuccess)}%</Label>
+                          ) : syncSuccessLoaded ? (
+                            <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                          ) : <Spinner size="sm" />}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Failed Syncs (24h)')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {failedSyncsLoaded && failedSyncs !== null ? (
+                            <Label isCompact color={failedSyncs > 0 ? 'red' : 'green'}>{Math.round(failedSyncs)}</Label>
+                          ) : failedSyncsLoaded ? (
+                            <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                          ) : <Spinner size="sm" />}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Reconciliations (1h)')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {reconcileLoaded && reconciliations !== null ? (
+                            <Label isCompact color="blue">{Math.round(reconciliations)}</Label>
+                          ) : reconcileLoaded ? (
+                            <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                          ) : <Spinner size="sm" />}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </GridItem>
+                  <GridItem span={6}>
+                    <DescriptionList isCompact>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Cluster Connectivity')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {clusterConnLoaded && clusterTotalLoaded && clusterConn !== null && clusterTotal !== null ? (
+                            <Label isCompact color={clusterConn === clusterTotal ? 'green' : 'red'}>{Math.round(clusterConn)}/{Math.round(clusterTotal)}</Label>
+                          ) : clusterConnLoaded && clusterTotalLoaded ? (
+                            <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                          ) : <Spinner size="sm" />}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Repo Queue')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {pendingRepoLoaded && pendingRepo !== null ? (
+                            <Label isCompact color={pendingRepo > 5 ? 'gold' : 'green'}>{Math.round(pendingRepo)}</Label>
+                          ) : pendingRepoLoaded ? (
+                            <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                          ) : <Spinner size="sm" />}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                      <DescriptionListGroup>
+                        <DescriptionListTerm>{t('Git Fetch Failures (24h)')}</DescriptionListTerm>
+                        <DescriptionListDescription>
+                          {gitFetchFailLoaded && gitFetchFail !== null ? (
+                            <Label isCompact color={gitFetchFail > 0 ? 'red' : 'green'}>{Math.round(gitFetchFail)}</Label>
+                          ) : gitFetchFailLoaded ? (
+                            <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
+                          ) : <Spinner size="sm" />}
+                        </DescriptionListDescription>
+                      </DescriptionListGroup>
+                    </DescriptionList>
+                  </GridItem>
+                </Grid>
+              </CardBody>
+            </Card>
+          </GridItem>
+
+          {/* Row 4: Activity Charts */}
+          <GridItem span={6}>
+            <Card className="gitops-dashboard__chart-card">
+              <CardTitle>{t('Sync Activity (24h)')}</CardTitle>
+              <CardBody>
+                {syncChartData.length > 0 ? (
+                  <div className="gitops-dashboard__sparkline-container">
+                    <Chart
+                      ariaTitle={t('Sync Activity')}
+                      containerComponent={<ChartVoronoiContainer />}
+                      height={150}
+                      padding={{ top: 10, right: 10, bottom: 30, left: 40 }}
+                    >
+                      <ChartAxis
+                        tickFormat={(tick: Date) => tick.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        tickCount={6}
+                      />
+                      <ChartAxis dependentAxis tickCount={4} />
+                      <ChartGroup>
+                        <ChartArea
+                          data={syncChartData}
+                          style={{ data: { fill: '#3e8635', fillOpacity: 0.15, stroke: '#3e8635' } }}
+                        />
+                      </ChartGroup>
+                    </Chart>
                   </div>
+                ) : (
+                  <div className="gitops-dashboard__sparkline-empty">{t('No data')}</div>
                 )}
               </CardBody>
             </Card>
           </GridItem>
 
-          <GridItem span={4}>
-            <Card className="gitops-dashboard__card-equal">
-              <CardTitle>{t('Health Status')}</CardTitle>
+          <GridItem span={6}>
+            <Card className="gitops-dashboard__chart-card">
+              <CardTitle>{t('Reconciliation Activity (24h)')}</CardTitle>
               <CardBody>
-                {healthEntries.map((s) => (
-                  <div key={s.label} className="pf-v6-u-mb-md">
-                    <Progress value={total > 0 ? Math.round((s.count / total) * 100) : 0} title={`${s.count} ${s.label}`} variant={s.variant} measureLocation={ProgressMeasureLocation.outside} />
+                {reconcileChartData.length > 0 ? (
+                  <div className="gitops-dashboard__sparkline-container">
+                    <Chart
+                      ariaTitle={t('Reconciliation Activity')}
+                      containerComponent={<ChartVoronoiContainer />}
+                      height={150}
+                      padding={{ top: 10, right: 10, bottom: 30, left: 40 }}
+                    >
+                      <ChartAxis
+                        tickFormat={(tick: Date) => tick.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                        tickCount={6}
+                      />
+                      <ChartAxis dependentAxis tickCount={4} />
+                      <ChartGroup>
+                        <ChartArea
+                          data={reconcileChartData}
+                          style={{ data: { fill: '#06c', fillOpacity: 0.15, stroke: '#06c' } }}
+                        />
+                      </ChartGroup>
+                    </Chart>
                   </div>
-                ))}
-                {total === 0 && <div className="gitops-dashboard__empty-text">{t('No applications found.')}</div>}
+                ) : (
+                  <div className="gitops-dashboard__sparkline-empty">{t('No data')}</div>
+                )}
               </CardBody>
             </Card>
           </GridItem>
 
-          <GridItem span={4}>
-            <Card className="gitops-dashboard__card-equal">
-              <CardTitle>{t('Metrics')}</CardTitle>
-              <CardBody>
-                <DescriptionList isCompact>
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Sync Success Rate')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      {syncSuccessLoaded && syncSuccess !== null ? (
-                        <Label isCompact color={syncSuccess >= 90 ? 'green' : syncSuccess >= 50 ? 'gold' : 'red'}>{Math.round(syncSuccess)}%</Label>
-                      ) : syncSuccessLoaded ? (
-                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
-                      ) : <Spinner size="sm" />}
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Failed Syncs (24h)')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      {failedSyncsLoaded && failedSyncs !== null ? (
-                        <Label isCompact color={failedSyncs > 0 ? 'red' : 'green'}>{Math.round(failedSyncs)}</Label>
-                      ) : failedSyncsLoaded ? (
-                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
-                      ) : <Spinner size="sm" />}
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Reconciliations (1h)')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      {reconcileLoaded && reconciliations !== null ? (
-                        <Label isCompact color="blue">{Math.round(reconciliations)}</Label>
-                      ) : reconcileLoaded ? (
-                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
-                      ) : <Spinner size="sm" />}
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Cluster Connectivity')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      {clusterConnLoaded && clusterTotalLoaded && clusterConn !== null && clusterTotal !== null ? (
-                        <Label isCompact color={clusterConn === clusterTotal ? 'green' : 'red'}>{Math.round(clusterConn)}/{Math.round(clusterTotal)}</Label>
-                      ) : clusterConnLoaded && clusterTotalLoaded ? (
-                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
-                      ) : <Spinner size="sm" />}
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Repo Queue')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      {pendingRepoLoaded && pendingRepo !== null ? (
-                        <Label isCompact color={pendingRepo > 5 ? 'gold' : 'green'}>{Math.round(pendingRepo)}</Label>
-                      ) : pendingRepoLoaded ? (
-                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
-                      ) : <Spinner size="sm" />}
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                  <DescriptionListGroup>
-                    <DescriptionListTerm>{t('Git Fetch Failures (24h)')}</DescriptionListTerm>
-                    <DescriptionListDescription>
-                      {gitFetchFailLoaded && gitFetchFail !== null ? (
-                        <Label isCompact color={gitFetchFail > 0 ? 'red' : 'green'}>{Math.round(gitFetchFail)}</Label>
-                      ) : gitFetchFailLoaded ? (
-                        <span className="gitops-dashboard__empty-text">{t('Metrics unavailable')}</span>
-                      ) : <Spinner size="sm" />}
-                    </DescriptionListDescription>
-                  </DescriptionListGroup>
-                </DescriptionList>
-              </CardBody>
-            </Card>
-          </GridItem>
-
-          {/* Row 4: Recent Operations */}
+          {/* Row 5: Recent Operations */}
           <GridItem span={12}>
             <Card>
               <CardTitle>{t('Recent Operations')}</CardTitle>
@@ -531,7 +633,7 @@ export const GitOpsDashboardPage: FC = () => {
             </Card>
           </GridItem>
 
-          {/* Row 5: All applications */}
+          {/* Row 6: All applications */}
           <GridItem span={12}>
             <Card>
               <CardTitle>{t('Applications')}</CardTitle>

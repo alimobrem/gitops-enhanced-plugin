@@ -1,0 +1,32 @@
+.gitops-dashboard__chart-card {
+  height: 100%;
+}
+
+.gitops-dashboard__donut-container {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding-top: var(--pf-t--global--spacer--sm);
+}
+
+.gitops-dashboard__donut-count {
+  font-size: 0.875rem;
+  color: var(--pf-t--global--color--status--default--default);
+  margin-top: var(--pf-t--global--spacer--xs);
+  text-align: center;
+}
+
+.gitops-dashboard__sparkline-container {
+  height: 180px;
+}
+
+.gitops-dashboard__sparkline-empty {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  height: 180px;
+  font-size: 0.875rem;
+  color: var(--pf-t--global--color--status--default--default);
+  font-style: italic;
+}

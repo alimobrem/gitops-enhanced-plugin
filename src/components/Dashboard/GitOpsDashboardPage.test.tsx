@@ -8,7 +8,7 @@ jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   DocumentTitle: ({ children }: { children: string }) => <title>{children}</title>,
   ResourceLink: ({ name }: { name: string }) => <a>{name}</a>,
   usePrometheusPoll: () => [undefined, true, null],
-  PrometheusEndpoint: { QUERY: 'api/v1/query' },
+  PrometheusEndpoint: { QUERY: 'api/v1/query', QUERY_RANGE: 'api/v1/query_range' },
 }));
 jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string) => s }) }));
 jest.mock('../../hooks/useArgoCDInstances', () => ({
@@ -23,6 +23,14 @@ jest.mock('../shared/DismissibleAlert', () => ({
 }));
 jest.mock('../../utils/sync-windows', () => ({
   isWindowActive: () => false,
+}));
+jest.mock('@patternfly/react-charts/victory', () => ({
+  ChartDonutUtilization: (props: Record<string, unknown>) => <div data-testid="chart-donut">{String(props.title)}</div>,
+  ChartArea: () => <div data-testid="chart-area" />,
+  Chart: ({ children }: { children: React.ReactNode }) => <div data-testid="chart">{children}</div>,
+  ChartAxis: () => <div data-testid="chart-axis" />,
+  ChartGroup: ({ children }: { children: React.ReactNode }) => <div>{children}</div>,
+  ChartVoronoiContainer: () => <div />,
 }));
 
 import { GitOpsDashboardPage } from './GitOpsDashboardPage';
@@ -45,12 +53,31 @@ describe('GitOpsDashboardPage', () => {
     expect(screen.getAllByText('app1').length).toBeGreaterThanOrEqual(1);
   });
 
-  it('renders metrics section', () => {
+  it('renders donut charts for sync and health', () => {
     render(<GitOpsDashboardPage />);
-    expect(screen.getByText('Metrics')).toBeInTheDocument();
+    const donuts = screen.getAllByTestId('chart-donut');
+    expect(donuts.length).toBe(2);
+    expect(donuts[0]).toHaveTextContent('100%');
+    expect(donuts[1]).toHaveTextContent('100%');
+  });
+
+  it('renders operational metrics section', () => {
+    render(<GitOpsDashboardPage />);
+    expect(screen.getByText('Operational Metrics')).toBeInTheDocument();
     expect(screen.getByText('Sync Success Rate')).toBeInTheDocument();
     expect(screen.getByText('Failed Syncs (24h)')).toBeInTheDocument();
     expect(screen.getByText('Reconciliations (1h)')).toBeInTheDocument();
+  });
+
+  it('renders activity chart cards', () => {
+    render(<GitOpsDashboardPage />);
+    expect(screen.getByText('Sync Activity (24h)')).toBeInTheDocument();
+    expect(screen.getByText('Reconciliation Activity (24h)')).toBeInTheDocument();
+  });
+
+  it('shows no data when range queries return empty', () => {
+    render(<GitOpsDashboardPage />);
+    expect(screen.getAllByText('No data').length).toBe(2);
   });
 
   it('renders recent operations', () => {

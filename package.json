@@ -107,6 +107,9 @@
       "@console/pluginAPI": "*"
     }
   },
+  "peerDependencies": {
+    "@patternfly/react-charts": "^8.5.1"
+  },
   "dependencies": {
     "@patternfly/react-data-view": "^6.5.0",
     "@patternfly/react-log-viewer": "^6.4.0",
