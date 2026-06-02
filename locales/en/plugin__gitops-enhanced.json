@@ -440,5 +440,8 @@
   "Resource Health": "Resource Health",
   "OutOfSync Resources": "OutOfSync Resources",
   "Repo Queue": "Repo Queue",
-  "Cluster Queue": "Cluster Queue"
+  "Cluster Queue": "Cluster Queue",
+  "Monitoring Dashboards": "Monitoring Dashboards",
+  "GitOps Components": "GitOps Components",
+  "GitOps Rollouts": "GitOps Rollouts"
 }

@@ -3,11 +3,15 @@
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"ApplicationSet"},"flag":"ARGOCD_APPLICATIONSET"}},
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"AppProject"},"flag":"ARGOCD_APPPROJECT"}},
   {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Rollout"},"flag":"ARGOCD_ROLLOUT"}},
+  {"type":"console.flag/model","properties":{"model":{"group":"argoproj.io","version":"v1beta1","kind":"ArgoCD"},"flag":"ARGOCD"}},
 
   {"type":"console.navigation/section","properties":{"id":"gitops","perspective":"admin","name":"%plugin__gitops-enhanced~GitOps%","insertAfter":"workloads"},"flags":{"required":["ARGOCD_APPLICATION"]}},
 
   {"type":"console.navigation/href","properties":{"id":"gitops-dashboard","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~Dashboard%","href":"/gitops/dashboard"},"flags":{"required":["ARGOCD_APPLICATION"]}},
   {"type":"console.page/route","properties":{"exact":true,"path":"/gitops/dashboard","component":{"$codeRef":"GitOpsDashboardPage"}},"flags":{"required":["ARGOCD_APPLICATION"]}},
+
+  {"type":"console.navigation/href","properties":{"id":"gitops-instances","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~ArgoCD Instances%","href":"/gitops/instances","insertAfter":"gitops-dashboard"},"flags":{"required":["ARGOCD"]}},
+  {"type":"console.page/route","properties":{"exact":true,"path":"/gitops/instances","component":{"$codeRef":"ArgoCDListPage"}},"flags":{"required":["ARGOCD"]}},
 
   {"type":"console.navigation/resource-ns","properties":{"id":"gitops-applications","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~Applications%","model":{"group":"argoproj.io","version":"v1alpha1","kind":"Application"}},"flags":{"required":["ARGOCD_APPLICATION"]}},
   {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Application"},"component":{"$codeRef":"ApplicationListPage"}},"flags":{"required":["ARGOCD_APPLICATION"]}},

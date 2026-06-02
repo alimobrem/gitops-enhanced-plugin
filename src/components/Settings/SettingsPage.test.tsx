@@ -27,8 +27,14 @@ describe('SettingsPage', () => {
 
   it('renders tab labels', () => {
     render(<SettingsPage />);
-    expect(screen.getAllByText('ArgoCD Instances').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Repositories').length).toBeGreaterThan(0);
     expect(screen.getAllByText('Clusters').length).toBeGreaterThan(0);
+  });
+
+  it('does not render removed tabs', () => {
+    render(<SettingsPage />);
+    expect(screen.queryByText('ArgoCD Instances')).not.toBeInTheDocument();
+    expect(screen.queryByText('AnalysisRuns')).not.toBeInTheDocument();
+    expect(screen.queryByText('Experiments')).not.toBeInTheDocument();
   });
 });

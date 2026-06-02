@@ -55,9 +55,11 @@ import { isWindowActive } from '../../utils/sync-windows';
 import { timeAgo } from '../../utils/time';
 import type { ApplicationResource } from '../../types';
 import {
+  FLEX_SPACE_XS,
   FLEX_SPACE_SM,
   FLEX_SPACE_MD,
   FLEX_ALIGN_CENTER,
+  FLEX_COLUMN,
   FLEX_JUSTIFY_BETWEEN,
   FLEX_JUSTIFY_EVENLY,
   DIVIDER_VERTICAL,

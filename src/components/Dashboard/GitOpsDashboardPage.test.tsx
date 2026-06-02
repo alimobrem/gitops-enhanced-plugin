@@ -30,7 +30,7 @@ import { GitOpsDashboardPage } from './GitOpsDashboardPage';
 describe('GitOpsDashboardPage', () => {
   it('renders overview title', () => {
     render(<GitOpsDashboardPage />);
-    expect(screen.getByText('GitOps Overview')).toBeInTheDocument();
+    expect(screen.getByRole('heading', { name: 'GitOps Overview' })).toBeInTheDocument();
   });
 
   it('renders summary strip', () => {

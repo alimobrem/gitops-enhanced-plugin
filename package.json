@@ -100,7 +100,8 @@
       "RolloutPodsTab": "./components/Rollout/PodsTab",
       "RolloutAnalysisRunsTab": "./components/Rollout/AnalysisRunsTab",
       "RolloutExperimentsTab": "./components/Rollout/ExperimentsTab",
-      "RolloutConfigTab": "./components/Rollout/RolloutEditTab"
+      "RolloutConfigTab": "./components/Rollout/RolloutEditTab",
+      "ArgoCDListPage": "./components/ArgoInstance/ArgoCDListPage"
     },
     "dependencies": {
       "@console/pluginAPI": "*"
