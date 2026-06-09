@@ -48,10 +48,11 @@ describe('MetricsTab', () => {
     expect(document.querySelector('.pf-v6-c-spinner')).toBeInTheDocument();
   });
 
-  it('shows empty state when all metrics are null', () => {
+  it('renders cards with dashes when all metrics are null', () => {
     mockPrometheusPollReturn = [{ data: { result: [] } }, true, null];
     render(<MetricsTab obj={mockApp} />);
-    expect(screen.getByText('Metrics unavailable')).toBeInTheDocument();
+    expect(screen.getByText('Sync Activity')).toBeInTheDocument();
+    expect(screen.getByText('Resource Health')).toBeInTheDocument();
   });
 
   it('renders metric cards when loaded', () => {

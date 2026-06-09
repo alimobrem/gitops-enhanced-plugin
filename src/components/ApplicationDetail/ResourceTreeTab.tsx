@@ -1,6 +1,7 @@
 import React from 'react';
 import { useEffect, useMemo, useState, useCallback, useRef, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
+import { useHistory } from 'react-router-dom';
 import { useK8sWatchResource } from '@openshift-console/dynamic-plugin-sdk';
 import {
   Bullseye,
@@ -135,7 +136,7 @@ function resourceNodeId(r: ManagedResource): string {
 
 const LAYOUT_ID = 'DagreLayout';
 
-const NODE_WIDTH = 200;
+const NODE_WIDTH = 220;
 const NODE_HEIGHT = 64;
 const ICON_SIZE = 32;
 const HEALTH_DOT: Record<string, string> = {
@@ -253,6 +254,7 @@ interface ResourceTreeContentProps {
 const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
   const controller = useVisualizationController();
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const history = useHistory();
   const { instance } = useCurrentInstance();
 
   const appName = app.metadata?.name ?? t('Application');
@@ -469,7 +471,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
       const nodeData = selectedNode?.data as NodeClickData | undefined;
 
       if (nodeData?.navigateTo && (nodeData.isArgoResource || nodeId === 'app')) {
-        window.location.href = nodeData.navigateTo;
+        history.push(nodeData.navigateTo);
         return;
       }
 

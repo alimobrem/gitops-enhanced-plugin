@@ -16,8 +16,6 @@ import {
   DescriptionListTerm,
   DescriptionListDescription,
   Label,
-  EmptyState,
-  EmptyStateBody,
 } from '@patternfly/react-core';
 import { parsePrometheusScalar } from '../../utils/prometheus';
 import type { ApplicationResource } from '../../types';
@@ -54,15 +52,14 @@ export const MetricsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   );
   const [reconcileCount, reconcileCountLoaded] = useAppMetric(
     appName,
-    `sum(increase(argocd_app_reconcile_count{namespace="${appNs}",name="APPNAME"}[1h]))`,
+    `sum(increase(argocd_app_reconcile_count{namespace="${appNs}"}[1h]))`,
   );
   const [avgReconcile, avgReconcileLoaded] = useAppMetric(
     appName,
-    `avg(argocd_app_reconcile_bucket{namespace="${appNs}",name="APPNAME",le="10"})`,
+    `avg(argocd_app_reconcile_bucket{namespace="${appNs}",le="10"})`,
   );
 
   const allLoaded = totalSyncsLoaded && successSyncsLoaded && failedSyncsLoaded && reconcileCountLoaded && avgReconcileLoaded;
-  const allNull = totalSyncs === null && successSyncs === null && failedSyncs === null && reconcileCount === null && avgReconcile === null;
 
   const syncRate = useMemo(() => {
     if (totalSyncs === null || successSyncs === null || totalSyncs === 0) return null;
@@ -78,16 +75,6 @@ export const MetricsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
     return (
       <PageSection>
         <Bullseye><Spinner /></Bullseye>
-      </PageSection>
-    );
-  }
-
-  if (allNull) {
-    return (
-      <PageSection>
-        <EmptyState>
-          <EmptyStateBody>{t('Metrics unavailable')}</EmptyStateBody>
-        </EmptyState>
       </PageSection>
     );
   }

@@ -1,5 +1,6 @@
 import React from 'react';
 import { useState, useMemo, useCallback, type FC } from 'react';
+import { useHistory } from 'react-router-dom';
 import {
   useK8sWatchResource,
   usePrometheusPoll,
@@ -126,6 +127,7 @@ const InstanceCardActions: FC<{
   onViewYaml: (inst: ArgoCDResource) => void;
 }> = ({ instance, onViewYaml }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const history = useHistory();
   const [isOpen, setIsOpen] = useState(false);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteError, setDeleteError] = useState('');
@@ -165,7 +167,7 @@ const InstanceCardActions: FC<{
             key="edit-yaml"
             onClick={() => {
               setIsOpen(false);
-              window.location.href = `/k8s/ns/${ns}/argoproj.io~v1beta1~ArgoCD/${name}/yaml`;
+              history.push(`/k8s/ns/${ns}/argoproj.io~v1beta1~ArgoCD/${name}/yaml`);
             }}
           >
             {t('Edit YAML')}

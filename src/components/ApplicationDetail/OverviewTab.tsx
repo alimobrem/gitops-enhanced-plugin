@@ -31,6 +31,7 @@ import { timeAgo } from '../../utils/time';
 import { buildCommitUrl } from '../../utils/argo-urls';
 import type { ApplicationResource } from '../../types';
 import { getApplicationSource, getAllSources, isMultiSource } from '../../utils/application';
+import { ConfirmModal } from '../shared/ConfirmModal';
 import { ConditionsBanner } from './ConditionsBanner';
 import { useSyncWindowStatus } from '../../hooks/useSyncWindowStatus';
 import {
@@ -46,6 +47,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
   const syncWindow = useSyncWindowStatus(app ?? null);
   const [patchError, setPatchError] = useState('');
+  const [showPruneConfirm, setShowPruneConfirm] = useState(false);
   if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;
   const source = getApplicationSource(app);
   const allSources = getAllSources(app);
@@ -84,8 +86,9 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
     }
   };
 
-  const togglePrune = async () => {
+  const doPrune = async () => {
     setPatchError('');
+    setShowPruneConfirm(false);
     try {
       await k8sPatch({
         model: ApplicationModel,
@@ -94,6 +97,14 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
       });
     } catch (e) {
       setPatchError((e as Error).message);
+    }
+  };
+
+  const togglePrune = () => {
+    if (!isPrune) {
+      setShowPruneConfirm(true);
+    } else {
+      doPrune();
     }
   };
 
@@ -325,6 +336,16 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
         </Card>
       </GridItem>
     </Grid>
+    <ConfirmModal
+      title={t('Enable Prune')}
+      isOpen={showPruneConfirm}
+      onConfirm={doPrune}
+      onCancel={() => setShowPruneConfirm(false)}
+      confirmLabel={t('Enable Prune')}
+      confirmVariant="danger"
+    >
+      {t('Enabling prune allows ArgoCD to delete resources not tracked in Git. This may remove manually created resources.')}
+    </ConfirmModal>
     </>
   );
 };

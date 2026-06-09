@@ -447,6 +447,12 @@
   "Operational Metrics": "Operational Metrics",
   "Sync Activity (24h)": "Sync Activity (24h)",
   "Reconciliation Activity (24h)": "Reconciliation Activity (24h)",
-  "No data": "No data",
+  "No sync operations in the last 24 hours": "No sync operations in the last 24 hours",
+  "No reconciliation data available": "No reconciliation data available",
+  "syncs/hr": "syncs/hr",
+  "reconciliations/hr": "reconciliations/hr",
+  "View all": "View all",
+  "Enable Prune": "Enable Prune",
+  "Enabling prune allows ArgoCD to delete resources not tracked in Git. This may remove manually created resources.": "Enabling prune allows ArgoCD to delete resources not tracked in Git. This may remove manually created resources.",
   "Reconciliation Activity": "Reconciliation Activity"
 }

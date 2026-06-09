@@ -1,5 +1,7 @@
 .gitops-resource-tree {
-  height: 650px;
+  height: calc(100vh - 300px);
+  min-height: 400px;
+  max-height: 900px;
   border-radius: 12px;
   background-color: #fafbfc;
   background-image: radial-gradient(circle, #d8dde3 1px, transparent 1px);
@@ -53,7 +55,7 @@
 
 .gitops-node-card__name {
   font-family: 'Red Hat Text', -apple-system, sans-serif;
-  font-size: 11px;
+  font-size: 12px;
   font-weight: 500;
   fill: #1f2329;
   pointer-events: none;
@@ -61,7 +63,7 @@
 
 .gitops-node-card__kind {
   font-family: 'Red Hat Text', -apple-system, sans-serif;
-  font-size: 9px;
+  font-size: 10px;
   font-weight: 400;
   fill: #6a6e73;
   text-transform: uppercase;

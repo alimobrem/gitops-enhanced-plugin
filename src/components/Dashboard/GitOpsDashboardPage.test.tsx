@@ -75,9 +75,10 @@ describe('GitOpsDashboardPage', () => {
     expect(screen.getByText('Reconciliation Activity (24h)')).toBeInTheDocument();
   });
 
-  it('shows no data when range queries return empty', () => {
+  it('shows empty message when range queries return empty', () => {
     render(<GitOpsDashboardPage />);
-    expect(screen.getAllByText('No data').length).toBe(2);
+    expect(screen.getByText('No sync operations in the last 24 hours')).toBeInTheDocument();
+    expect(screen.getByText('No reconciliation data available')).toBeInTheDocument();
   });
 
   it('renders recent operations', () => {

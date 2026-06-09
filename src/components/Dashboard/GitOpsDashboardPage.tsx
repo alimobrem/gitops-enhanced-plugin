@@ -23,6 +23,7 @@ import {
   Bullseye,
   Alert,
   Label,
+  Tooltip,
   DescriptionList,
   DescriptionListGroup,
   DescriptionListTerm,
@@ -69,10 +70,15 @@ import './GitOpsDashboardCharts.css';
 
 const SYNC_CHART_STYLE = { data: { fill: '#3e8635', fillOpacity: 0.15, stroke: '#3e8635' } };
 const RECONCILE_CHART_STYLE = { data: { fill: '#06c', fillOpacity: 0.15, stroke: '#06c' } };
-const CHART_PADDING = { top: 10, right: 10, bottom: 30, left: 40 };
+const CHART_PADDING = { top: 10, right: 20, bottom: 40, left: 50 };
 const DONUT_THRESHOLDS = [{ value: 80, color: '#f0ab00' }, { value: 60, color: '#c9190b' }];
 const formatTimeTick = (tick: unknown) =>
-  tick instanceof Date ? tick.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : String(tick);
+  tick instanceof Date ? tick.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '';
+const formatCountTick = (tick: unknown) => {
+  const n = Number(tick);
+  if (isNaN(n)) return '';
+  return n >= 1000 ? `${(n / 1000).toFixed(1)}k` : String(Math.round(n));
+};
 
 function donutColorScale(pct: number): string[] {
   if (pct === 100) return ['#3e8635', '#d2d2d2'];
@@ -115,7 +121,7 @@ export const GitOpsDashboardPage: FC = () => {
   const [csvs, , _csvsError] = useK8sWatchResource<Array<Record<string, unknown>>>({
     groupVersionKind: { group: 'operators.coreos.com', version: 'v1alpha1', kind: 'ClusterServiceVersion' },
     isList: true,
-    namespace: ns ?? 'openshift-gitops',
+    ...(ns ? { namespace: ns } : {}),
   });
 
   const csvKey = useMemo(() => (csvs ?? []).map((c) => (c.metadata as Record<string, string>)?.name).join(','), [csvs]);
@@ -228,12 +234,14 @@ export const GitOpsDashboardPage: FC = () => {
   const [syncRangeResp] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY_RANGE,
     query: `sum(increase(argocd_app_sync_total{${nsFilter}}[1h]))`,
-    timespan: 86400,
+    timespan: 24 * 60 * 60 * 1000,
+    samples: 96,
   });
   const [reconcileRangeResp] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY_RANGE,
     query: `sum(increase(argocd_app_reconcile_count{${nsFilter}}[1h]))`,
-    timespan: 86400,
+    timespan: 24 * 60 * 60 * 1000,
+    samples: 96,
   });
 
   const syncChartData = useMemo(
@@ -383,7 +391,11 @@ export const GitOpsDashboardPage: FC = () => {
                                 <Label isCompact color={phaseColor(app.status.operationState.phase)}>{app.status.operationState.phase}</Label>
                               )}
                             </Td>
-                            <Td className="gitops-dashboard__issue-cell">{issues.join('; ') || '-'}</Td>
+                            <Td className="gitops-dashboard__issue-cell">
+                              {issues.length > 0 ? (
+                                <Tooltip content={issues.join('\n')}><span>{issues.join('; ')}</span></Tooltip>
+                              ) : '-'}
+                            </Td>
                           </Tr>
                         );
                       })}
@@ -523,18 +535,18 @@ export const GitOpsDashboardPage: FC = () => {
                     <Chart
                       ariaTitle={t('Sync Activity')}
                       containerComponent={<ChartVoronoiContainer />}
-                      height={150}
+                      height={200}
                       padding={CHART_PADDING}
                     >
-                      <ChartAxis tickFormat={formatTimeTick} tickCount={6} />
-                      <ChartAxis dependentAxis tickCount={4} />
+                      <ChartAxis tickFormat={formatTimeTick} tickCount={6} fixLabelOverlap />
+                      <ChartAxis dependentAxis tickFormat={formatCountTick} tickCount={4} label={t('syncs/hr')} />
                       <ChartGroup>
                         <ChartArea data={syncChartData} style={SYNC_CHART_STYLE} />
                       </ChartGroup>
                     </Chart>
                   </div>
                 ) : (
-                  <div className="gitops-dashboard__sparkline-empty">{t('No data')}</div>
+                  <div className="gitops-dashboard__sparkline-empty">{t('No sync operations in the last 24 hours')}</div>
                 )}
               </CardBody>
             </Card>
@@ -549,18 +561,18 @@ export const GitOpsDashboardPage: FC = () => {
                     <Chart
                       ariaTitle={t('Reconciliation Activity')}
                       containerComponent={<ChartVoronoiContainer />}
-                      height={150}
+                      height={200}
                       padding={CHART_PADDING}
                     >
-                      <ChartAxis tickFormat={formatTimeTick} tickCount={6} />
-                      <ChartAxis dependentAxis tickCount={4} />
+                      <ChartAxis tickFormat={formatTimeTick} tickCount={6} fixLabelOverlap />
+                      <ChartAxis dependentAxis tickFormat={formatCountTick} tickCount={4} label={t('reconciliations/hr')} />
                       <ChartGroup>
                         <ChartArea data={reconcileChartData} style={RECONCILE_CHART_STYLE} />
                       </ChartGroup>
                     </Chart>
                   </div>
                 ) : (
-                  <div className="gitops-dashboard__sparkline-empty">{t('No data')}</div>
+                  <div className="gitops-dashboard__sparkline-empty">{t('No reconciliation data available')}</div>
                 )}
               </CardBody>
             </Card>
@@ -595,8 +607,10 @@ export const GitOpsDashboardPage: FC = () => {
                               {app.status?.operationState?.phase ?? '-'}
                             </Label>
                           </Td>
-                          <Td className="gitops-dashboard__message-cell" title={msg}>
-                            {shortMsg}
+                          <Td className="gitops-dashboard__message-cell">
+                            {msg.length > 80 ? (
+                              <Tooltip content={msg}><span>{shortMsg}</span></Tooltip>
+                            ) : msg}
                           </Td>
                           <Td className="gitops-dashboard__finished-cell">
                             {app.status?.operationState?.finishedAt
@@ -613,10 +627,19 @@ export const GitOpsDashboardPage: FC = () => {
             </Card>
           </GridItem>
 
-          {/* Row 6: All applications */}
+          {/* Row 6: Applications (top 10) */}
           <GridItem span={12}>
             <Card>
-              <CardTitle>{t('Applications')}</CardTitle>
+              <CardTitle>
+                <Flex justifyContent={FLEX_JUSTIFY_BETWEEN} alignItems={FLEX_ALIGN_CENTER}>
+                  <FlexItem>{t('Applications')} ({total})</FlexItem>
+                  {total > 10 && (
+                    <FlexItem>
+                      <a href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application">{t('View all')}</a>
+                    </FlexItem>
+                  )}
+                </Flex>
+              </CardTitle>
               <CardBody>
                 {allApps.length === 0 ? (
                   <div className="gitops-dashboard__empty-text">{t('No applications found.')}</div>
@@ -631,7 +654,7 @@ export const GitOpsDashboardPage: FC = () => {
                       <Th>{t('Last Reconciled')}</Th>
                     </Tr></Thead>
                     <Tbody>
-                      {allApps.map((app) => (
+                      {allApps.slice(0, 10).map((app) => (
                         <Tr key={app.metadata.uid}>
                           <Td>
                             <ResourceLink groupVersionKind={ApplicationGroupVersionKind} name={app.metadata.name} namespace={app.metadata.namespace} />
@@ -720,21 +743,6 @@ export const GitOpsDashboardPage: FC = () => {
                       <DescriptionListGroup>
                         <DescriptionListTerm>{t('AppProjects')}</DescriptionListTerm>
                         <DescriptionListDescription><Label isCompact>{projects?.length ?? 0}</Label></DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>{t('Console Plugin')}</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <Flex spaceItems={FLEX_SPACE_SM} alignItems={FLEX_ALIGN_CENTER}>
-                            <FlexItem><Label isCompact color="blue">v0.1.0</Label></FlexItem>
-                            <FlexItem><span className="gitops-dashboard__version-text">SDK 4.21</span></FlexItem>
-                          </Flex>
-                        </DescriptionListDescription>
-                      </DescriptionListGroup>
-                      <DescriptionListGroup>
-                        <DescriptionListTerm>{t('Extensions')}</DescriptionListTerm>
-                        <DescriptionListDescription>
-                          <span className="gitops-dashboard__version-text">20 tabs · 2 actions · 6 pages · 4 flags</span>
-                        </DescriptionListDescription>
                       </DescriptionListGroup>
                     </DescriptionList>
                   </GridItem>
