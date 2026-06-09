@@ -7,6 +7,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import { AnalysisRunGroupVersionKind } from '../../models';
+import { phaseColor } from '../../utils/status';
 import type { RolloutResource } from '../../types';
 
 interface AnalysisRunResource {
@@ -36,15 +37,6 @@ export const AnalysisRunsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) 
   if (rolloutRuns.length === 0) {
     return <EmptyState className="pf-v6-u-mt-md"><EmptyStateBody>{t('No analysis runs found for this rollout.')}</EmptyStateBody></EmptyState>;
   }
-
-  const phaseColor = (phase?: string): 'green' | 'red' | 'blue' | 'grey' => {
-    switch (phase) {
-      case 'Successful': return 'green';
-      case 'Failed': case 'Error': return 'red';
-      case 'Running': case 'Pending': return 'blue';
-      default: return 'grey';
-    }
-  };
 
   return (
     <Table aria-label={t('AnalysisRuns')} isCompact isStriped className="pf-v6-u-mt-md">

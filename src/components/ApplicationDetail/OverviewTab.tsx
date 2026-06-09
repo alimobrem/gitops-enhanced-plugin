@@ -28,6 +28,7 @@ import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { ApplicationModel } from '../../models';
 import { safePatch } from '../../utils/patch';
 import { timeAgo } from '../../utils/time';
+import { buildCommitUrl } from '../../utils/argo-urls';
 import type { ApplicationResource } from '../../types';
 import { getApplicationSource, getAllSources, isMultiSource } from '../../utils/application';
 import { ConditionsBanner } from './ConditionsBanner';
@@ -39,15 +40,6 @@ import {
   FLEX_ALIGN_CENTER,
   FLEX_COLUMN,
 } from '../../utils/pf-constants';
-
-function buildCommitUrl(repoURL: string, revision: string): string | null {
-  if (!repoURL || !revision) return null;
-  const cleaned = repoURL.replace(/\.git$/, '');
-  if (cleaned.includes('github.com') || cleaned.includes('gitlab.com') || cleaned.includes('bitbucket.org')) {
-    return `${cleaned}/commit/${revision}`;
-  }
-  return null;
-}
 
 export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const app = obj as ApplicationResource | undefined;

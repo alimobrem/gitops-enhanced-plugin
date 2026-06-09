@@ -29,8 +29,7 @@ import {
   DescriptionListDescription,
   Divider,
 } from '@patternfly/react-core';
-import { ChartDonutUtilization } from '@patternfly/react-charts/victory';
-import { ChartArea, Chart, ChartAxis, ChartGroup, ChartVoronoiContainer } from '@patternfly/react-charts/victory';
+import { ChartDonutUtilization, ChartArea, Chart, ChartAxis, ChartGroup, ChartVoronoiContainer } from '@patternfly/react-charts/victory';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
 import {
   CheckCircleIcon,
@@ -52,6 +51,8 @@ import { DismissibleAlert } from '../shared/DismissibleAlert';
 import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
 import { isWindowActive } from '../../utils/sync-windows';
 import { timeAgo } from '../../utils/time';
+import { phaseColor } from '../../utils/status';
+import { parsePrometheusScalar, parsePrometheusRange } from '../../utils/prometheus';
 import type { ApplicationResource } from '../../types';
 import {
   FLEX_SPACE_XS,
@@ -66,10 +67,16 @@ import {
 import './GitOpsDashboardPage.css';
 import './GitOpsDashboardCharts.css';
 
-function parsePrometheusScalar(response: PrometheusResponse | undefined): number | null {
-  if (!response?.data?.result?.[0]?.value) return null;
-  const val = parseFloat(response.data.result[0].value[1]);
-  return isNaN(val) ? null : val;
+const SYNC_CHART_STYLE = { data: { fill: '#3e8635', fillOpacity: 0.15, stroke: '#3e8635' } };
+const RECONCILE_CHART_STYLE = { data: { fill: '#06c', fillOpacity: 0.15, stroke: '#06c' } };
+const CHART_PADDING = { top: 10, right: 10, bottom: 30, left: 40 };
+const DONUT_THRESHOLDS = [{ value: 80, color: '#f0ab00' }, { value: 60, color: '#c9190b' }];
+const formatTimeTick = (tick: unknown) =>
+  tick instanceof Date ? tick.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : String(tick);
+
+function donutColorScale(pct: number): string[] {
+  if (pct === 100) return ['#3e8635', '#d2d2d2'];
+  return pct > 80 ? ['#f0ab00', '#d2d2d2'] : ['#c9190b', '#d2d2d2'];
 }
 
 export const GitOpsDashboardPage: FC = () => {
@@ -229,21 +236,15 @@ export const GitOpsDashboardPage: FC = () => {
     timespan: 86400,
   });
 
-  const syncChartData = useMemo(() => {
-    const values = (syncRangeResp as PrometheusResponse | undefined)?.data?.result?.[0]?.values ?? [];
-    return (values as Array<[number, string]>).map(([ts, val]) => ({
-      x: new Date(ts * 1000),
-      y: parseFloat(val) || 0,
-    }));
-  }, [syncRangeResp]);
+  const syncChartData = useMemo(
+    () => parsePrometheusRange(syncRangeResp as PrometheusResponse | undefined),
+    [syncRangeResp],
+  );
 
-  const reconcileChartData = useMemo(() => {
-    const values = (reconcileRangeResp as PrometheusResponse | undefined)?.data?.result?.[0]?.values ?? [];
-    return (values as Array<[number, string]>).map(([ts, val]) => ({
-      x: new Date(ts * 1000),
-      y: parseFloat(val) || 0,
-    }));
-  }, [reconcileRangeResp]);
+  const reconcileChartData = useMemo(
+    () => parsePrometheusRange(reconcileRangeResp as PrometheusResponse | undefined),
+    [reconcileRangeResp],
+  );
 
   if (!appsLoaded && errors.length === 0) {
     return (
@@ -263,15 +264,6 @@ export const GitOpsDashboardPage: FC = () => {
   const clusterTotal = parsePrometheusScalar(clusterTotalResp);
   const pendingRepo = parsePrometheusScalar(pendingRepoResp);
   const gitFetchFail = parsePrometheusScalar(gitFetchFailResp);
-
-  const opPhaseColor = (phase?: string): 'green' | 'red' | 'blue' | 'grey' => {
-    switch (phase) {
-      case 'Succeeded': return 'green';
-      case 'Failed': case 'Error': return 'red';
-      case 'Running': case 'Terminating': return 'blue';
-      default: return 'grey';
-    }
-  };
 
   return (
     <React.Fragment>
@@ -388,7 +380,7 @@ export const GitOpsDashboardPage: FC = () => {
                             <Td><HealthStatusIcon status={app.status?.health?.status ?? 'Unknown'} /></Td>
                             <Td>
                               {app.status?.operationState?.phase && (
-                                <Label isCompact color={opPhaseColor(app.status.operationState.phase)}>{app.status.operationState.phase}</Label>
+                                <Label isCompact color={phaseColor(app.status.operationState.phase)}>{app.status.operationState.phase}</Label>
                               )}
                             </Td>
                             <Td className="gitops-dashboard__issue-cell">{issues.join('; ') || '-'}</Td>
@@ -414,8 +406,8 @@ export const GitOpsDashboardPage: FC = () => {
                     subTitle={t('Synced')}
                     height={150}
                     width={150}
-                    thresholds={[{ value: 80, color: '#f0ab00' }, { value: 60, color: '#c9190b' }]}
-                    colorScale={syncPct === 100 ? ['#3e8635', '#d2d2d2'] : syncPct > 80 ? ['#f0ab00', '#d2d2d2'] : ['#c9190b', '#d2d2d2']}
+                    thresholds={DONUT_THRESHOLDS}
+                    colorScale={donutColorScale(syncPct)}
                   />
                   <div className="gitops-dashboard__donut-count">{synced}/{total} {t('Synced')}</div>
                 </div>
@@ -434,8 +426,8 @@ export const GitOpsDashboardPage: FC = () => {
                     subTitle={t('Healthy')}
                     height={150}
                     width={150}
-                    thresholds={[{ value: 80, color: '#f0ab00' }, { value: 60, color: '#c9190b' }]}
-                    colorScale={healthPct === 100 ? ['#3e8635', '#d2d2d2'] : healthPct > 80 ? ['#f0ab00', '#d2d2d2'] : ['#c9190b', '#d2d2d2']}
+                    thresholds={DONUT_THRESHOLDS}
+                    colorScale={donutColorScale(healthPct)}
                   />
                   <div className="gitops-dashboard__donut-count">{healthy}/{total} {t('Healthy')}</div>
                 </div>
@@ -532,18 +524,12 @@ export const GitOpsDashboardPage: FC = () => {
                       ariaTitle={t('Sync Activity')}
                       containerComponent={<ChartVoronoiContainer />}
                       height={150}
-                      padding={{ top: 10, right: 10, bottom: 30, left: 40 }}
+                      padding={CHART_PADDING}
                     >
-                      <ChartAxis
-                        tickFormat={(tick: Date) => tick.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        tickCount={6}
-                      />
+                      <ChartAxis tickFormat={formatTimeTick} tickCount={6} />
                       <ChartAxis dependentAxis tickCount={4} />
                       <ChartGroup>
-                        <ChartArea
-                          data={syncChartData}
-                          style={{ data: { fill: '#3e8635', fillOpacity: 0.15, stroke: '#3e8635' } }}
-                        />
+                        <ChartArea data={syncChartData} style={SYNC_CHART_STYLE} />
                       </ChartGroup>
                     </Chart>
                   </div>
@@ -564,18 +550,12 @@ export const GitOpsDashboardPage: FC = () => {
                       ariaTitle={t('Reconciliation Activity')}
                       containerComponent={<ChartVoronoiContainer />}
                       height={150}
-                      padding={{ top: 10, right: 10, bottom: 30, left: 40 }}
+                      padding={CHART_PADDING}
                     >
-                      <ChartAxis
-                        tickFormat={(tick: Date) => tick.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                        tickCount={6}
-                      />
+                      <ChartAxis tickFormat={formatTimeTick} tickCount={6} />
                       <ChartAxis dependentAxis tickCount={4} />
                       <ChartGroup>
-                        <ChartArea
-                          data={reconcileChartData}
-                          style={{ data: { fill: '#06c', fillOpacity: 0.15, stroke: '#06c' } }}
-                        />
+                        <ChartArea data={reconcileChartData} style={RECONCILE_CHART_STYLE} />
                       </ChartGroup>
                     </Chart>
                   </div>
@@ -611,7 +591,7 @@ export const GitOpsDashboardPage: FC = () => {
                             <ResourceLink groupVersionKind={ApplicationGroupVersionKind} name={app.metadata.name} namespace={app.metadata.namespace} />
                           </Td>
                           <Td>
-                            <Label isCompact color={opPhaseColor(app.status?.operationState?.phase)}>
+                            <Label isCompact color={phaseColor(app.status?.operationState?.phase)}>
                               {app.status?.operationState?.phase ?? '-'}
                             </Label>
                           </Td>

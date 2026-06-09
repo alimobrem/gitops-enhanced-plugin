@@ -2,7 +2,6 @@ import React from 'react';
 import { useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { usePrometheusPoll, PrometheusEndpoint } from '@openshift-console/dynamic-plugin-sdk';
-import type { PrometheusResponse } from '@openshift-console/dynamic-plugin-sdk';
 import {
   Bullseye,
   Spinner,
@@ -20,20 +19,17 @@ import {
   EmptyState,
   EmptyStateBody,
 } from '@patternfly/react-core';
+import { parsePrometheusScalar } from '../../utils/prometheus';
 import type { ApplicationResource } from '../../types';
 
-function parseScalar(response: PrometheusResponse | undefined): string | null {
-  return response?.data?.result?.[0]?.value?.[1] ?? null;
-}
-
-const useAppMetric = (appName: string, query: string): [string | null, boolean] => {
+const useAppMetric = (appName: string, query: string): [number | null, boolean] => {
   const fullQuery = query.replace(/APPNAME/g, appName);
   const [resp, loaded] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY,
     query: fullQuery,
   });
   if (!loaded) return [null, false];
-  return [parseScalar(resp), true];
+  return [parsePrometheusScalar(resp), true];
 };
 
 export const MetricsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
@@ -69,11 +65,8 @@ export const MetricsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   const allNull = totalSyncs === null && successSyncs === null && failedSyncs === null && reconcileCount === null && avgReconcile === null;
 
   const syncRate = useMemo(() => {
-    if (totalSyncs === null || successSyncs === null) return null;
-    const total = parseFloat(totalSyncs);
-    const success = parseFloat(successSyncs);
-    if (isNaN(total) || isNaN(success) || total === 0) return null;
-    return Math.round((success / total) * 100);
+    if (totalSyncs === null || successSyncs === null || totalSyncs === 0) return null;
+    return Math.round((successSyncs / totalSyncs) * 100);
   }, [totalSyncs, successSyncs]);
 
   const outOfSyncCount = useMemo(
@@ -99,11 +92,7 @@ export const MetricsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
     );
   }
 
-  const formatVal = (val: string | null): string => {
-    if (val === null) return '-';
-    const n = parseFloat(val);
-    return isNaN(n) ? '-' : String(Math.round(n));
-  };
+  const formatVal = (val: number | null): string => val === null ? '-' : String(Math.round(val));
 
   return (
     <PageSection>
@@ -128,7 +117,7 @@ export const MetricsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
                 <DescriptionListGroup>
                   <DescriptionListTerm>{t('Failed Syncs')}</DescriptionListTerm>
                   <DescriptionListDescription>
-                    <Label isCompact color={failedSyncs !== null && parseFloat(failedSyncs) > 0 ? 'red' : 'green'}>{formatVal(failedSyncs)}</Label>
+                    <Label isCompact color={failedSyncs !== null && failedSyncs > 0 ? 'red' : 'green'}>{formatVal(failedSyncs)}</Label>
                   </DescriptionListDescription>
                 </DescriptionListGroup>
                 <DescriptionListGroup>

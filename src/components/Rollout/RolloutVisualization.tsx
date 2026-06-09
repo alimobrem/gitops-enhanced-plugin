@@ -20,6 +20,7 @@ import { AnalysisRunGroupVersionKind } from '../../models';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import type { RolloutResource } from '../../types';
 import { FLEX_SPACE_SM, FLEX_ALIGN_CENTER } from '../../utils/pf-constants';
+import { phaseColor } from '../../utils/status';
 import './RolloutVisualization.css';
 
 interface RSResource {
@@ -74,15 +75,6 @@ const phaseAlertVariant = (phase?: string): 'success' | 'info' | 'danger' | 'war
     case 'Progressing': return 'info';
     case 'Degraded': return 'danger';
     default: return 'warning';
-  }
-};
-
-const phaseColor = (phase?: string): 'green' | 'red' | 'blue' | 'grey' => {
-  switch (phase) {
-    case 'Successful': return 'green';
-    case 'Failed': case 'Error': return 'red';
-    case 'Running': case 'Pending': return 'blue';
-    default: return 'grey';
   }
 };
 

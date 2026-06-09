@@ -1,7 +1,6 @@
 export const FLEX_SPACE_XS = { default: 'spaceItemsXs' } as const;
 export const FLEX_SPACE_SM = { default: 'spaceItemsSm' } as const;
 export const FLEX_SPACE_MD = { default: 'spaceItemsMd' } as const;
-export const FLEX_SPACE_LG = { default: 'spaceItemsLg' } as const;
 export const FLEX_SPACE_XL = { default: 'spaceItemsXl' } as const;
 export const FLEX_ALIGN_CENTER = { default: 'alignItemsCenter' } as const;
 export const FLEX_COLUMN = { default: 'column' } as const;

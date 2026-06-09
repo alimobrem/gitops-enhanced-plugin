@@ -408,7 +408,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
     }
 
     const resourceNodes = flatResources.map((r) => {
-      const gvk = r.group ? `${r.group}~v1~${r.kind}` : `~v1~${r.kind}`;
+      const gvk = r.group ? `${r.group}~${r.version}~${r.kind}` : `~${r.version}~${r.kind}`;
       return {
         id: resourceNodeId(r),
         type: 'node',
@@ -465,8 +465,7 @@ const ResourceTreeContent: FC<ResourceTreeContentProps> = ({ app }) => {
       if (ids.length === 0) { setDrawerResource(null); return; }
       const nodeId = ids[0];
 
-      const allNodes = modelNodes;
-      const selectedNode = allNodes.find((n) => n.id === nodeId);
+      const selectedNode = modelNodes.find((n) => n.id === nodeId);
       const nodeData = selectedNode?.data as NodeClickData | undefined;
 
       if (nodeData?.navigateTo && (nodeData.isArgoResource || nodeId === 'app')) {

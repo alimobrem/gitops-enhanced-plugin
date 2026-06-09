@@ -30,6 +30,7 @@ import yaml from 'js-yaml';
 import { ArgoCDModel, ArgoCDGroupVersionKind, ApplicationGroupVersionKind } from '../../models';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { timeAgo } from '../../utils/time';
+import { phaseColor } from '../../utils/status';
 import type { ApplicationResource } from '../../types';
 import { FLEX_SPACE_SM, FLEX_ALIGN_CENTER, FLEX_WRAP } from '../../utils/pf-constants';
 
@@ -86,13 +87,6 @@ const PodGroupVersionKind = { group: '', version: 'v1', kind: 'Pod' };
 const componentColor = (status?: string): 'green' | 'red' | 'grey' => {
   if (status === 'Running' || status === 'Available') return 'green';
   if (status === 'Failed' || status === 'Error') return 'red';
-  return 'grey';
-};
-
-const phaseColor = (phase?: string): 'green' | 'red' | 'gold' | 'grey' => {
-  if (phase === 'Available') return 'green';
-  if (phase === 'Failed') return 'red';
-  if (phase === 'Pending') return 'gold';
   return 'grey';
 };
 
@@ -478,7 +472,7 @@ export const ArgoCDListPage: FC = () => {
                               <Title headingLevel="h3" size="md">{name}</Title>
                             </FlexItem>
                             <FlexItem>
-                              <Label isCompact color={phaseColor(inst.status?.phase)}>{inst.status?.phase ?? t('Unknown')}</Label>
+                              <Label isCompact color={inst.status?.phase === 'Pending' ? 'gold' : phaseColor(inst.status?.phase)}>{inst.status?.phase ?? t('Unknown')}</Label>
                             </FlexItem>
                           </Flex>
                         </CardHeader>

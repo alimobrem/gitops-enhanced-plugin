@@ -14,3 +14,12 @@ export const healthStatusColor: Record<HealthStatusCode, string> = {
   Missing: 'var(--pf-t--global--color--status--warning--default)',
   Unknown: 'var(--pf-t--global--color--status--info--default)',
 };
+
+export function phaseColor(phase?: string): 'green' | 'red' | 'blue' | 'gold' | 'grey' {
+  switch (phase) {
+    case 'Succeeded': case 'Successful': case 'Available': return 'green';
+    case 'Failed': case 'Error': return 'red';
+    case 'Running': case 'Terminating': case 'Pending': return 'blue';
+    default: return 'grey';
+  }
+}

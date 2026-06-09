@@ -6,6 +6,7 @@ import {
   Bullseye, Spinner, EmptyState, EmptyStateBody, Label,
 } from '@patternfly/react-core';
 import { Table, Thead, Tr, Th, Tbody, Td } from '@patternfly/react-table';
+import { phaseColor } from '../../utils/status';
 import type { RolloutResource } from '../../types';
 
 interface PodResource {
@@ -43,15 +44,7 @@ export const PodsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
     return <EmptyState className="pf-v6-u-mt-md"><EmptyStateBody>{t('No pods found for this rollout.')}</EmptyStateBody></EmptyState>;
   }
 
-  const phaseColor = (phase?: string): 'green' | 'red' | 'blue' | 'grey' => {
-    switch (phase) {
-      case 'Running': return 'green';
-      case 'Succeeded': return 'green';
-      case 'Failed': case 'Error': return 'red';
-      case 'Pending': return 'blue';
-      default: return 'grey';
-    }
-  };
+  const podPhaseColor = (phase?: string) => phase === 'Running' ? 'green' as const : phaseColor(phase);
 
   return (
     <Table aria-label={t('Pods')} isCompact isStriped className="pf-v6-u-mt-md">
@@ -72,7 +65,7 @@ export const PodsTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
               <Td>
                 <ResourceLink groupVersionKind={{ group: '', version: 'v1', kind: 'Pod' }} name={pod.metadata.name} namespace={pod.metadata.namespace} />
               </Td>
-              <Td><Label isCompact color={phaseColor(pod.status?.phase)}>{pod.status?.phase ?? t('Unknown')}</Label></Td>
+              <Td><Label isCompact color={podPhaseColor(pod.status?.phase)}>{pod.status?.phase ?? t('Unknown')}</Label></Td>
               <Td>{readyCount}/{containers.length}</Td>
               <Td>{restarts}</Td>
               <Td>{pod.metadata.creationTimestamp ? new Date(pod.metadata.creationTimestamp).toLocaleString() : '-'}</Td>

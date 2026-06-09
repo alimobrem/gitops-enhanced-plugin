@@ -11,6 +11,8 @@ import { EllipsisVIcon } from '@patternfly/react-icons';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { useApplicationActions } from '../../hooks/useApplicationActions';
 import { timeAgo } from '../../utils/time';
+import { phaseColor } from '../../utils/status';
+import { buildCommitUrl } from '../../utils/argo-urls';
 import type { ApplicationResource } from '../../types';
 
 function formatDuration(startStr?: string, endStr?: string): string {
@@ -25,24 +27,6 @@ function formatDuration(startStr?: string, endStr?: string): string {
   const hours = Math.floor(mins / 60);
   const remainMins = mins % 60;
   return `${hours}h ${remainMins}m`;
-}
-
-function commitUrl(repoURL?: string, revision?: string): string | null {
-  if (!repoURL || !revision) return null;
-  const cleanUrl = repoURL.replace(/\.git$/, '');
-  if (cleanUrl.includes('github.com')) return `${cleanUrl}/commit/${revision}`;
-  if (cleanUrl.includes('gitlab.com') || cleanUrl.includes('gitlab')) return `${cleanUrl}/-/commit/${revision}`;
-  if (cleanUrl.includes('bitbucket.org')) return `${cleanUrl}/commits/${revision}`;
-  return null;
-}
-
-function phaseColor(phase?: string): 'green' | 'red' | 'blue' | 'grey' {
-  switch (phase) {
-    case 'Succeeded': return 'green';
-    case 'Failed': case 'Error': return 'red';
-    case 'Running': return 'blue';
-    default: return 'grey';
-  }
 }
 
 const RowActions: FC<{
@@ -126,7 +110,7 @@ export const HistoryTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
         </Thead>
         <Tbody>
           {history.map((entry, idx) => {
-            const url = commitUrl(entry.source?.repoURL, entry.revision);
+            const url = buildCommitUrl(entry.source?.repoURL, entry.revision);
             const opPhase = idx === 0 ? app.status?.operationState?.phase : undefined;
 
             return (

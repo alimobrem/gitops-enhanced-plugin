@@ -12,3 +12,18 @@ export function parsePrometheusGauge(
   }
   return m;
 }
+
+export function parsePrometheusScalar(
+  resp: { data?: { result?: Array<{ value?: [number, string] }> } } | undefined,
+): number | null {
+  if (!resp?.data?.result?.[0]?.value) return null;
+  const val = parseFloat(resp.data.result[0].value[1]);
+  return isNaN(val) ? null : val;
+}
+
+export function parsePrometheusRange(
+  resp: { data?: { result?: Array<{ values?: Array<[number, string]> }> } } | undefined,
+): Array<{ x: Date; y: number }> {
+  const values = resp?.data?.result?.[0]?.values ?? [];
+  return values.map(([ts, val]) => ({ x: new Date(ts * 1000), y: parseFloat(val) || 0 }));
+}
