@@ -1,5 +1,6 @@
 import React from 'react';
 import { useMemo, type FC } from 'react';
+import { Link } from 'react-router-dom';
 import {
   useK8sWatchResource,
   DocumentTitle,
@@ -68,6 +69,8 @@ import {
 import './GitOpsDashboardPage.css';
 import './GitOpsDashboardCharts.css';
 
+const CHART_TIMESPAN_MS = 24 * 60 * 60 * 1000;
+const CHART_SAMPLES = 96;
 const SYNC_CHART_STYLE = { data: { fill: '#3e8635', fillOpacity: 0.15, stroke: '#3e8635' } };
 const RECONCILE_CHART_STYLE = { data: { fill: '#06c', fillOpacity: 0.15, stroke: '#06c' } };
 const CHART_PADDING = { top: 10, right: 20, bottom: 40, left: 50 };
@@ -234,14 +237,14 @@ export const GitOpsDashboardPage: FC = () => {
   const [syncRangeResp] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY_RANGE,
     query: `sum(increase(argocd_app_sync_total{${nsFilter}}[1h]))`,
-    timespan: 24 * 60 * 60 * 1000,
-    samples: 96,
+    timespan: CHART_TIMESPAN_MS,
+    samples: CHART_SAMPLES,
   });
   const [reconcileRangeResp] = usePrometheusPoll({
     endpoint: PrometheusEndpoint.QUERY_RANGE,
     query: `sum(increase(argocd_app_reconcile_count{${nsFilter}}[1h]))`,
-    timespan: 24 * 60 * 60 * 1000,
-    samples: 96,
+    timespan: CHART_TIMESPAN_MS,
+    samples: CHART_SAMPLES,
   });
 
   const syncChartData = useMemo(
@@ -392,9 +395,10 @@ export const GitOpsDashboardPage: FC = () => {
                               )}
                             </Td>
                             <Td className="gitops-dashboard__issue-cell">
-                              {issues.length > 0 ? (
-                                <Tooltip content={issues.join('\n')}><span>{issues.join('; ')}</span></Tooltip>
-                              ) : '-'}
+                              {issues.length > 0 ? (() => {
+                                const text = issues.join('; ');
+                                return <Tooltip content={text}><span>{text}</span></Tooltip>;
+                              })() : '-'}
                             </Td>
                           </Tr>
                         );
@@ -635,7 +639,7 @@ export const GitOpsDashboardPage: FC = () => {
                   <FlexItem>{t('Applications')} ({total})</FlexItem>
                   {total > 10 && (
                     <FlexItem>
-                      <a href="/k8s/all-namespaces/argoproj.io~v1alpha1~Application">{t('View all')}</a>
+                      <Link to="/k8s/all-namespaces/argoproj.io~v1alpha1~Application">{t('View all')}</Link>
                     </FlexItem>
                   )}
                 </Flex>
