@@ -33,6 +33,7 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
   const [confirmAction, setConfirmAction] = useState<{ type: 'retry' | 'approve'; key: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
   const [actionError, setActionError] = useState('');
+  const [actionSuccess, setActionSuccess] = useState('');
 
   const proposedChecks = targetStage.proposedChecks;
   const activeChecks = targetStage.activeChecks;
@@ -41,11 +42,14 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
     if (!confirmAction) return;
     setActionLoading(true);
     setActionError('');
+    setActionSuccess('');
     try {
       if (confirmAction.type === 'retry') {
         await onRetryCheck(confirmAction.key);
+        setActionSuccess(t('"{{key}}" reset to pending — waiting for rerun', { key: confirmAction.key }));
       } else {
         await onApproveCheck(confirmAction.key);
+        setActionSuccess(t('"{{key}}" approved — promotion will proceed once all checks pass', { key: confirmAction.key }));
       }
       setConfirmAction(null);
     } catch (e) {
@@ -61,6 +65,16 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
         {t('Gate: {{source}} → {{target}}', { source: gate.sourceEnv, target: gate.targetEnv })}
       </CardTitle>
       <CardBody>
+        {actionSuccess && (
+          <Alert variant="success" isInline title={actionSuccess} className="pf-v6-u-mb-md"
+            actionClose={<Button variant="plain" aria-label="Close" onClick={() => setActionSuccess('')} />}
+          />
+        )}
+        {actionError && !confirmAction && (
+          <Alert variant="danger" isInline title={actionError} className="pf-v6-u-mb-md"
+            actionClose={<Button variant="plain" aria-label="Close" onClick={() => setActionError('')} />}
+          />
+        )}
         {gate.pr?.url && (
           <div className="gitops-gate-detail__pr-link">
             <Button
