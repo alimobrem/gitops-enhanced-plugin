@@ -174,6 +174,7 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
                     key={entry.key}
                     entry={entry}
                     onRetry={() => setConfirmAction({ type: 'retry', key: entry.key })}
+                    onApprove={() => setConfirmAction({ type: 'approve', key: entry.key })}
                   />
                 ))}
               </Tbody>

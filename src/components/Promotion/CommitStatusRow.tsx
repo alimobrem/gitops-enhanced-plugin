@@ -2,6 +2,7 @@ import React from 'react';
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Button, Label } from '@patternfly/react-core';
+import { Tr, Td } from '@patternfly/react-table';
 import {
   CheckCircleIcon,
   ExclamationCircleIcon,
@@ -37,17 +38,17 @@ export const CommitStatusRow: FC<CommitStatusRowProps> = ({ entry, onRetry, onAp
   const canApprove = entry.phase === 'pending' && onApprove;
 
   return (
-    <tr>
-      <td>
+    <Tr>
+      <Td>
         <PhaseIcon phase={entry.phase} />{' '}
         {entry.key}
-      </td>
-      <td>
+      </Td>
+      <Td>
         <Label isCompact color={commitStatusPhaseColor[entry.phase] ?? 'grey'}>
           {entry.phase}
         </Label>
-      </td>
-      <td>
+      </Td>
+      <Td>
         {safeUrl ? (
           <Button variant="link" size="sm" component="a" href={safeUrl} target="_blank" rel="noopener noreferrer">
             {t('View Logs')}
@@ -55,8 +56,8 @@ export const CommitStatusRow: FC<CommitStatusRowProps> = ({ entry, onRetry, onAp
         ) : (
           <span className="pf-v6-u-color-200">{t('Manual check')}</span>
         )}
-      </td>
-      <td>
+      </Td>
+      <Td>
         {canRetry && (
           <Button variant="secondary" isSmall onClick={onRetry}>
             {t('Retry')}
@@ -67,7 +68,7 @@ export const CommitStatusRow: FC<CommitStatusRowProps> = ({ entry, onRetry, onAp
             {t('Approve')}
           </Button>
         )}
-      </td>
-    </tr>
+      </Td>
+    </Tr>
   );
 };
