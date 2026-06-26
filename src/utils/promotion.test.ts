@@ -1,6 +1,7 @@
 import {
   deriveEnvLabel,
   derivePipelineStatus,
+  computeStuckMinutes,
 } from './promotion';
 import type { PromotionStrategyResource } from '../types';
 
@@ -156,5 +157,69 @@ describe('derivePipelineStatus', () => {
     const result = derivePipelineStatus(strategy);
     expect(result.stages[0].activeSha).toBe('abc1234567890');
     expect(result.stages[2].activeSha).toBe('ghi9012345678');
+  });
+
+  it('computes stuckMinutes when all checks pending and PR is old', () => {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const strategy = makeStrategy({
+      status: {
+        environments: [
+          { branch: 'env/dev', proposed: { commitStatuses: [{ key: 'test', phase: 'pending' }] }, active: {}, pullRequest: { state: 'open', prCreationTime: oneHourAgo } },
+          { branch: 'env/staging', proposed: {}, active: {} },
+          { branch: 'env/prod', proposed: {}, active: {} },
+        ],
+      },
+    });
+    const result = derivePipelineStatus(strategy);
+    expect(result.stages[0].stuckMinutes).toBeGreaterThanOrEqual(59);
+  });
+
+  it('stuckMinutes is 0 when checks are not all pending', () => {
+    const oneHourAgo = new Date(Date.now() - 60 * 60 * 1000).toISOString();
+    const strategy = makeStrategy({
+      status: {
+        environments: [
+          { branch: 'env/dev', proposed: { commitStatuses: [{ key: 'test', phase: 'success' }] }, active: {}, pullRequest: { state: 'open', prCreationTime: oneHourAgo } },
+          { branch: 'env/staging', proposed: {}, active: {} },
+          { branch: 'env/prod', proposed: {}, active: {} },
+        ],
+      },
+    });
+    const result = derivePipelineStatus(strategy);
+    expect(result.stages[0].stuckMinutes).toBe(0);
+  });
+
+  it('stuckMinutes is 0 when no PR exists', () => {
+    const strategy = makeStrategy({
+      status: {
+        environments: [
+          { branch: 'env/dev', proposed: { commitStatuses: [{ key: 'test', phase: 'pending' }] }, active: {} },
+          { branch: 'env/staging', proposed: {}, active: {} },
+          { branch: 'env/prod', proposed: {}, active: {} },
+        ],
+      },
+    });
+    const result = derivePipelineStatus(strategy);
+    expect(result.stages[0].stuckMinutes).toBe(0);
+  });
+});
+
+describe('computeStuckMinutes', () => {
+  it('returns minutes when all checks pending', () => {
+    const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    expect(computeStuckMinutes(thirtyMinsAgo, [{ key: 'a', phase: 'pending' }])).toBeGreaterThanOrEqual(29);
+  });
+
+  it('returns 0 when any check is not pending', () => {
+    const thirtyMinsAgo = new Date(Date.now() - 30 * 60 * 1000).toISOString();
+    expect(computeStuckMinutes(thirtyMinsAgo, [{ key: 'a', phase: 'pending' }, { key: 'b', phase: 'success' }])).toBe(0);
+  });
+
+  it('returns 0 with no PR creation time', () => {
+    expect(computeStuckMinutes(undefined, [{ key: 'a', phase: 'pending' }])).toBe(0);
+  });
+
+  it('returns 0 with empty checks', () => {
+    expect(computeStuckMinutes(new Date().toISOString(), [])).toBe(0);
   });
 });

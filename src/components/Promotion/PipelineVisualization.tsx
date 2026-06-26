@@ -197,6 +197,7 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
         <GateDetailPanel
           gate={gates[selection.index]}
           targetStage={stages[selection.index + 1]}
+          stuckMinutes={stages[selection.index + 1]?.stuckMinutes ?? 0}
           onRetryCheck={handleRetry}
           onApproveCheck={handleApprove}
         />

@@ -2,6 +2,7 @@ import React from 'react';
 import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardBody, Label, Tooltip } from '@patternfly/react-core';
+import { ExclamationTriangleIcon } from '@patternfly/react-icons';
 import type { DerivedPipelineStage, PipelineStageStatus } from '../../utils/promotion';
 import { timeAgo } from '../../utils/time';
 
@@ -75,6 +76,13 @@ export const EnvironmentStageCard: FC<EnvironmentStageCardProps> = ({ stage, isS
         )}
         {!stage.pr?.createdAt && stage.activeCommitTime && stage.status === 'healthy' && (
           <div className="gitops-env-time">{timeAgo(stage.activeCommitTime)}</div>
+        )}
+        {stage.stuckMinutes >= 30 && (
+          <Tooltip content={t('All checks pending for {{minutes}}m — click for details', { minutes: stage.stuckMinutes })}>
+            <div className="gitops-env-stuck">
+              <ExclamationTriangleIcon color="var(--pf-t--global--color--status--warning--default)" /> {t('Stuck')}
+            </div>
+          </Tooltip>
         )}
       </CardBody>
     </Card>

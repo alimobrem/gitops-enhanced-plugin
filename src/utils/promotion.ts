@@ -32,6 +32,14 @@ export interface DerivedPipelineStage {
   proposedChecks: CommitStatusPhaseEntry[];
   activeChecks: CommitStatusPhaseEntry[];
   history: PromotionHistoryEntry[];
+  stuckMinutes: number;
+}
+
+export function computeStuckMinutes(prCreatedAt?: string, checks?: CommitStatusPhaseEntry[]): number {
+  if (!prCreatedAt || !checks || checks.length === 0) return 0;
+  const allPending = checks.every((c) => c.phase === 'pending');
+  if (!allPending) return 0;
+  return Math.floor((Date.now() - new Date(prCreatedAt).getTime()) / 60000);
 }
 
 export function buildCommitLink(repoURL: string | undefined, sha: string): string | undefined {
@@ -120,6 +128,10 @@ export function derivePipelineStatus(strategy: PromotionStrategyResource): {
         subject: h.active?.hydrated?.subject,
         commitTime: h.active?.hydrated?.commitTime,
       })),
+      stuckMinutes: computeStuckMinutes(
+        envStatus?.pullRequest?.prCreationTime,
+        [...proposedChecks, ...activeChecks],
+      ),
     };
   });
 
@@ -144,6 +156,8 @@ export function derivePipelineStatus(strategy: PromotionStrategyResource): {
 
   return { stages, gates, overallStatus };
 }
+
+export const STUCK_THRESHOLD_MINUTES = 30;
 
 export const commitStatusPhaseColor: Record<string, 'green' | 'red' | 'blue' | 'gold' | 'grey'> = {
   success: 'green',

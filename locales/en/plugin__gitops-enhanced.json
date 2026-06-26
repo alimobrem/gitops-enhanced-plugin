@@ -532,5 +532,9 @@
   "Live": "Live",
   "Promotion History": "Promotion History",
   "When": "When",
-  "Related Applications": "Related Applications"
+  "Related Applications": "Related Applications",
+  "Stuck": "Stuck",
+  "All checks pending for {{minutes}}m — click for details": "All checks pending for {{minutes}}m — click for details",
+  "Promotion stuck for {{minutes}} minutes": "Promotion stuck for {{minutes}} minutes",
+  "All checks have been pending since the PR was opened. Verify that your CI system (Tekton, GitHub Actions) is configured to report commit statuses for this repository, or manually approve the checks below.": "All checks have been pending since the PR was opened. Verify that your CI system (Tekton, GitHub Actions) is configured to report commit statuses for this repository, or manually approve the checks below."
 }

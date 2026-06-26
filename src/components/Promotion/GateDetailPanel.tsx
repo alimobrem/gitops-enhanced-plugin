@@ -19,6 +19,7 @@ import type { DerivedGateStatus, DerivedPipelineStage } from '../../utils/promot
 interface GateDetailPanelProps {
   gate: DerivedGateStatus;
   targetStage: DerivedPipelineStage;
+  stuckMinutes: number;
   onRetryCheck: (key: string) => Promise<void>;
   onApproveCheck: (key: string) => Promise<void>;
 }
@@ -26,6 +27,7 @@ interface GateDetailPanelProps {
 export const GateDetailPanel: FC<GateDetailPanelProps> = ({
   gate,
   targetStage,
+  stuckMinutes,
   onRetryCheck,
   onApproveCheck,
 }) => {
@@ -74,6 +76,13 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
           <Alert variant="danger" isInline title={actionError} className="pf-v6-u-mb-md"
             actionClose={<Button variant="plain" aria-label="Close" onClick={() => setActionError('')} />}
           />
+        )}
+        {stuckMinutes >= 30 && (
+          <Alert variant="warning" isInline className="pf-v6-u-mb-md"
+            title={t('Promotion stuck for {{minutes}} minutes', { minutes: stuckMinutes })}
+          >
+            {t('All checks have been pending since the PR was opened. Verify that your CI system (Tekton, GitHub Actions) is configured to report commit statuses for this repository, or manually approve the checks below.')}
+          </Alert>
         )}
         {gate.pr?.url && (
           <div className="gitops-gate-detail__pr-link">

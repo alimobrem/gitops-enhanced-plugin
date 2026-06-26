@@ -48,6 +48,13 @@
   margin-top: 0.25rem;
 }
 
+.gitops-env-stuck {
+  font-size: 0.6875rem;
+  font-weight: 600;
+  color: var(--pf-t--global--color--status--warning--default);
+  margin-top: 0.25rem;
+}
+
 .gitops-env-time {
   font-size: 0.6875rem;
   color: var(--pf-t--global--text--color--subtle);

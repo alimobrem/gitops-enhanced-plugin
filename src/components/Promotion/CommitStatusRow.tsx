@@ -49,13 +49,16 @@ export const CommitStatusRow: FC<CommitStatusRowProps> = ({ entry, onRetry, onAp
         </Label>
       </Td>
       <Td>
+        {entry.description && (
+          <div className="pf-v6-u-color-200 pf-v6-u-font-size-sm">{entry.description}</div>
+        )}
         {safeUrl ? (
           <Button variant="link" size="sm" component="a" href={safeUrl} target="_blank" rel="noopener noreferrer">
             {t('View Logs')}
           </Button>
-        ) : (
+        ) : !entry.description ? (
           <span className="pf-v6-u-color-200">{t('Manual check')}</span>
-        )}
+        ) : null}
       </Td>
       <Td>
         {canRetry && (
