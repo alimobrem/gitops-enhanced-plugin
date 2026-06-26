@@ -24,9 +24,16 @@ export const PromotionTab: FC<PromotionTabProps> = ({ obj }) => {
 
   const match = useMemo(() => {
     if (!loaded || strategies.length === 0 || !app) return null;
-    return strategies.find((s) =>
-      s.spec.gitRepositoryRef.name && app.spec?.source?.repoURL?.includes(s.spec.gitRepositoryRef.name),
-    ) ?? null;
+    const repoURL = app.spec?.source?.repoURL ?? '';
+    return strategies.find((s) => {
+      const ref = s.spec.gitRepositoryRef.name;
+      if (!ref) return false;
+      const repoPath = repoURL.replace(/\.git$/, '').split('/').slice(-2).join('/');
+      const envRepoURL = s.status?.environments?.[0]?.proposed?.dry?.repoURL ?? '';
+      const envPath = envRepoURL.replace(/\.git$/, '').replace(/^https?:\/\/(git@)?/, '').split('/').slice(-2).join('/');
+      if (envPath && repoPath) return repoPath === envPath;
+      return false;
+    }) ?? null;
   }, [strategies, loaded, app]);
 
   if (!app?.metadata) return <Bullseye><Spinner /></Bullseye>;

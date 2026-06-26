@@ -36,8 +36,8 @@ const matchingStrategy: PromotionStrategyResource = {
   },
   status: {
     environments: [
-      { branch: 'env/dev', proposed: {}, active: { dry: { sha: 'aaa' } } },
-      { branch: 'env/prod', proposed: {}, active: { dry: { sha: 'aaa' } } },
+      { branch: 'env/dev', proposed: { dry: { sha: 'aaa', repoURL: 'https://github.com/org/my-repo' } }, active: { dry: { sha: 'aaa' } } },
+      { branch: 'env/prod', proposed: { dry: { sha: 'aaa', repoURL: 'https://github.com/org/my-repo' } }, active: { dry: { sha: 'aaa' } } },
     ],
   },
 };
@@ -46,10 +46,10 @@ const blockedStrategy: PromotionStrategyResource = {
   ...matchingStrategy,
   status: {
     environments: [
-      { branch: 'env/dev', proposed: {}, active: { dry: { sha: 'aaa' } } },
+      { branch: 'env/dev', proposed: { dry: { sha: 'aaa', repoURL: 'https://github.com/org/my-repo' } }, active: { dry: { sha: 'aaa' } } },
       {
         branch: 'env/prod',
-        proposed: { commitStatuses: [{ key: 'security-scan', phase: 'failure' }] },
+        proposed: { dry: { sha: 'bbb', repoURL: 'https://github.com/org/my-repo' }, commitStatuses: [{ key: 'security-scan', phase: 'failure' }] },
         active: { dry: { sha: 'bbb' } },
       },
     ],
@@ -74,6 +74,12 @@ describe('PromotionBanner', () => {
     const nonMatchingStrategy: PromotionStrategyResource = {
       ...matchingStrategy,
       spec: { ...matchingStrategy.spec, gitRepositoryRef: { name: 'other-repo' } },
+      status: {
+        environments: [
+          { branch: 'env/dev', proposed: { dry: { sha: 'aaa', repoURL: 'https://github.com/other-org/other-repo' } }, active: { dry: { sha: 'aaa' } } },
+          { branch: 'env/prod', proposed: { dry: { sha: 'aaa', repoURL: 'https://github.com/other-org/other-repo' } }, active: { dry: { sha: 'aaa' } } },
+        ],
+      },
     };
     mockUseK8sWatchResource.mockReturnValue([[nonMatchingStrategy], true, undefined]);
     const { container } = render(
