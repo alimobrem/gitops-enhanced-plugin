@@ -1,10 +1,12 @@
 import React from 'react';
-import { useState, useMemo, useCallback, type FC } from 'react';
+import { useState, useEffect, useRef, useMemo, useCallback, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
+  Alert, AlertActionCloseButton,
   Card, CardTitle, CardBody,
   Flex, FlexItem,
 } from '@patternfly/react-core';
+import { SyncAltIcon } from '@patternfly/react-icons';
 import { ArrowRightIcon } from '@patternfly/react-icons';
 import { k8sPatch, k8sCreate } from '@openshift-console/dynamic-plugin-sdk';
 import { PromoterCommitStatusModel } from '../../models';
@@ -34,6 +36,33 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
     () => derivePipelineStatus(strategy),
     [strategy],
   );
+
+  const [toasts, setToasts] = useState<Array<{ id: number; message: string; variant: 'success' | 'danger' | 'info' }>>([]);
+  const prevChecksRef = useRef<Record<string, string>>({});
+  const toastIdRef = useRef(0);
+
+  useEffect(() => {
+    const currentChecks: Record<string, string> = {};
+    stages.forEach((stage) => {
+      [...stage.proposedChecks, ...stage.activeChecks].forEach((c) => {
+        currentChecks[`${stage.label}/${c.key}`] = c.phase;
+      });
+    });
+    const prev = prevChecksRef.current;
+    if (Object.keys(prev).length > 0) {
+      Object.entries(currentChecks).forEach(([key, phase]) => {
+        const old = prev[key];
+        if (old && old !== phase) {
+          const [env, check] = key.split('/');
+          const id = ++toastIdRef.current;
+          const variant = phase === 'success' ? 'success' : phase === 'failure' ? 'danger' : 'info';
+          setToasts((t) => [...t, { id, message: `${check} → ${phase} (${env})`, variant }]);
+          setTimeout(() => setToasts((t) => t.filter((toast) => toast.id !== id)), 8000);
+        }
+      });
+    }
+    prevChecksRef.current = currentChecks;
+  }, [stages]);
 
   const setCommitStatusPhase = useCallback(
     async (key: string, sha: string, phase: 'pending' | 'success') => {
@@ -96,8 +125,27 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
 
   return (
     <div className="gitops-pipeline">
+      {toasts.map((toast) => (
+        <Alert
+          key={toast.id}
+          variant={toast.variant}
+          isInline
+          title={toast.message}
+          className="pf-v6-u-mb-sm"
+          actionClose={<AlertActionCloseButton onClose={() => setToasts((t) => t.filter((x) => x.id !== toast.id))} />}
+        />
+      ))}
+
       <Card isCompact className="pf-v6-u-mb-md">
-        <CardTitle>{t('Promotion Pipeline')}</CardTitle>
+        <CardTitle>
+          <Flex justifyContent={{ default: 'justifyContentSpaceBetween' }} alignItems={{ default: 'alignItemsCenter' }}>
+            <FlexItem>{t('Promotion Pipeline')}</FlexItem>
+            <FlexItem>
+              <SyncAltIcon className="gitops-live-indicator" />
+              <span className="gitops-live-text">{t('Live')}</span>
+            </FlexItem>
+          </Flex>
+        </CardTitle>
         <CardBody>
           <Flex spaceItems={FLEX_SPACE_SM} alignItems={FLEX_ALIGN_CENTER}>
             {stages.map((stage, i) => (
@@ -142,7 +190,7 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
       </Card>
 
       {selection?.type === 'env' && stages[selection.index] && (
-        <EnvironmentDetailPanel stage={stages[selection.index]} />
+        <EnvironmentDetailPanel stage={stages[selection.index]} namespace={strategy.metadata.namespace} />
       )}
 
       {selection?.type === 'gate' && gates[selection.index] && (

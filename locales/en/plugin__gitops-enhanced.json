@@ -528,5 +528,9 @@
   "Proposed": "Proposed",
   "opened {{time}}": "opened {{time}}",
   "\"{{key}}\" approved — promotion will proceed once all checks pass": "\"{{key}}\" approved — promotion will proceed once all checks pass",
-  "\"{{key}}\" reset to pending — waiting for rerun": "\"{{key}}\" reset to pending — waiting for rerun"
+  "\"{{key}}\" reset to pending — waiting for rerun": "\"{{key}}\" reset to pending — waiting for rerun",
+  "Live": "Live",
+  "Promotion History": "Promotion History",
+  "When": "When",
+  "Related Applications": "Related Applications"
 }

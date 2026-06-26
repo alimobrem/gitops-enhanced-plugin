@@ -3,6 +3,7 @@ import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardBody, Label, Tooltip } from '@patternfly/react-core';
 import type { DerivedPipelineStage, PipelineStageStatus } from '../../utils/promotion';
+import { timeAgo } from '../../utils/time';
 
 const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | 'gold'> = {
   healthy: 'green',
@@ -68,6 +69,12 @@ export const EnvironmentStageCard: FC<EnvironmentStageCardProps> = ({ stage, isS
           <div className="gitops-env-sha">
             PR #{stage.pr.id ?? '?'}
           </div>
+        )}
+        {stage.pr?.createdAt && stage.status === 'promoting' && (
+          <div className="gitops-env-time">{timeAgo(stage.pr.createdAt)}</div>
+        )}
+        {!stage.pr?.createdAt && stage.activeCommitTime && stage.status === 'healthy' && (
+          <div className="gitops-env-time">{timeAgo(stage.activeCommitTime)}</div>
         )}
       </CardBody>
     </Card>

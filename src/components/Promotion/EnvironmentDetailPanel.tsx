@@ -15,6 +15,9 @@ import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 import type { DerivedPipelineStage, PipelineStageStatus } from '../../utils/promotion';
 import { commitStatusPhaseColor, buildCommitLink } from '../../utils/promotion';
+import { useApplications } from '../../hooks/useApplications';
+import { ApplicationGroupVersionKind } from '../../models';
+import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
 import { timeAgo } from '../../utils/time';
 
 const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | 'gold'> = {
@@ -39,10 +42,16 @@ const CommitLink: FC<{ sha: string; repoURL?: string }> = ({ sha, repoURL }) => 
 
 interface EnvironmentDetailPanelProps {
   stage: DerivedPipelineStage;
+  namespace?: string;
 }
 
-export const EnvironmentDetailPanel: FC<EnvironmentDetailPanelProps> = ({ stage }) => {
+export const EnvironmentDetailPanel: FC<EnvironmentDetailPanelProps> = ({ stage, namespace }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
+  const [apps] = useApplications(namespace);
+
+  const relatedApps = apps.filter((app) =>
+    stage.repoURL && app.spec?.source?.repoURL?.includes(stage.repoURL.replace(/^https?:\/\/git@/, '').replace(/\.git$/, '').split('/').slice(-2).join('/')),
+  );
 
   const hasProposed = stage.proposedSha && stage.proposedSha !== stage.activeSha;
   const allChecks = [...stage.proposedChecks, ...stage.activeChecks];
@@ -179,6 +188,48 @@ export const EnvironmentDetailPanel: FC<EnvironmentDetailPanelProps> = ({ stage 
                     <Td>
                       <Label isCompact color={commitStatusPhaseColor[c.phase] ?? 'grey'}>{c.phase}</Label>
                     </Td>
+                  </Tr>
+                ))}
+              </Tbody>
+            </Table>
+          </div>
+        )}
+        {relatedApps.length > 0 && (
+          <div className="pf-v6-u-mt-md">
+            <div className="pf-v6-u-font-weight-bold pf-v6-u-mb-sm">{t('Related Applications')}</div>
+            {relatedApps.map((app) => (
+              <div key={app.metadata.uid} className="pf-v6-u-mb-xs">
+                <ResourceLink
+                  groupVersionKind={ApplicationGroupVersionKind}
+                  name={app.metadata.name}
+                  namespace={app.metadata.namespace}
+                />
+              </div>
+            ))}
+          </div>
+        )}
+
+        {stage.history.length > 0 && (
+          <div className="pf-v6-u-mt-md">
+            <div className="pf-v6-u-font-weight-bold pf-v6-u-mb-sm">{t('Promotion History')}</div>
+            <Table aria-label={t('Promotion History')} isCompact isStriped>
+              <Thead>
+                <Tr>
+                  <Th>{t('Commit')}</Th>
+                  <Th>{t('Author')}</Th>
+                  <Th>{t('Message')}</Th>
+                  <Th>{t('When')}</Th>
+                </Tr>
+              </Thead>
+              <Tbody>
+                {stage.history.slice(0, 10).map((h, i) => (
+                  <Tr key={i}>
+                    <Td className="gitops-env-sha">
+                      {h.activeSha ? <CommitLink sha={h.activeSha} repoURL={stage.repoURL} /> : '-'}
+                    </Td>
+                    <Td>{h.author ?? '-'}</Td>
+                    <Td>{h.subject ?? '-'}</Td>
+                    <Td>{h.commitTime ? timeAgo(h.commitTime) : '-'}</Td>
                   </Tr>
                 ))}
               </Tbody>

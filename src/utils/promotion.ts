@@ -8,6 +8,14 @@ import type {
 export type PipelineStageStatus = 'healthy' | 'promoting' | 'blocked' | 'pending';
 export type GateStatus = 'passed' | 'blocked' | 'running' | 'waiting';
 
+export interface PromotionHistoryEntry {
+  activeSha?: string;
+  activeHydratedSha?: string;
+  author?: string;
+  subject?: string;
+  commitTime?: string;
+}
+
 export interface DerivedPipelineStage {
   branch: string;
   label: string;
@@ -15,6 +23,7 @@ export interface DerivedPipelineStage {
   repoURL?: string;
   activeSha: string;
   activeHydratedSha?: string;
+  activeCommitTime?: string;
   proposedSha?: string;
   proposedHydratedSha?: string;
   activeNote?: HydratorMetadata;
@@ -22,6 +31,7 @@ export interface DerivedPipelineStage {
   pr?: { state: string; url?: string; id?: string; createdAt?: string };
   proposedChecks: CommitStatusPhaseEntry[];
   activeChecks: CommitStatusPhaseEntry[];
+  history: PromotionHistoryEntry[];
 }
 
 export function buildCommitLink(repoURL: string | undefined, sha: string): string | undefined {
@@ -88,6 +98,7 @@ export function derivePipelineStatus(strategy: PromotionStrategyResource): {
       repoURL: envStatus?.proposed?.dry?.repoURL ?? envStatus?.active?.dry?.repoURL,
       activeSha: envStatus?.active?.dry?.sha ?? '',
       activeHydratedSha: envStatus?.active?.hydrated?.sha,
+      activeCommitTime: envStatus?.active?.hydrated?.commitTime ?? envStatus?.active?.dry?.commitTime,
       proposedSha: envStatus?.proposed?.dry?.sha,
       proposedHydratedSha: envStatus?.proposed?.hydrated?.sha,
       activeNote: envStatus?.active?.note,
@@ -102,6 +113,13 @@ export function derivePipelineStatus(strategy: PromotionStrategyResource): {
         : undefined,
       proposedChecks,
       activeChecks,
+      history: (envStatus?.history ?? []).map((h) => ({
+        activeSha: h.active?.dry?.sha,
+        activeHydratedSha: h.active?.hydrated?.sha,
+        author: h.active?.hydrated?.author,
+        subject: h.active?.hydrated?.subject,
+        commitTime: h.active?.hydrated?.commitTime,
+      })),
     };
   });
 
