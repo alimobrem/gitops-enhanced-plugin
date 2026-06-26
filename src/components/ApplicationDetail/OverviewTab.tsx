@@ -33,6 +33,7 @@ import type { ApplicationResource } from '../../types';
 import { getApplicationSource, getAllSources, isMultiSource } from '../../utils/application';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { ConditionsBanner } from './ConditionsBanner';
+import { PromotionBanner } from '../Promotion/PromotionBanner';
 import { useSyncWindowStatus } from '../../hooks/useSyncWindowStatus';
 import {
   FLEX_SPACE_SM,
@@ -124,6 +125,7 @@ export const OverviewTab: FC<{ obj?: Record<string, unknown> }> = ({ obj }) => {
   return (
     <>
     <ConditionsBanner conditions={app?.status?.conditions} />
+    <PromotionBanner app={app} />
     {syncWindow.blocked && (
       <Alert variant="warning" isInline isPlain title={t('Sync blocked')} className="pf-v6-u-mb-md">
         {t('A deny sync window is currently active on project {{project}}', { project: syncWindow.projectName })}

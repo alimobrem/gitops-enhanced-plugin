@@ -21,6 +21,16 @@
   {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"ApplicationSet"},"component":{"$codeRef":"ApplicationSetListPage"}},"flags":{"required":["ARGOCD_APPLICATIONSET"]}},
   {"type":"console.page/route","properties":{"exact":true,"path":"/gitops/create-appset","component":{"$codeRef":"ApplicationSetCreatePage"}},"flags":{"required":["ARGOCD_APPLICATIONSET"]}},
 
+  {"type":"console.flag/model","properties":{"model":{"group":"promoter.argoproj.io","version":"v1alpha1","kind":"PromotionStrategy"},"flag":"GITOPS_PROMOTIONSTRATEGY"}},
+
+  {"type":"console.navigation/resource-ns","properties":{"id":"gitops-promotions","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~Promotion Pipelines%","model":{"group":"promoter.argoproj.io","version":"v1alpha1","kind":"PromotionStrategy"},"insertAfter":"gitops-applicationsets"},"flags":{"required":["GITOPS_PROMOTIONSTRATEGY"]}},
+  {"type":"console.page/resource/list","properties":{"model":{"group":"promoter.argoproj.io","version":"v1alpha1","kind":"PromotionStrategy"},"component":{"$codeRef":"PromotionListPage"}},"flags":{"required":["GITOPS_PROMOTIONSTRATEGY"]}},
+  {"type":"console.page/route","properties":{"exact":true,"path":"/gitops/create-promotion","component":{"$codeRef":"PromotionCreatePage"}},"flags":{"required":["GITOPS_PROMOTIONSTRATEGY"]}},
+
+  {"type":"console.tab/horizontalNav","properties":{"model":{"group":"promoter.argoproj.io","version":"v1alpha1","kind":"PromotionStrategy"},"page":{"name":"%plugin__gitops-enhanced~Summary%","href":"summary"},"component":{"$codeRef":"PromotionDetailPage"}},"flags":{"required":["GITOPS_PROMOTIONSTRATEGY"]}},
+
+  {"type":"console.tab/horizontalNav","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Application"},"page":{"name":"%plugin__gitops-enhanced~Promotion%","href":"promotion"},"component":{"$codeRef":"ApplicationPromotionTab"}},"flags":{"required":["ARGOCD_APPLICATION","GITOPS_PROMOTIONSTRATEGY"]}},
+
   {"type":"console.navigation/resource-ns","properties":{"id":"gitops-rollouts","perspective":"admin","section":"gitops","name":"%plugin__gitops-enhanced~Rollouts%","model":{"group":"argoproj.io","version":"v1alpha1","kind":"Rollout"}},"flags":{"required":["ARGOCD_ROLLOUT"]}},
   {"type":"console.page/resource/list","properties":{"model":{"group":"argoproj.io","version":"v1alpha1","kind":"Rollout"},"component":{"$codeRef":"RolloutListPage"}},"flags":{"required":["ARGOCD_ROLLOUT"]}},
   {"type":"console.page/route","properties":{"exact":true,"path":"/gitops/create-rollout","component":{"$codeRef":"RolloutCreatePage"}},"flags":{"required":["ARGOCD_ROLLOUT"]}},

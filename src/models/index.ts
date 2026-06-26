@@ -8,3 +8,4 @@ export { ExperimentModel, ExperimentGroupVersionKind } from './experiment';
 export { NotificationsConfigurationModel, NotificationsConfigurationGroupVersionKind } from './notifications';
 export { ImageUpdaterModel, ImageUpdaterGroupVersionKind } from './imageupdater';
 export { NamespaceManagementModel, NamespaceManagementGroupVersionKind } from './namespacemanagement';
+export { PromotionStrategyModel, PromotionStrategyGroupVersionKind, ChangeTransferPolicyModel, ChangeTransferPolicyGroupVersionKind, PromoterCommitStatusModel, PromoterCommitStatusGroupVersionKind, PromoterPullRequestModel, PromoterPullRequestGroupVersionKind } from './promoter';

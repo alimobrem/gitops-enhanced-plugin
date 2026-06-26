@@ -33,6 +33,10 @@ jest.mock('@patternfly/react-charts/victory', () => ({
   ChartVoronoiContainer: () => <div />,
 }));
 
+jest.mock('./PromotionActivitySection', () => ({
+  PromotionActivitySection: () => null,
+}));
+
 import { GitOpsDashboardPage } from './GitOpsDashboardPage';
 
 describe('GitOpsDashboardPage', () => {

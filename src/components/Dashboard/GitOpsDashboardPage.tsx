@@ -48,6 +48,7 @@ import {
 import { SyncStatusIcon } from '../shared/SyncStatusIcon';
 import { HealthStatusIcon } from '../shared/HealthStatusIcon';
 import { InstancePicker } from '../shared/InstancePicker';
+import { PromotionActivitySection } from './PromotionActivitySection';
 import { InstanceProvider } from '../shared/InstanceProvider';
 import { DismissibleAlert } from '../shared/DismissibleAlert';
 import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
@@ -582,7 +583,10 @@ export const GitOpsDashboardPage: FC = () => {
             </Card>
           </GridItem>
 
-          {/* Row 5: Recent Operations */}
+          {/* Row 5: Promotion Activity */}
+          <PromotionActivitySection namespace={ns} />
+
+          {/* Row 6: Recent Operations */}
           <GridItem span={12}>
             <Card>
               <CardTitle>{t('Recent Operations')}</CardTitle>

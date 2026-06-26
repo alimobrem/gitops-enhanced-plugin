@@ -22,6 +22,10 @@ jest.mock('./ConditionsBanner', () => ({
   ConditionsBanner: () => null,
 }));
 
+jest.mock('../Promotion/PromotionBanner', () => ({
+  PromotionBanner: () => null,
+}));
+
 jest.mock('../../hooks/useSyncWindowStatus', () => ({
   useSyncWindowStatus: () => ({ blocked: false, projectName: 'default' }),
 }));

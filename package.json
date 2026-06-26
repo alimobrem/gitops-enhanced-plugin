@@ -118,7 +118,11 @@
       "RolloutAnalysisRunsTab": "./components/Rollout/AnalysisRunsTab",
       "RolloutExperimentsTab": "./components/Rollout/ExperimentsTab",
       "RolloutConfigTab": "./components/Rollout/RolloutEditTab",
-      "ArgoCDListPage": "./components/ArgoInstance/ArgoCDListPage"
+      "ArgoCDListPage": "./components/ArgoInstance/ArgoCDListPage",
+      "PromotionListPage": "./components/Promotion/PromotionListPage",
+      "PromotionDetailPage": "./components/Promotion/PromotionDetailPage",
+      "PromotionCreatePage": "./components/PromotionCreate/PromotionCreatePage",
+      "ApplicationPromotionTab": "./components/Promotion/PromotionTab"
     },
     "dependencies": {
       "@console/pluginAPI": "*"
