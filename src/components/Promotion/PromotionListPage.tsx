@@ -31,8 +31,7 @@ import {
   useDataViewSort,
 } from '@patternfly/react-data-view';
 import { usePromotionStrategies } from '../../hooks/usePromotionStrategies';
-import { useCurrentInstance, watchNamespace } from '../../hooks/useArgoCDInstances';
-import { InstanceProvider } from '../shared/InstanceProvider';
+import { useActiveNamespace } from '@openshift-console/dynamic-plugin-sdk';
 import { PromotionStrategyGroupVersionKind } from '../../models';
 import { derivePipelineStatus, deriveEnvLabel } from '../../utils/promotion';
 import type { PromotionStrategyResource } from '../../types';
@@ -57,8 +56,9 @@ const INITIAL_FILTERS: FilterValues = { name: '', status: [] };
 
 export const PromotionListPage: FC = () => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const { instance } = useCurrentInstance();
-  const [strategies, loaded, error] = usePromotionStrategies(watchNamespace(instance));
+  const [activeNamespace] = useActiveNamespace();
+  const ns = activeNamespace === '#ALL_NS#' ? undefined : activeNamespace;
+  const [strategies, loaded, error] = usePromotionStrategies(ns);
 
   const { filters, onSetFilters, clearAllFilters } = useDataViewFilters<FilterValues>({
     initialFilters: INITIAL_FILTERS,
@@ -236,9 +236,4 @@ export const PromotionListPage: FC = () => {
   );
 };
 
-const PromotionListPageWithProvider = () => (
-  <InstanceProvider>
-    <PromotionListPage />
-  </InstanceProvider>
-);
-export default PromotionListPageWithProvider;
+export default PromotionListPage;
