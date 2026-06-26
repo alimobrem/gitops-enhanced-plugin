@@ -27,6 +27,11 @@ export interface PromotionStrategySpec {
 
 export interface CommitShaState {
   sha?: string;
+  repoURL?: string;
+  author?: string;
+  commitTime?: string;
+  subject?: string;
+  body?: string;
 }
 
 export interface CommitStatusPhaseEntry {

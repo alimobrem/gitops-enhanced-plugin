@@ -12,6 +12,7 @@ export interface DerivedPipelineStage {
   branch: string;
   label: string;
   status: PipelineStageStatus;
+  repoURL?: string;
   activeSha: string;
   activeHydratedSha?: string;
   proposedSha?: string;
@@ -21,6 +22,15 @@ export interface DerivedPipelineStage {
   pr?: { state: string; url?: string; id?: string; createdAt?: string };
   proposedChecks: CommitStatusPhaseEntry[];
   activeChecks: CommitStatusPhaseEntry[];
+}
+
+export function buildCommitLink(repoURL: string | undefined, sha: string): string | undefined {
+  if (!repoURL || !sha) return undefined;
+  const cleaned = repoURL
+    .replace(/^https?:\/\/git@/, 'https://')
+    .replace(/\.git$/, '');
+  if (!/^https?:\/\//i.test(cleaned)) return undefined;
+  return `${cleaned}/commit/${sha}`;
 }
 
 export interface DerivedGateStatus {
@@ -75,6 +85,7 @@ export function derivePipelineStatus(strategy: PromotionStrategyResource): {
       branch: env.branch,
       label: deriveEnvLabel(env.branch),
       status: deriveStageStatus(envStatus),
+      repoURL: envStatus?.proposed?.dry?.repoURL ?? envStatus?.active?.dry?.repoURL,
       activeSha: envStatus?.active?.dry?.sha ?? '',
       activeHydratedSha: envStatus?.active?.hydrated?.sha,
       proposedSha: envStatus?.proposed?.dry?.sha,

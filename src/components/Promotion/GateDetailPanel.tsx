@@ -3,6 +3,7 @@ import { useState, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Card, CardTitle, CardBody,
+  Alert,
   Button,
   DescriptionList,
   DescriptionListGroup,
@@ -31,6 +32,7 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
   const { t } = useTranslation('plugin__gitops-enhanced');
   const [confirmAction, setConfirmAction] = useState<{ type: 'retry' | 'approve'; key: string } | null>(null);
   const [actionLoading, setActionLoading] = useState(false);
+  const [actionError, setActionError] = useState('');
 
   const proposedChecks = targetStage.proposedChecks;
   const activeChecks = targetStage.activeChecks;
@@ -38,13 +40,19 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
   const handleConfirm = async () => {
     if (!confirmAction) return;
     setActionLoading(true);
-    if (confirmAction.type === 'retry') {
-      await onRetryCheck(confirmAction.key);
-    } else {
-      await onApproveCheck(confirmAction.key);
+    setActionError('');
+    try {
+      if (confirmAction.type === 'retry') {
+        await onRetryCheck(confirmAction.key);
+      } else {
+        await onApproveCheck(confirmAction.key);
+      }
+      setConfirmAction(null);
+    } catch (e) {
+      setActionError((e as Error).message);
+    } finally {
+      setActionLoading(false);
     }
-    setActionLoading(false);
-    setConfirmAction(null);
   };
 
   return (
@@ -168,6 +176,9 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
           confirmLabel={confirmAction?.type === 'retry' ? t('Retry') : t('Approve')}
           confirmVariant={confirmAction?.type === 'approve' ? 'warning' : 'primary'}
         >
+          {actionError && (
+            <Alert variant="danger" isInline isPlain title={actionError} className="pf-v6-u-mb-sm" />
+          )}
           {confirmAction?.type === 'retry'
             ? t('Retry the "{{key}}" check? This will reset the commit status to pending.', { key: confirmAction.key })
             : t('Manually approve the "{{key}}" check? This will mark the commit status as successful.', { key: confirmAction?.key ?? '' })}

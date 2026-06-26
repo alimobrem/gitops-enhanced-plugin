@@ -14,7 +14,7 @@ import {
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 import type { DerivedPipelineStage, PipelineStageStatus } from '../../utils/promotion';
-import { commitStatusPhaseColor } from '../../utils/promotion';
+import { commitStatusPhaseColor, buildCommitLink } from '../../utils/promotion';
 import { timeAgo } from '../../utils/time';
 
 const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | 'gold'> = {
@@ -22,6 +22,19 @@ const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | '
   promoting: 'blue',
   blocked: 'red',
   pending: 'gold',
+};
+
+const CommitLink: FC<{ sha: string; repoURL?: string }> = ({ sha, repoURL }) => {
+  const url = buildCommitLink(repoURL, sha);
+  const display = sha.slice(0, 12);
+  if (url) {
+    return (
+      <a href={url} target="_blank" rel="noopener noreferrer" className="gitops-env-sha">
+        {display}
+      </a>
+    );
+  }
+  return <span className="gitops-env-sha">{display}</span>;
 };
 
 interface EnvironmentDetailPanelProps {
@@ -55,15 +68,15 @@ export const EnvironmentDetailPanel: FC<EnvironmentDetailPanelProps> = ({ stage 
               </DescriptionListGroup>
               <DescriptionListGroup>
                 <DescriptionListTerm>{t('Active commit (dry)')}</DescriptionListTerm>
-                <DescriptionListDescription className="gitops-env-sha">
-                  {stage.activeSha ? stage.activeSha.slice(0, 12) : t('None')}
+                <DescriptionListDescription>
+                  {stage.activeSha ? <CommitLink sha={stage.activeSha} repoURL={stage.repoURL} /> : t('None')}
                 </DescriptionListDescription>
               </DescriptionListGroup>
               {stage.activeHydratedSha && stage.activeHydratedSha !== stage.activeSha && (
                 <DescriptionListGroup>
                   <DescriptionListTerm>{t('Active commit (hydrated)')}</DescriptionListTerm>
-                  <DescriptionListDescription className="gitops-env-sha">
-                    {stage.activeHydratedSha.slice(0, 12)}
+                  <DescriptionListDescription>
+                    <CommitLink sha={stage.activeHydratedSha} repoURL={stage.repoURL} />
                   </DescriptionListDescription>
                 </DescriptionListGroup>
               )}
@@ -87,15 +100,15 @@ export const EnvironmentDetailPanel: FC<EnvironmentDetailPanelProps> = ({ stage 
               <DescriptionList isCompact>
                 <DescriptionListGroup>
                   <DescriptionListTerm>{t('Proposed commit (dry)')}</DescriptionListTerm>
-                  <DescriptionListDescription className="gitops-env-sha">
-                    {stage.proposedSha?.slice(0, 12)}
+                  <DescriptionListDescription>
+                    {stage.proposedSha && <CommitLink sha={stage.proposedSha} repoURL={stage.repoURL} />}
                   </DescriptionListDescription>
                 </DescriptionListGroup>
                 {stage.proposedHydratedSha && stage.proposedHydratedSha !== stage.proposedSha && (
                   <DescriptionListGroup>
                     <DescriptionListTerm>{t('Proposed commit (hydrated)')}</DescriptionListTerm>
-                    <DescriptionListDescription className="gitops-env-sha">
-                      {stage.proposedHydratedSha.slice(0, 12)}
+                    <DescriptionListDescription>
+                      <CommitLink sha={stage.proposedHydratedSha} repoURL={stage.repoURL} />
                     </DescriptionListDescription>
                   </DescriptionListGroup>
                 )}
