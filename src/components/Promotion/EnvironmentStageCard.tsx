@@ -3,15 +3,9 @@ import type { FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import { Card, CardBody, Label, Tooltip } from '@patternfly/react-core';
 import { ExclamationTriangleIcon } from '@patternfly/react-icons';
-import type { DerivedPipelineStage, PipelineStageStatus } from '../../utils/promotion';
+import type { DerivedPipelineStage } from '../../utils/promotion';
+import { statusLabelColor } from '../../utils/promotion';
 import { timeAgo } from '../../utils/time';
-
-const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | 'gold'> = {
-  healthy: 'green',
-  promoting: 'blue',
-  blocked: 'red',
-  pending: 'gold',
-};
 
 const statusText: Record<PipelineStageStatus, string> = {
   healthy: 'Healthy',

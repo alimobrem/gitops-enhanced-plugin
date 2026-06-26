@@ -33,19 +33,12 @@ import {
 import { usePromotionStrategies } from '../../hooks/usePromotionStrategies';
 import { useActiveNamespace } from '@openshift-console/dynamic-plugin-sdk';
 import { PromotionStrategyGroupVersionKind } from '../../models';
-import { derivePipelineStatus, deriveEnvLabel } from '../../utils/promotion';
+import { derivePipelineStatus, deriveEnvLabel, statusLabelColor } from '../../utils/promotion';
 import type { PromotionStrategyResource } from '../../types';
 import type { PipelineStageStatus } from '../../utils/promotion';
 
 const STATUS_OPTIONS: PipelineStageStatus[] = ['healthy', 'promoting', 'blocked', 'pending'];
 const COLUMN_KEYS = ['name', 'repository', 'environments', 'status', 'activeEnv'] as const;
-
-const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | 'gold'> = {
-  healthy: 'green',
-  promoting: 'blue',
-  blocked: 'red',
-  pending: 'gold',
-};
 
 interface FilterValues {
   name: string;

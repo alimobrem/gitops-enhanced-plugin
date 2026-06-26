@@ -15,6 +15,7 @@ import { Table, Thead, Tbody, Tr, Th } from '@patternfly/react-table';
 import { ConfirmModal } from '../shared/ConfirmModal';
 import { CommitStatusRow } from './CommitStatusRow';
 import type { DerivedGateStatus, DerivedPipelineStage } from '../../utils/promotion';
+import { safeHref } from '../../utils/promotion';
 
 interface GateDetailPanelProps {
   gate: DerivedGateStatus;
@@ -89,10 +90,10 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
             <Button
               variant="link"
               component="a"
-              href={gate.pr.url && /^https?:\/\//i.test(gate.pr.url) ? gate.pr.url : undefined}
+              href={safeHref(gate.pr.url)}
               target="_blank"
               rel="noopener noreferrer"
-              isDisabled={!gate.pr.url || !/^https?:\/\//i.test(gate.pr.url)}
+              isDisabled={!safeHref(gate.pr.url)}
               icon={<ExternalLinkAltIcon />}
               iconPosition="end"
             >

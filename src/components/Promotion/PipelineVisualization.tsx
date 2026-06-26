@@ -6,18 +6,15 @@ import {
   Card, CardTitle, CardBody,
   Flex, FlexItem,
 } from '@patternfly/react-core';
-import { SyncAltIcon } from '@patternfly/react-icons';
-import { ArrowRightIcon } from '@patternfly/react-icons';
-import { k8sPatch, k8sCreate } from '@openshift-console/dynamic-plugin-sdk';
-import { PromoterCommitStatusModel } from '../../models';
-import { useCommitStatuses } from '../../hooks/useCommitStatuses';
+import { SyncAltIcon, ArrowRightIcon } from '@patternfly/react-icons';
+import { useCommitStatusMutation } from '../../hooks/useCommitStatusMutation';
 import { derivePipelineStatus } from '../../utils/promotion';
 import { FLEX_SPACE_SM, FLEX_ALIGN_CENTER } from '../../utils/pf-constants';
 import { EnvironmentStageCard } from './EnvironmentStageCard';
 import { GateConnector } from './GateConnector';
 import { GateDetailPanel } from './GateDetailPanel';
 import { EnvironmentDetailPanel } from './EnvironmentDetailPanel';
-import type { PromotionStrategyResource, CommitStatusResource } from '../../types';
+import type { PromotionStrategyResource } from '../../types';
 import './PipelineVisualization.css';
 
 type Selection = { type: 'env'; index: number } | { type: 'gate'; index: number } | null;
@@ -30,11 +27,14 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
   const { t } = useTranslation('plugin__gitops-enhanced');
   const [selection, setSelection] = useState<Selection>(null);
 
-  const [commitStatuses] = useCommitStatuses(strategy.metadata.namespace);
-
   const { stages, gates } = useMemo(
     () => derivePipelineStatus(strategy),
     [strategy],
+  );
+
+  const { setPhase } = useCommitStatusMutation(
+    strategy.metadata.namespace,
+    strategy.spec.gitRepositoryRef.name,
   );
 
   const [toasts, setToasts] = useState<Array<{ id: number; message: string; variant: 'success' | 'danger' | 'info' }>>([]);
@@ -59,8 +59,8 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
           const check = key.slice(slashIdx + 1);
           const id = ++toastIdRef.current;
           const variant = phase === 'success' ? 'success' : phase === 'failure' ? 'danger' : 'info';
-          setToasts((prev) => [...prev, { id, message: `${check} → ${phase} (${env})`, variant }]);
-          const timer = window.setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 8000);
+          setToasts((list) => [...list, { id, message: `${check} → ${phase} (${env})`, variant }]);
+          const timer = window.setTimeout(() => setToasts((list) => list.filter((toast) => toast.id !== id)), 8000);
           toastTimersRef.current.push(timer);
         }
       });
@@ -69,43 +69,8 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
   }, [stages]);
 
   useEffect(() => {
-    return () => { toastTimersRef.current.forEach((t) => clearTimeout(t)); };
+    return () => { toastTimersRef.current.forEach(clearTimeout); };
   }, []);
-
-  const setCommitStatusPhase = useCallback(
-    async (key: string, sha: string, phase: 'pending' | 'success') => {
-      const match = (commitStatuses ?? []).find(
-        (cs: CommitStatusResource) => cs.spec.name === key && cs.spec.sha === sha,
-      );
-      if (match) {
-        await k8sPatch({
-          model: PromoterCommitStatusModel,
-          resource: match,
-          data: [{ op: 'replace', path: '/spec/phase', value: phase }],
-        });
-      } else {
-        await k8sCreate({
-          model: PromoterCommitStatusModel,
-          data: {
-            apiVersion: 'promoter.argoproj.io/v1alpha1',
-            kind: 'CommitStatus',
-            metadata: {
-              generateName: `${key}-`,
-              namespace: strategy.metadata.namespace,
-            },
-            spec: {
-              gitRepositoryRef: { name: strategy.spec.gitRepositoryRef.name },
-              sha,
-              name: key,
-              description: phase === 'success' ? 'Manually approved via console' : 'Retried via console',
-              phase,
-            },
-          },
-        });
-      }
-    },
-    [commitStatuses, strategy.metadata.namespace, strategy.spec.gitRepositoryRef.name],
-  );
 
   const getProposedSha = useCallback(
     (stageIndex: number): string => {
@@ -118,17 +83,17 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
   const handleRetry = useCallback(
     async (key: string) => {
       if (selection?.type !== 'gate') return;
-      await setCommitStatusPhase(key, getProposedSha(selection.index + 1), 'pending');
+      await setPhase(key, getProposedSha(selection.index + 1), 'pending');
     },
-    [selection, getProposedSha, setCommitStatusPhase],
+    [selection, getProposedSha, setPhase],
   );
 
   const handleApprove = useCallback(
     async (key: string) => {
       if (selection?.type !== 'gate') return;
-      await setCommitStatusPhase(key, getProposedSha(selection.index + 1), 'success');
+      await setPhase(key, getProposedSha(selection.index + 1), 'success');
     },
-    [selection, getProposedSha, setCommitStatusPhase],
+    [selection, getProposedSha, setPhase],
   );
 
   return (
@@ -140,7 +105,7 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
           isInline
           title={toast.message}
           className="pf-v6-u-mb-sm"
-          actionClose={<AlertActionCloseButton onClose={() => setToasts((t) => t.filter((x) => x.id !== toast.id))} />}
+          actionClose={<AlertActionCloseButton onClose={() => setToasts((list) => list.filter((x) => x.id !== toast.id))} />}
         />
       ))}
 

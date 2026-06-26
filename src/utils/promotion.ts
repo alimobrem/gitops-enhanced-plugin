@@ -159,6 +159,27 @@ export function derivePipelineStatus(strategy: PromotionStrategyResource): {
 
 export const STUCK_THRESHOLD_MINUTES = 30;
 
+export const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | 'gold'> = {
+  healthy: 'green',
+  promoting: 'blue',
+  blocked: 'red',
+  pending: 'gold',
+};
+
+export function extractRepoPath(repoURL: string): string {
+  return repoURL
+    .replace(/\.git$/, '')
+    .replace(/^https?:\/\/(git@)?/, '')
+    .split('/')
+    .slice(-2)
+    .join('/');
+}
+
+export function safeHref(url: string | undefined): string | undefined {
+  if (!url) return undefined;
+  return /^https?:\/\//i.test(url) ? url : undefined;
+}
+
 export const commitStatusPhaseColor: Record<string, 'green' | 'red' | 'blue' | 'gold' | 'grey'> = {
   success: 'green',
   failure: 'red',

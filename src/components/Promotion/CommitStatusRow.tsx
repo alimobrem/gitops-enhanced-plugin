@@ -9,7 +9,7 @@ import {
   InProgressIcon,
 } from '@patternfly/react-icons';
 import type { CommitStatusPhaseEntry } from '../../types';
-import { commitStatusPhaseColor } from '../../utils/promotion';
+import { commitStatusPhaseColor, safeHref } from '../../utils/promotion';
 
 const PhaseIcon: FC<{ phase: string }> = ({ phase }) => {
   switch (phase) {
@@ -32,7 +32,7 @@ interface CommitStatusRowProps {
 
 export const CommitStatusRow: FC<CommitStatusRowProps> = ({ entry, onRetry, onApprove }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const safeUrl = entry.url && /^https?:\/\//i.test(entry.url) ? entry.url : undefined;
+  const safeUrl = safeHref(entry.url);
   const isManual = !safeUrl;
   const canRetry = entry.phase === 'failure' && onRetry;
   const canApprove = entry.phase === 'pending' && onApprove;

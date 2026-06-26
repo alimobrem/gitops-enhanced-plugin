@@ -19,14 +19,7 @@ import { PromotionStrategyGroupVersionKind } from '../../models';
 import { derivePipelineStatus } from '../../utils/promotion';
 import { PipelineVisualization } from './PipelineVisualization';
 import type { PromotionStrategyResource } from '../../types';
-import type { PipelineStageStatus } from '../../utils/promotion';
-
-const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | 'gold'> = {
-  healthy: 'green',
-  promoting: 'blue',
-  blocked: 'red',
-  pending: 'gold',
-};
+import { statusLabelColor } from '../../utils/promotion';
 
 interface PromotionDetailPageProps {
   obj?: Record<string, unknown>;

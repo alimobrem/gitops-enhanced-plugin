@@ -3,10 +3,9 @@ import { useMemo, type FC } from 'react';
 import { Link } from 'react-router-dom';
 import { useTranslation } from 'react-i18next';
 import { Alert, Button } from '@patternfly/react-core';
-import { usePromotionStrategies } from '../../hooks/usePromotionStrategies';
+import { useMatchingStrategy } from '../../hooks/useMatchingStrategy';
 import { derivePipelineStatus } from '../../utils/promotion';
 import type { ApplicationResource } from '../../types';
-import { getApplicationSource } from '../../utils/application';
 import type { PipelineStageStatus } from '../../utils/promotion';
 
 const statusVariant: Record<PipelineStageStatus, 'success' | 'info' | 'warning' | 'danger'> = {
@@ -22,21 +21,7 @@ interface PromotionBannerProps {
 
 export const PromotionBanner: FC<PromotionBannerProps> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const [strategies, loaded, error] = usePromotionStrategies(app.metadata.namespace);
-
-  const match = useMemo(() => {
-    if (!loaded || strategies.length === 0) return null;
-    const repoURL = getApplicationSource(app)?.repoURL ?? '';
-    return strategies.find((s) => {
-      const ref = s.spec.gitRepositoryRef.name;
-      if (!ref) return false;
-      const repoPath = repoURL.replace(/\.git$/, '').split('/').slice(-2).join('/');
-      const envRepoURL = s.status?.environments?.[0]?.proposed?.dry?.repoURL ?? '';
-      const envPath = envRepoURL.replace(/\.git$/, '').replace(/^https?:\/\/(git@)?/, '').split('/').slice(-2).join('/');
-      if (envPath && repoPath) return repoPath === envPath;
-      return false;
-    }) ?? null;
-  }, [strategies, loaded, app.spec?.source?.repoURL]);
+  const [match, , error] = useMatchingStrategy(app, app.metadata.namespace);
 
   const pipeline = useMemo(
     () => (match ? derivePipelineStatus(match) : null),
@@ -45,8 +30,7 @@ export const PromotionBanner: FC<PromotionBannerProps> = ({ app }) => {
 
   if (error || !match || !pipeline) return null;
 
-  const { overallStatus, stages, gates } = pipeline;
-
+  const { overallStatus, gates } = pipeline;
   const promotingGate = gates.find((g) => g.status === 'blocked' || g.status === 'running');
   const message = overallStatus === 'healthy'
     ? t('All environments healthy')

@@ -10,7 +10,7 @@ import {
 } from '@patternfly/react-core';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
 import { usePromotionStrategies } from '../../hooks/usePromotionStrategies';
-import { derivePipelineStatus } from '../../utils/promotion';
+import { derivePipelineStatus, statusLabelColor } from '../../utils/promotion';
 import type { PromotionStrategyResource } from '../../types';
 
 interface PromotionActivitySectionProps {
@@ -21,22 +21,13 @@ export const PromotionActivitySection: FC<PromotionActivitySectionProps> = ({ na
   const { t } = useTranslation('plugin__gitops-enhanced');
   const [strategies, loaded, error] = usePromotionStrategies(namespace);
 
-  const derived = useMemo(
-    () => strategies.map((s) => ({ strategy: s, ...derivePipelineStatus(s) })),
-    [strategies],
-  );
-
-  const blocked = useMemo(
-    () => derived.filter((d) => d.overallStatus === 'blocked'),
-    [derived],
-  );
-
-  const active = useMemo(
-    () => derived
-      .filter((d) => d.overallStatus === 'promoting' || d.overallStatus === 'blocked' || d.overallStatus === 'pending')
-      .slice(0, 5),
-    [derived],
-  );
+  const { blocked, active } = useMemo(() => {
+    const d = strategies.map((s) => ({ strategy: s, ...derivePipelineStatus(s) }));
+    return {
+      blocked: d.filter((x) => x.overallStatus === 'blocked'),
+      active: d.filter((x) => x.overallStatus !== 'healthy').slice(0, 5),
+    };
+  }, [strategies]);
 
   if (!loaded || error || strategies.length === 0) return null;
 
@@ -95,7 +86,7 @@ export const PromotionActivitySection: FC<PromotionActivitySectionProps> = ({ na
                           <Td>
                             <Label
                               isCompact
-                              color={d.overallStatus === 'blocked' ? 'red' : d.overallStatus === 'promoting' ? 'blue' : 'gold'}
+                              color={statusLabelColor[d.overallStatus]}
                             >
                               {d.overallStatus}
                             </Label>

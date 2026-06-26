@@ -1,5 +1,5 @@
 import React from 'react';
-import type { FC } from 'react';
+import { useMemo, type FC } from 'react';
 import { useTranslation } from 'react-i18next';
 import {
   Card, CardTitle, CardBody,
@@ -13,19 +13,12 @@ import {
 } from '@patternfly/react-core';
 import { ExternalLinkAltIcon } from '@patternfly/react-icons';
 import { Table, Thead, Tbody, Tr, Th, Td } from '@patternfly/react-table';
-import type { DerivedPipelineStage, PipelineStageStatus } from '../../utils/promotion';
-import { commitStatusPhaseColor, buildCommitLink } from '../../utils/promotion';
+import type { DerivedPipelineStage } from '../../utils/promotion';
+import { statusLabelColor, commitStatusPhaseColor, buildCommitLink, safeHref, extractRepoPath } from '../../utils/promotion';
 import { useApplications } from '../../hooks/useApplications';
 import { ApplicationGroupVersionKind } from '../../models';
 import { ResourceLink } from '@openshift-console/dynamic-plugin-sdk';
 import { timeAgo } from '../../utils/time';
-
-const statusLabelColor: Record<PipelineStageStatus, 'green' | 'red' | 'blue' | 'gold'> = {
-  healthy: 'green',
-  promoting: 'blue',
-  blocked: 'red',
-  pending: 'gold',
-};
 
 const CommitLink: FC<{ sha: string; repoURL?: string }> = ({ sha, repoURL }) => {
   const url = buildCommitLink(repoURL, sha);
@@ -49,8 +42,16 @@ export const EnvironmentDetailPanel: FC<EnvironmentDetailPanelProps> = ({ stage,
   const { t } = useTranslation('plugin__gitops-enhanced');
   const [apps] = useApplications(namespace);
 
-  const relatedApps = apps.filter((app) =>
-    stage.repoURL && app.spec?.source?.repoURL?.includes(stage.repoURL.replace(/^https?:\/\/git@/, '').replace(/\.git$/, '').split('/').slice(-2).join('/')),
+  const repoPath = useMemo(
+    () => stage.repoURL ? extractRepoPath(stage.repoURL) : '',
+    [stage.repoURL],
+  );
+
+  const relatedApps = useMemo(
+    () => repoPath ? apps.filter((app) =>
+      app.spec?.source?.repoURL && extractRepoPath(app.spec.source.repoURL) === repoPath,
+    ) : [],
+    [apps, repoPath],
   );
 
   const hasProposed = stage.proposedSha && stage.proposedSha !== stage.activeSha;
@@ -143,12 +144,12 @@ export const EnvironmentDetailPanel: FC<EnvironmentDetailPanelProps> = ({ stage,
             <Button
               variant="link"
               component="a"
-              href={stage.pr.url && /^https?:\/\//i.test(stage.pr.url) ? stage.pr.url : undefined}
+              href={safeHref(stage.pr.url)}
               target="_blank"
               rel="noopener noreferrer"
               icon={<ExternalLinkAltIcon />}
               iconPosition="end"
-              isDisabled={!stage.pr.url || !/^https?:\/\//i.test(stage.pr.url)}
+              isDisabled={!safeHref(stage.pr.url)}
             >
               PR #{stage.pr.id ?? '?'}
             </Button>
