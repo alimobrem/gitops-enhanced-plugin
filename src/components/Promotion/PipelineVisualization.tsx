@@ -60,6 +60,7 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
               gitRepositoryRef: { name: strategy.spec.gitRepositoryRef.name },
               sha,
               name: key,
+              description: phase === 'success' ? 'Manually approved via console' : 'Retried via console',
               phase,
             },
           },
