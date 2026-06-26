@@ -62,12 +62,12 @@ export const CommitStatusRow: FC<CommitStatusRowProps> = ({ entry, onRetry, onAp
       </Td>
       <Td>
         {canRetry && (
-          <Button variant="secondary" isSmall onClick={onRetry}>
+          <Button variant="secondary" size="sm" onClick={onRetry}>
             {t('Retry')}
           </Button>
         )}
         {canApprove && (
-          <Button variant="secondary" isSmall onClick={onApprove}>
+          <Button variant="secondary" size="sm" onClick={onApprove}>
             {t('Approve')}
           </Button>
         )}

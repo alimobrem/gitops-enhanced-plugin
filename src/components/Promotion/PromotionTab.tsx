@@ -12,6 +12,7 @@ import {
 import { usePromotionStrategies } from '../../hooks/usePromotionStrategies';
 import { PipelineVisualization } from './PipelineVisualization';
 import type { ApplicationResource } from '../../types';
+import { getApplicationSource } from '../../utils/application';
 
 interface PromotionTabProps {
   obj?: Record<string, unknown>;
@@ -20,11 +21,11 @@ interface PromotionTabProps {
 export const PromotionTab: FC<PromotionTabProps> = ({ obj }) => {
   const app = obj as ApplicationResource | undefined;
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const [strategies, loaded] = usePromotionStrategies(app?.metadata?.namespace);
+  const [strategies, loaded, error] = usePromotionStrategies(app?.metadata?.namespace);
 
   const match = useMemo(() => {
     if (!loaded || strategies.length === 0 || !app) return null;
-    const repoURL = app.spec?.source?.repoURL ?? '';
+    const repoURL = getApplicationSource(app)?.repoURL ?? '';
     return strategies.find((s) => {
       const ref = s.spec.gitRepositoryRef.name;
       if (!ref) return false;

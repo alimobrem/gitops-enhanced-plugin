@@ -198,7 +198,7 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
           onCancel={() => setConfirmAction(null)}
           isLoading={actionLoading}
           confirmLabel={confirmAction?.type === 'retry' ? t('Retry') : t('Approve')}
-          confirmVariant={confirmAction?.type === 'approve' ? 'warning' : 'primary'}
+          confirmVariant={confirmAction?.type === 'approve' ? 'danger' : 'primary'}
         >
           {actionError && (
             <Alert variant="danger" isInline isPlain title={actionError} className="pf-v6-u-mb-sm" />

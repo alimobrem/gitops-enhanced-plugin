@@ -49,21 +49,21 @@
 }
 
 .gitops-env-stuck {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   font-weight: 600;
   color: var(--pf-t--global--color--status--warning--default);
   margin-top: 0.25rem;
 }
 
 .gitops-env-time {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   color: var(--pf-t--global--text--color--subtle);
   margin-top: 0.25rem;
 }
 
 .gitops-env-sha-label {
   font-family: var(--pf-t--global--font--family--sans-serif);
-  font-size: 0.625rem;
+  font-size: 0.75rem;
   font-weight: 600;
   text-transform: uppercase;
   opacity: 0.7;
@@ -79,6 +79,12 @@
   align-items: center;
   min-width: 24px;
   padding: 0 var(--pf-t--global--spacer--xs);
+  cursor: pointer;
+  opacity: 0.85;
+}
+
+.gitops-gate--selected {
+  opacity: 1;
 }
 
 .gitops-gate-arrow {
@@ -103,7 +109,7 @@
 }
 
 .gitops-gate-summary {
-  font-size: 0.6875rem;
+  font-size: 0.75rem;
   max-width: 120px;
   text-align: center;
   margin-top: 0.125rem;

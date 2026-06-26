@@ -19,7 +19,7 @@ interface PromotionActivitySectionProps {
 
 export const PromotionActivitySection: FC<PromotionActivitySectionProps> = ({ namespace }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const [strategies, loaded] = usePromotionStrategies(namespace);
+  const [strategies, loaded, error] = usePromotionStrategies(namespace);
 
   const derived = useMemo(
     () => strategies.map((s) => ({ strategy: s, ...derivePipelineStatus(s) })),
@@ -38,7 +38,7 @@ export const PromotionActivitySection: FC<PromotionActivitySectionProps> = ({ na
     [derived],
   );
 
-  if (!loaded || strategies.length === 0) return null;
+  if (!loaded || error || strategies.length === 0) return null;
 
   return (
     <GridItem span={12}>
@@ -58,8 +58,7 @@ export const PromotionActivitySection: FC<PromotionActivitySectionProps> = ({ na
             <GridItem span={3}>
               <div className="gitops-dashboard__stat">
                 <div
-                  className="gitops-dashboard__stat-value"
-                  style={blocked.length > 0 ? { color: 'var(--pf-t--global--color--status--danger--default)' } : undefined}
+                  className={`gitops-dashboard__stat-value${blocked.length > 0 ? ' gitops-dashboard__stat-value--danger' : ''}`}
                 >
                   {blocked.length}
                 </div>

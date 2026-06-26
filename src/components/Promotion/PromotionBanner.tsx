@@ -6,6 +6,7 @@ import { Alert, Button } from '@patternfly/react-core';
 import { usePromotionStrategies } from '../../hooks/usePromotionStrategies';
 import { derivePipelineStatus } from '../../utils/promotion';
 import type { ApplicationResource } from '../../types';
+import { getApplicationSource } from '../../utils/application';
 import type { PipelineStageStatus } from '../../utils/promotion';
 
 const statusVariant: Record<PipelineStageStatus, 'success' | 'info' | 'warning' | 'danger'> = {
@@ -21,11 +22,11 @@ interface PromotionBannerProps {
 
 export const PromotionBanner: FC<PromotionBannerProps> = ({ app }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const [strategies, loaded] = usePromotionStrategies(app.metadata.namespace);
+  const [strategies, loaded, error] = usePromotionStrategies(app.metadata.namespace);
 
   const match = useMemo(() => {
     if (!loaded || strategies.length === 0) return null;
-    const repoURL = app.spec?.source?.repoURL ?? '';
+    const repoURL = getApplicationSource(app)?.repoURL ?? '';
     return strategies.find((s) => {
       const ref = s.spec.gitRepositoryRef.name;
       if (!ref) return false;
@@ -42,7 +43,7 @@ export const PromotionBanner: FC<PromotionBannerProps> = ({ app }) => {
     [match],
   );
 
-  if (!match || !pipeline) return null;
+  if (error || !match || !pipeline) return null;
 
   const { overallStatus, stages, gates } = pipeline;
 

@@ -8,9 +8,11 @@ jest.mock('react-i18next', () => ({ useTranslation: () => ({ t: (s: string, opts
 
 const mockUseK8sWatchResource = jest.fn().mockReturnValue([[], true, undefined]);
 const mockK8sPatch = jest.fn().mockResolvedValue(undefined);
+const mockK8sCreate = jest.fn().mockResolvedValue(undefined);
 jest.mock('@openshift-console/dynamic-plugin-sdk', () => ({
   useK8sWatchResource: (...args: unknown[]) => mockUseK8sWatchResource(...args),
   k8sPatch: (...args: unknown[]) => mockK8sPatch(...args),
+  k8sCreate: (...args: unknown[]) => mockK8sCreate(...args),
 }));
 
 import { PipelineVisualization } from './PipelineVisualization';

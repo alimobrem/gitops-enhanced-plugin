@@ -2,6 +2,7 @@ import {
   deriveEnvLabel,
   derivePipelineStatus,
   computeStuckMinutes,
+  buildCommitLink,
 } from './promotion';
 import type { PromotionStrategyResource } from '../types';
 
@@ -221,5 +222,39 @@ describe('computeStuckMinutes', () => {
 
   it('returns 0 with empty checks', () => {
     expect(computeStuckMinutes(new Date().toISOString(), [])).toBe(0);
+  });
+});
+
+describe('buildCommitLink', () => {
+  it('builds a GitHub commit URL', () => {
+    expect(buildCommitLink('https://github.com/org/repo', 'abc123')).toBe('https://github.com/org/repo/commit/abc123');
+  });
+
+  it('strips git@ prefix from repoURL', () => {
+    expect(buildCommitLink('https://git@github.com/org/repo', 'abc123')).toBe('https://github.com/org/repo/commit/abc123');
+  });
+
+  it('strips .git suffix from repoURL', () => {
+    expect(buildCommitLink('https://github.com/org/repo.git', 'abc123')).toBe('https://github.com/org/repo/commit/abc123');
+  });
+
+  it('returns undefined for empty repoURL', () => {
+    expect(buildCommitLink('', 'abc123')).toBeUndefined();
+  });
+
+  it('returns undefined for empty SHA', () => {
+    expect(buildCommitLink('https://github.com/org/repo', '')).toBeUndefined();
+  });
+
+  it('rejects javascript: scheme', () => {
+    expect(buildCommitLink('javascript:alert(1)', 'abc123')).toBeUndefined();
+  });
+
+  it('rejects data: scheme', () => {
+    expect(buildCommitLink('data:text/html,<h1>hi</h1>', 'abc123')).toBeUndefined();
+  });
+
+  it('returns undefined for undefined repoURL', () => {
+    expect(buildCommitLink(undefined, 'abc123')).toBeUndefined();
   });
 });

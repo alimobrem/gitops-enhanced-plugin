@@ -8,6 +8,10 @@
   line-height: 1.2;
 }
 
+.gitops-dashboard__stat-value--danger {
+  color: var(--pf-t--global--color--status--danger--default);
+}
+
 .gitops-dashboard__stat-value-sm {
   font-size: 1.125rem;
   font-weight: 700;

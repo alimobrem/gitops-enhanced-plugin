@@ -40,6 +40,7 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
   const [toasts, setToasts] = useState<Array<{ id: number; message: string; variant: 'success' | 'danger' | 'info' }>>([]);
   const prevChecksRef = useRef<Record<string, string>>({});
   const toastIdRef = useRef(0);
+  const toastTimersRef = useRef<number[]>([]);
 
   useEffect(() => {
     const currentChecks: Record<string, string> = {};
@@ -53,16 +54,23 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
       Object.entries(currentChecks).forEach(([key, phase]) => {
         const old = prev[key];
         if (old && old !== phase) {
-          const [env, check] = key.split('/');
+          const slashIdx = key.indexOf('/');
+          const env = key.slice(0, slashIdx);
+          const check = key.slice(slashIdx + 1);
           const id = ++toastIdRef.current;
           const variant = phase === 'success' ? 'success' : phase === 'failure' ? 'danger' : 'info';
-          setToasts((t) => [...t, { id, message: `${check} → ${phase} (${env})`, variant }]);
-          setTimeout(() => setToasts((t) => t.filter((toast) => toast.id !== id)), 8000);
+          setToasts((prev) => [...prev, { id, message: `${check} → ${phase} (${env})`, variant }]);
+          const timer = window.setTimeout(() => setToasts((prev) => prev.filter((toast) => toast.id !== id)), 8000);
+          toastTimersRef.current.push(timer);
         }
       });
     }
     prevChecksRef.current = currentChecks;
   }, [stages]);
+
+  useEffect(() => {
+    return () => { toastTimersRef.current.forEach((t) => clearTimeout(t)); };
+  }, []);
 
   const setCommitStatusPhase = useCallback(
     async (key: string, sha: string, phase: 'pending' | 'success') => {

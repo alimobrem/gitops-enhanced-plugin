@@ -43,12 +43,11 @@ export const GateConnector: FC<GateConnectorProps> = ({ gate, isSelected, onClic
 
   return (
     <div
-      className="gitops-gate"
+      className={`gitops-gate${isSelected ? ' gitops-gate--selected' : ''}`}
       onClick={onClick}
       role="button"
       tabIndex={0}
       onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
-      style={{ cursor: 'pointer', opacity: isSelected ? 1 : 0.85 }}
     >
       <GateIcon status={gate.status} />
       {summaryText && (

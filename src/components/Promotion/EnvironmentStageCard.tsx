@@ -37,6 +37,9 @@ export const EnvironmentStageCard: FC<EnvironmentStageCardProps> = ({ stage, isS
       isCompact
       className={`gitops-env-card ${stateClass}${selectedClass}`}
       onClick={onClick}
+      role="button"
+      tabIndex={0}
+      onKeyDown={(e: React.KeyboardEvent) => { if (e.key === 'Enter' || e.key === ' ') onClick(); }}
     >
       <CardBody>
         <div className="gitops-env-label">{stage.label}</div>
