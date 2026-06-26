@@ -31,9 +31,10 @@ interface CommitStatusRowProps {
 
 export const CommitStatusRow: FC<CommitStatusRowProps> = ({ entry, onRetry, onApprove }) => {
   const { t } = useTranslation('plugin__gitops-enhanced');
-  const isManual = !entry.url;
+  const safeUrl = entry.url && /^https?:\/\//i.test(entry.url) ? entry.url : undefined;
+  const isManual = !safeUrl;
   const canRetry = entry.phase === 'failure' && onRetry;
-  const canApprove = entry.phase === 'pending' && isManual && onApprove;
+  const canApprove = entry.phase === 'pending' && onApprove;
 
   return (
     <tr>
@@ -47,22 +48,22 @@ export const CommitStatusRow: FC<CommitStatusRowProps> = ({ entry, onRetry, onAp
         </Label>
       </td>
       <td>
-        {entry.url ? (
-          <a href={entry.url} target="_blank" rel="noopener noreferrer">
+        {safeUrl ? (
+          <Button variant="link" size="sm" component="a" href={safeUrl} target="_blank" rel="noopener noreferrer">
             {t('View Logs')}
-          </a>
+          </Button>
         ) : (
-          <span>{t('Manual check')}</span>
+          <span className="pf-v6-u-color-200">{t('Manual check')}</span>
         )}
       </td>
       <td>
         {canRetry && (
-          <Button variant="link" size="sm" onClick={onRetry}>
+          <Button variant="secondary" size="sm" onClick={onRetry}>
             {t('Retry')}
           </Button>
         )}
         {canApprove && (
-          <Button variant="link" size="sm" onClick={onApprove}>
+          <Button variant="primary" size="sm" onClick={onApprove}>
             {t('Approve')}
           </Button>
         )}

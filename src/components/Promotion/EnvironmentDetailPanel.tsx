@@ -121,11 +121,12 @@ export const EnvironmentDetailPanel: FC<EnvironmentDetailPanelProps> = ({ stage 
             <Button
               variant="link"
               component="a"
-              href={stage.pr.url}
+              href={stage.pr.url && /^https?:\/\//i.test(stage.pr.url) ? stage.pr.url : undefined}
               target="_blank"
               rel="noopener noreferrer"
               icon={<ExternalLinkAltIcon />}
               iconPosition="end"
+              isDisabled={!stage.pr.url || !/^https?:\/\//i.test(stage.pr.url)}
             >
               PR #{stage.pr.id ?? '?'}
             </Button>

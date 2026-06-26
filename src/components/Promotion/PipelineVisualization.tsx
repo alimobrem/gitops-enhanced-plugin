@@ -6,7 +6,7 @@ import {
   Flex, FlexItem,
 } from '@patternfly/react-core';
 import { ArrowRightIcon } from '@patternfly/react-icons';
-import { k8sPatch } from '@openshift-console/dynamic-plugin-sdk';
+import { k8sPatch, k8sCreate } from '@openshift-console/dynamic-plugin-sdk';
 import { PromoterCommitStatusModel } from '../../models';
 import { useCommitStatuses } from '../../hooks/useCommitStatuses';
 import { derivePipelineStatus } from '../../utils/promotion';
@@ -35,39 +35,62 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
     [strategy],
   );
 
-  const patchCommitStatus = useCallback(
+  const setCommitStatusPhase = useCallback(
     async (key: string, sha: string, phase: 'pending' | 'success') => {
       const match = (commitStatuses ?? []).find(
         (cs: CommitStatusResource) => cs.spec.name === key && cs.spec.sha === sha,
       );
-      if (!match) return;
-      await k8sPatch({
-        model: PromoterCommitStatusModel,
-        resource: match,
-        data: [{ op: 'replace', path: '/spec/phase', value: phase }],
-      });
+      if (match) {
+        await k8sPatch({
+          model: PromoterCommitStatusModel,
+          resource: match,
+          data: [{ op: 'replace', path: '/spec/phase', value: phase }],
+        });
+      } else {
+        await k8sCreate({
+          model: PromoterCommitStatusModel,
+          data: {
+            apiVersion: 'promoter.argoproj.io/v1alpha1',
+            kind: 'CommitStatus',
+            metadata: {
+              generateName: `${key}-`,
+              namespace: strategy.metadata.namespace,
+            },
+            spec: {
+              gitRepositoryRef: { name: strategy.spec.gitRepositoryRef.name },
+              sha,
+              name: key,
+              phase,
+            },
+          },
+        });
+      }
     },
-    [commitStatuses],
+    [commitStatuses, strategy.metadata.namespace, strategy.spec.gitRepositoryRef.name],
+  );
+
+  const getProposedSha = useCallback(
+    (stageIndex: number): string => {
+      const stage = stages[stageIndex];
+      return stage?.proposedHydratedSha ?? stage?.proposedSha ?? stage?.activeSha ?? '';
+    },
+    [stages],
   );
 
   const handleRetry = useCallback(
     async (key: string) => {
       if (selection?.type !== 'gate') return;
-      const stage = stages[selection.index + 1];
-      const sha = stage?.proposedSha ?? stage?.activeSha ?? '';
-      await patchCommitStatus(key, sha, 'pending');
+      await setCommitStatusPhase(key, getProposedSha(selection.index + 1), 'pending');
     },
-    [selection, stages, patchCommitStatus],
+    [selection, getProposedSha, setCommitStatusPhase],
   );
 
   const handleApprove = useCallback(
     async (key: string) => {
       if (selection?.type !== 'gate') return;
-      const stage = stages[selection.index + 1];
-      const sha = stage?.proposedSha ?? stage?.activeSha ?? '';
-      await patchCommitStatus(key, sha, 'success');
+      await setCommitStatusPhase(key, getProposedSha(selection.index + 1), 'success');
     },
-    [selection, stages, patchCommitStatus],
+    [selection, getProposedSha, setCommitStatusPhase],
   );
 
   return (

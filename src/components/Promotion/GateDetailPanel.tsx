@@ -58,9 +58,10 @@ export const GateDetailPanel: FC<GateDetailPanelProps> = ({
             <Button
               variant="link"
               component="a"
-              href={gate.pr.url}
+              href={gate.pr.url && /^https?:\/\//i.test(gate.pr.url) ? gate.pr.url : undefined}
               target="_blank"
               rel="noopener noreferrer"
+              isDisabled={!gate.pr.url || !/^https?:\/\//i.test(gate.pr.url)}
               icon={<ExternalLinkAltIcon />}
               iconPosition="end"
             >
