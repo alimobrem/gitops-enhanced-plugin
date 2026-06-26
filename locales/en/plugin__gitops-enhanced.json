@@ -517,5 +517,14 @@
   "Commit": "Commit",
   "Author": "Author",
   "Pushed": "Pushed",
-  "hydrated": "hydrated"
+  "hydrated": "hydrated",
+  "Environment: {{name}}": "Environment: {{name}}",
+  "Branch": "Branch",
+  "Active commit (dry)": "Active commit (dry)",
+  "Active commit (hydrated)": "Active commit (hydrated)",
+  "Proposed commit (dry)": "Proposed commit (dry)",
+  "Proposed commit (hydrated)": "Proposed commit (hydrated)",
+  "Commit Statuses": "Commit Statuses",
+  "Proposed": "Proposed",
+  "opened {{time}}": "opened {{time}}"
 }

@@ -14,6 +14,7 @@ import { FLEX_SPACE_SM, FLEX_ALIGN_CENTER } from '../../utils/pf-constants';
 import { EnvironmentStageCard } from './EnvironmentStageCard';
 import { GateConnector } from './GateConnector';
 import { GateDetailPanel } from './GateDetailPanel';
+import { EnvironmentDetailPanel } from './EnvironmentDetailPanel';
 import type { PromotionStrategyResource, CommitStatusResource } from '../../types';
 import './PipelineVisualization.css';
 
@@ -115,6 +116,10 @@ export const PipelineVisualization: FC<PipelineVisualizationProps> = ({ strategy
           </Flex>
         </CardBody>
       </Card>
+
+      {selection?.type === 'env' && stages[selection.index] && (
+        <EnvironmentDetailPanel stage={stages[selection.index]} />
+      )}
 
       {selection?.type === 'gate' && gates[selection.index] && (
         <GateDetailPanel
