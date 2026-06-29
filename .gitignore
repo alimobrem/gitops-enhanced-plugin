@@ -10,3 +10,5 @@ coverage/
 *.p12
 kubeconfig
 .claude/
+e2e/screenshots/
+.playwright-mcp/
