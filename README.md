@@ -72,17 +72,31 @@ An OpenShift Console dynamic plugin that brings full Argo CD and Argo Rollouts m
 - Per-instance namespace scoping for watches and metrics
 - ArgoCD instance list page with component status, version info, and routes
 
+### Promotion Pipelines (GitOps Promoter + Tekton)
+- Horizontal pipeline visualization showing commits flowing through dev → staging → prod
+- Click any environment stage to see active/proposed commits, hydrator metadata, promotion history, and related applications
+- Click any gate to see commit status checks with approve/retry actions
+- Stuck detection warns when checks have been pending too long
+- Toast notifications on gate state changes
+- Dashboard integration with pipeline count, blocked count, and active promotions table
+- Application detail banner showing promotion status with link to pipeline view
+- Full setup wizard: SCM Provider → Git Repository → Environments → Gates → Review
+- Supports GitHub, GitLab, Gitea, Forgejo, Bitbucket Cloud, and Azure DevOps
+- See [Promotion Pipeline Usage Guide](docs/promotion-usage.md) for detailed setup and usage
+
 ### Additional Features
 - Namespace GitOps tab (see apps deployed to any namespace)
 - Settings page with repository and cluster management
 - Full i18n support
-- 52 console extensions (7 nav items, 8 pages, 27 tabs, 2 action providers, 5 flags)
+- 60+ console extensions (8 nav items, 9 pages, 28 tabs, 2 action providers, 6 flags)
 
 ## Prerequisites
 
 - **OpenShift** 4.16 or later
 - **Red Hat OpenShift GitOps** operator (or standalone Argo CD)
 - **Argo Rollouts** (optional, for rollout management features)
+- **GitOps Promoter** (optional, for promotion pipeline features) — [v0.27+](https://github.com/argoproj-labs/gitops-promoter)
+- **OpenShift Pipelines / Tekton** (optional, for CI gate checks)
 - **Prometheus** (optional, for metrics dashboard and application metrics)
 
 ## Installation
@@ -157,7 +171,7 @@ OpenShift Console
 
 ```bash
 npm install        # install dependencies
-npm test           # run 428 tests across 88 suites
+npm test           # run 551 tests across 99 suites
 npm run build      # production webpack build
 ```
 
