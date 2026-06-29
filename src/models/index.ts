@@ -9,3 +9,5 @@ export { NotificationsConfigurationModel, NotificationsConfigurationGroupVersion
 export { ImageUpdaterModel, ImageUpdaterGroupVersionKind } from './imageupdater';
 export { NamespaceManagementModel, NamespaceManagementGroupVersionKind } from './namespacemanagement';
 export { PromotionStrategyModel, PromotionStrategyGroupVersionKind, ChangeTransferPolicyModel, ChangeTransferPolicyGroupVersionKind, PromoterCommitStatusModel, PromoterCommitStatusGroupVersionKind, PromoterPullRequestModel, PromoterPullRequestGroupVersionKind } from './promoter';
+export { ScmProviderModel, ScmProviderGroupVersionKind } from './scmprovider';
+export { GitRepositoryModel, GitRepositoryGroupVersionKind } from './gitrepository';
