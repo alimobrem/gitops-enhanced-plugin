@@ -9,13 +9,14 @@ export function useCommitStatusMutation(namespace: string, gitRepositoryRefName:
 
   const setPhase = useCallback(
     async (key: string, sha: string, phase: 'pending' | 'success') => {
-      const match = (commitStatuses ?? []).find(
-        (cs: CommitStatusResource) => cs.spec.name === key && cs.spec.sha === sha,
+      const matches = (commitStatuses ?? []).filter(
+        (cs: CommitStatusResource) =>
+          cs.spec.sha === sha && cs.metadata.labels?.['promoter.argoproj.io/commit-status'] === key,
       );
-      if (match) {
+      if (matches.length > 0) {
         await k8sPatch({
           model: PromoterCommitStatusModel,
-          resource: match,
+          resource: matches[0],
           data: [{ op: 'replace', path: '/spec/phase', value: phase }],
         });
       } else {
