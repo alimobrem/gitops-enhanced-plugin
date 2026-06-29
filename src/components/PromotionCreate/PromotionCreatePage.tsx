@@ -11,7 +11,6 @@ import {
   Form,
   FormGroup,
   TextInput,
-  TextArea,
   Alert,
   Checkbox,
   Button,
@@ -31,26 +30,14 @@ import { InstanceProvider } from '../shared/InstanceProvider';
 import { useCurrentInstance } from '../../hooks/useArgoCDInstances';
 import { useScmProviders } from '../../hooks/useScmProviders';
 import { useGitRepositories } from '../../hooks/useGitRepositories';
-
-type ProviderType = 'github' | 'gitlab' | 'gitea' | 'forgejo' | 'bitbucketCloud' | 'azureDevOps';
-
-const PROVIDER_OPTIONS: Array<{ value: ProviderType; label: string }> = [
-  { value: 'github', label: 'GitHub' },
-  { value: 'gitlab', label: 'GitLab' },
-  { value: 'gitea', label: 'Gitea' },
-  { value: 'forgejo', label: 'Forgejo' },
-  { value: 'bitbucketCloud', label: 'Bitbucket Cloud' },
-  { value: 'azureDevOps', label: 'Azure DevOps' },
-];
-
-const SECRET_KEY: Record<ProviderType, string> = {
-  github: 'githubAppPrivateKey',
-  gitlab: 'token',
-  gitea: 'token',
-  forgejo: 'token',
-  bitbucketCloud: 'token',
-  azureDevOps: 'token',
-};
+import {
+  type ProviderType,
+  PROVIDER_OPTIONS,
+  SECRET_KEY,
+  SecretModel,
+  buildProviderSpec,
+  buildRepoSpec,
+} from '../../utils/provider-config';
 
 interface EnvironmentEntry {
   branch: string;
@@ -157,7 +144,7 @@ export const PromotionCreatePage: FC = () => {
         const secretName = `${form.providerName}-credentials`;
         setCreationProgress((prev) => [...prev, t('Creating Secret...')]);
         await k8sCreate({
-          model: { apiGroup: '', apiVersion: 'v1', kind: 'Secret', plural: 'secrets', namespaced: true, abbr: 'S', label: 'Secret', labelPlural: 'Secrets' },
+          model: SecretModel,
           data: {
             apiVersion: 'v1',
             kind: 'Secret',
@@ -169,35 +156,13 @@ export const PromotionCreatePage: FC = () => {
         setCreationProgress((prev) => [...prev, t('Secret created')]);
 
         setCreationProgress((prev) => [...prev, t('Creating SCM Provider...')]);
-        const providerSpec: Record<string, unknown> = {};
-        if (form.providerType === 'github') {
-          providerSpec.github = {
-            appID: parseInt(form.githubAppId, 10),
-            ...(form.githubInstallationId ? { installationID: parseInt(form.githubInstallationId, 10) } : {}),
-            ...(form.providerDomain ? { domain: form.providerDomain } : {}),
-          };
-        } else if (form.providerType === 'gitlab') {
-          providerSpec.gitlab = form.providerDomain ? { domain: form.providerDomain } : {};
-        } else if (form.providerType === 'gitea') {
-          providerSpec.gitea = { domain: form.providerDomain };
-        } else if (form.providerType === 'forgejo') {
-          providerSpec.forgejo = { domain: form.providerDomain };
-        } else if (form.providerType === 'bitbucketCloud') {
-          providerSpec.bitbucketCloud = {};
-        } else if (form.providerType === 'azureDevOps') {
-          providerSpec.azureDevOps = {
-            organization: form.azureOrg,
-            ...(form.providerDomain ? { domain: form.providerDomain } : {}),
-          };
-        }
-
         await k8sCreate({
           model: ScmProviderModel,
           data: {
             apiVersion: 'promoter.argoproj.io/v1alpha1',
             kind: 'ScmProvider',
             metadata: { name: form.providerName, namespace: ns },
-            spec: { ...providerSpec, secretRef: { name: secretName } },
+            spec: { ...buildProviderSpec(form.providerType, form), secretRef: { name: secretName } },
           },
         });
         setCreationProgress((prev) => [...prev, t('SCM Provider created')]);
@@ -205,23 +170,13 @@ export const PromotionCreatePage: FC = () => {
 
       if (!form.useExistingRepo) {
         setCreationProgress((prev) => [...prev, t('Creating Git Repository...')]);
-        const repoSpec: Record<string, unknown> = { scmProviderRef: { name: resolvedProviderName } };
-
-        if (form.providerType === 'gitlab') {
-          repoSpec.gitlab = { name: form.repoProjectName || form.repoName, namespace: form.gitlabNamespace || form.repoOwner };
-        } else if (form.providerType === 'azureDevOps') {
-          repoSpec.azureDevOps = { name: form.repoName, project: form.repoProjectName || form.repoOwner };
-        } else {
-          repoSpec[form.providerType] = { owner: form.repoOwner, name: form.repoName };
-        }
-
         await k8sCreate({
           model: GitRepositoryModel,
           data: {
             apiVersion: 'promoter.argoproj.io/v1alpha1',
             kind: 'GitRepository',
             metadata: { name: form.repoName, namespace: ns },
-            spec: repoSpec,
+            spec: buildRepoSpec(form.providerType, resolvedProviderName, form),
           },
         });
         setCreationProgress((prev) => [...prev, t('Git Repository created')]);
