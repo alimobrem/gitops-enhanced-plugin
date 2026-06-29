@@ -455,11 +455,11 @@ src/
 
 ### Known limitations
 
-1. **Promoter v0.27.1 check-run visibility** — CTP controller can't find check runs created by its own GitHub App via the Checks API. Commit statuses created via CommitStatus CRs → GitHub check runs are invisible to the CTP controller's lookup. This prevents `integration-tests` and `argocd-health` gates from passing. Workaround: remove required checks, or wait for upstream fix.
+1. **CommitStatus label requirement (resolved)** — The CTP controller finds CommitStatus CRs via K8s label selector (`promoter.argoproj.io/commit-status: <key>`), not by querying GitHub. Initially misdiagnosed as an upstream bug — was actually a missing label on manually created CRs. Fixed in `useCommitStatusMutation` hook and Tekton `report-commit-status` Task.
 
 2. **Argo CD source hydrator not in OpenShift GitOps** — The `argocd-commit-server` binary is not included in the Red Hat OpenShift GitOps operator image (as of v1.21.0). The `sourceHydrator` Application spec field is available in Argo CD 3.x but non-functional without the commit-server. Workaround: use a custom hydrator (GitHub Actions workflow).
 
-3. **Approve flow creates CommitStatus CRs but doesn't directly unblock promotion** — Due to limitation #1, manually approving a check creates the CR and the CommitStatus controller writes to GitHub, but the CTP controller doesn't see it. The UI correctly shows the success alert, but the pipeline doesn't advance.
+3. **Approve flow now works end-to-end** — Fixed by adding the `promoter.argoproj.io/commit-status` label to CommitStatus CRs created by the UI. The CTP controller finds them immediately and advances the pipeline.
 
 ### Lessons learned
 

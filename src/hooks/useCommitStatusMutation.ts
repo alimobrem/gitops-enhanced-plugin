@@ -24,7 +24,11 @@ export function useCommitStatusMutation(namespace: string, gitRepositoryRefName:
           data: {
             apiVersion: 'promoter.argoproj.io/v1alpha1',
             kind: 'CommitStatus',
-            metadata: { generateName: `${key}-`, namespace },
+            metadata: {
+              generateName: `${key}-`,
+              namespace,
+              labels: { 'promoter.argoproj.io/commit-status': key },
+            },
             spec: {
               gitRepositoryRef: { name: gitRepositoryRefName },
               sha,

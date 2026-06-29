@@ -98,9 +98,15 @@ The Argo CD source hydrator (commit-server) is not available in OpenShift GitOps
 - Pushes rendered manifests + `hydrator.metadata` to `env/{dev,staging,prod}-next` branches
 - The promoter opens PRs from `-next` → active branches
 
-### Known Limitation: Promoter v0.27.1 Check-Run Visibility
+### Critical: CommitStatus Label Requirement
 
-The CTP controller queries GitHub's Checks API filtered by the GitHub App, but cannot find check runs created by its own App. This means `integration-tests` and `argocd-health` commit statuses created via CommitStatus CRs (which the CommitStatus controller writes as check runs) are invisible to the CTP controller. Tracked as an upstream issue. Workaround: remove required checks from the PromotionStrategy, or use a future promoter version.
+The CTP controller finds CommitStatus CRs via label selector, **not** by querying GitHub. Every CommitStatus CR **must** have the label:
+
+```
+promoter.argoproj.io/commit-status: <key>
+```
+
+Without this label, the CTP controller reports `found: false` and the gate stays `pending` forever. The `useCommitStatusMutation` hook and the Tekton `report-commit-status` Task both include this label automatically.
 
 ### Tekton Pipeline Pattern
 
