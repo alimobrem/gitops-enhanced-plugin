@@ -23,6 +23,18 @@ An OpenShift Console dynamic plugin that brings full Argo CD and Argo Rollouts m
 |:-:|:-:|
 | ![Rollouts](docs/screenshots/rollouts.png) | ![Instances](docs/screenshots/instances.png) |
 
+| Promotion Pipeline | Promotion List |
+|:-:|:-:|
+| ![Promotion Pipeline](docs/screenshots/promotion-pipeline.png) | ![Promotion List](docs/screenshots/promotion-list.png) |
+
+| Create Pipeline Wizard | App Promotion Tab |
+|:-:|:-:|
+| ![Create Wizard](docs/screenshots/promotion-wizard.png) | ![App Promotion Tab](docs/screenshots/promotion-app-tab.png) |
+
+| Promotion Banner |
+|:-:|
+| ![Promotion Banner](docs/screenshots/promotion-banner.png) |
+
 ## Features
 
 ### Dashboard
