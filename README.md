@@ -7,6 +7,8 @@ An OpenShift Console dynamic plugin that brings full Argo CD and Argo Rollouts m
 ![React](https://img.shields.io/badge/React-17-61DAFB)
 ![PatternFly](https://img.shields.io/badge/PatternFly-6-004080)
 
+> **New: Promotion Pipelines** — Automated environment promotion (dev → staging → prod) with GitOps Promoter + Tekton integration. [Setup & Usage Guide →](docs/promotion-usage.md)
+
 ## Screenshots
 
 | Dashboard | Applications |
