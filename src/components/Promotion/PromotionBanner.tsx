@@ -53,7 +53,6 @@ export const PromotionBanner: FC<PromotionBannerProps> = ({ app }) => {
     <Alert
       variant={statusVariant[overallStatus]}
       isInline
-      isPlain
       title={message}
       className="pf-v6-u-mb-md"
       actionLinks={
