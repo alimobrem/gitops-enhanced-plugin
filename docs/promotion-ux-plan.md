@@ -414,5 +414,60 @@ src/
 5. Trigger a CommitStatus failure → verify gate shows BLOCKED, drill into Tekton logs
 6. Test Retry and manual Approve flows
 7. Verify dashboard row renders with active promotions, hides when empty
-8. Run `npm test` — all new components must have tests for loading/loaded/error states
+8. Run `npm test` — 99 suites, 530+ tests passing
 9. Run `npm run build` — production build succeeds
+10. Run `./e2e/promotion-e2e.sh` — 13 checks passing
+
+---
+
+## Implementation Status (as built)
+
+### What's deployed and working
+
+| Component | Status | Notes |
+|-----------|--------|-------|
+| Promotion Pipelines list page | Working | DataView with filters, pagination |
+| Pipeline detail + visualization | Working | Horizontal card chain, click-to-expand gates and stages |
+| Gate detail panel | Working | CommitStatus table, approve/retry with ConfirmModal, success/error alerts |
+| Environment detail panel | Working | Active/proposed SHAs as links, hydrator metadata, promotion history, related apps |
+| PromotionBanner on Application OverviewTab | Working | Matches by repo path, graceful degradation |
+| Promotion tab on Application detail | Working | Uses shared `useMatchingStrategy` hook |
+| Dashboard Promotion Activity section | Working | Pipeline count, blocked count, active promotions table |
+| Create Pipeline wizard | Working | 3-step wizard: repo, envs, gates |
+| Stuck detection | Working | 30-minute threshold, warning on stage card + gate detail |
+| Toast notifications | Working | Auto-dismiss on gate state changes |
+| Live indicator | Working | Pulsing sync icon in pipeline header |
+| Commit links | Working | SHA links to GitHub commit pages |
+| Timestamps on stage cards | Working | PR age for promoting, commit time for healthy |
+| E2E test | 13/13 passing | Prerequisites, health, push, hydrator, promoter, PRs, plugin |
+
+### Infrastructure on cluster
+
+- GitOps Promoter v0.27.1 — controller running in `promoter-system`
+- GitHub App (ID 4153635) — ScmProvider `github` + GitRepository `example-apps`
+- Fork: `alimobrem/argocd-example-apps` with `env/{dev,staging,prod}` + `-next` branches
+- 3 per-environment Applications: `guestbook-{dev,staging,prod}` — all Synced/Healthy
+- `ArgoCDCommitStatus` CR watching app health
+- GitHub Actions custom hydrator workflow (renders kustomize → pushes to `-next` branches)
+- GitHub Actions promotion checks workflow (reports commit statuses on `-next` pushes)
+- OpenShift Pipelines (Tekton) v1.22.3 — Pipeline + Tasks for integration tests
+- Console plugin deployed (revision 100+)
+
+### Known limitations
+
+1. **Promoter v0.27.1 check-run visibility** — CTP controller can't find check runs created by its own GitHub App via the Checks API. Commit statuses created via CommitStatus CRs → GitHub check runs are invisible to the CTP controller's lookup. This prevents `integration-tests` and `argocd-health` gates from passing. Workaround: remove required checks, or wait for upstream fix.
+
+2. **Argo CD source hydrator not in OpenShift GitOps** — The `argocd-commit-server` binary is not included in the Red Hat OpenShift GitOps operator image (as of v1.21.0). The `sourceHydrator` Application spec field is available in Argo CD 3.x but non-functional without the commit-server. Workaround: use a custom hydrator (GitHub Actions workflow).
+
+3. **Approve flow creates CommitStatus CRs but doesn't directly unblock promotion** — Due to limitation #1, manually approving a check creates the CR and the CommitStatus controller writes to GitHub, but the CTP controller doesn't see it. The UI correctly shows the success alert, but the pipeline doesn't advance.
+
+### Lessons learned
+
+- **The promoter controller reads from GitHub, not from K8s CRs** — The CTP controller queries the SCM (GitHub Checks API) for commit status, not CommitStatus CRs directly. CommitStatus CRs are a write-through mechanism: CR → controller → GitHub → CTP reads from GitHub.
+- **`hydrator.metadata` is required on every hydrated commit** — Without it, the CTP controller logs "hydrator.metadata file not found" and can't compute dry SHAs.
+- **Every push to a `-next` branch changes the SHA** — Creating check runs for one SHA, then pushing again, orphans those check runs. Don't push to `-next` branches after creating CommitStatus CRs.
+- **PF6 `EmptyStateIcon` was removed** — PatternFly 6 doesn't export `EmptyStateIcon`. Use `EmptyState` directly.
+- **PF6 `isSmall` deprecated** — Use `size="sm"` instead.
+- **`console.flag/model` drives nav visibility** — The console won't show the "Promotion Pipelines" nav item until the PromotionStrategy CRD exists on the cluster. Console pods may need restart after CRD installation.
+- **Operator-managed configmaps can't be patched** — The `argocd-cmd-params-cm` is owned by the ArgoCD CR. Manual patches get overwritten. Use `spec.controller.env` or `spec.server.env` on the ArgoCD CR instead.
+- **GitHub App required, not PAT** — The ScmProvider CRD requires a GitHub App (appID + installationID + private key). OAuth tokens and PATs are not supported.

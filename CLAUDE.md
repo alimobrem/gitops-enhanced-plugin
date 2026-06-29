@@ -13,7 +13,7 @@ OpenShift Console dynamic plugin for ArgoCD/GitOps management.
 
 ```bash
 npm install          # install deps
-npm test             # run tests (130+)
+npm test             # run tests (530+)
 npm run build        # production webpack build
 make ship            # build image on cluster, helm deploy, rollout restart
 ```
@@ -64,3 +64,55 @@ make ship            # build image on cluster, helm deploy, rollout restart
 - `src/components/` — React components organized by feature
 - `src/utils/` — Shared utilities (status colors, URL builders, app helpers)
 - `charts/` — Helm chart with ConsolePlugin CR and proxy config
+- `e2e/` — End-to-end test scripts
+
+## Promotion Pipeline (GitOps Promoter + Tekton)
+
+### Overview
+
+The plugin integrates GitOps Promoter (`promoter.argoproj.io/v1alpha1`) with Tekton Pipelines for automated environment promotion. A horizontal pipeline visualization shows commits flowing through dev → staging → prod with gate checks between each stage.
+
+### CRDs Watched
+
+| CRD | API Group | Purpose |
+|-----|-----------|---------|
+| PromotionStrategy | promoter.argoproj.io | Defines environment chain + gate checks |
+| ChangeTransferPolicy | promoter.argoproj.io | Per-environment-hop PR management (auto-created) |
+| CommitStatus | promoter.argoproj.io | Gate check results (created by Tekton or manually) |
+| PullRequest | promoter.argoproj.io | SCM PR wrapper |
+
+### Shared Utilities (use these, don't re-implement)
+
+- `extractRepoPath(url)` — normalizes git URLs to `owner/repo` path (`utils/promotion.ts`)
+- `safeHref(url)` — validates URLs against `https?://` scheme for XSS prevention (`utils/promotion.ts`)
+- `statusLabelColor` — shared color mapping for pipeline stage status (`utils/promotion.ts`)
+- `buildCommitLink(repoURL, sha)` — builds GitHub commit URL (`utils/promotion.ts`)
+- `useMatchingStrategy(app, namespace)` — finds PromotionStrategy matching an Application's repo (`hooks/useMatchingStrategy.ts`)
+- `useCommitStatusMutation(namespace, gitRepoRef)` — creates/patches CommitStatus CRs (`hooks/useCommitStatusMutation.ts`)
+
+### Custom Hydrator (GitHub Actions)
+
+The Argo CD source hydrator (commit-server) is not available in OpenShift GitOps yet. Instead, a GitHub Actions workflow (`argocd-example-apps/.github/workflows/hydrator.yaml`) acts as the custom hydrator:
+- Watches `master` for non-`.github` pushes
+- Runs `kustomize build` on the app directory
+- Pushes rendered manifests + `hydrator.metadata` to `env/{dev,staging,prod}-next` branches
+- The promoter opens PRs from `-next` → active branches
+
+### Known Limitation: Promoter v0.27.1 Check-Run Visibility
+
+The CTP controller queries GitHub's Checks API filtered by the GitHub App, but cannot find check runs created by its own App. This means `integration-tests` and `argocd-health` commit statuses created via CommitStatus CRs (which the CommitStatus controller writes as check runs) are invisible to the CTP controller. Tracked as an upstream issue. Workaround: remove required checks from the PromotionStrategy, or use a future promoter version.
+
+### Tekton Pipeline Pattern
+
+When OpenShift Pipelines is installed, the `promotion-integration-tests` Pipeline in `openshift-gitops` namespace:
+1. Runs integration tests (`run-integration-tests` Task)
+2. Reports results by creating a `CommitStatus` CR (`report-commit-status` Task)
+3. On failure, the `finally` block creates a `CommitStatus` with `phase: failure`
+
+The `promotion-pipeline` ServiceAccount has RBAC to create CommitStatus CRs.
+
+### E2E Testing
+
+```bash
+./e2e/promotion-e2e.sh    # 13 checks: prerequisites, app health, push, hydrator, promoter, PRs, plugin
+```
